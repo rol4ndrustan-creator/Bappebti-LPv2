@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+    output: "export",
+    basePath: "/Bappebti-LPv2",
+    assetPrefix: "/Bappebti-LPv2",
+    images: {
+          unoptimized: true,
+    },
 };
 
 export default nextConfig;
