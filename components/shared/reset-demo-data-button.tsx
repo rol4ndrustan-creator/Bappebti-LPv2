@@ -5,6 +5,7 @@ import { RotateCcw } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { resetDemoData } from "@/lib/mock-service/store";
+import { resetClarificationData } from "@/lib/mock-service/clarification-store";
 
 /** Section 24 — a visible, explicit way to wipe every simulated action (clarifications, resolutions, closures). */
 export function ResetDemoDataButton() {
@@ -39,6 +40,7 @@ export function ResetDemoDataButton() {
             variant="destructive"
             onClick={() => {
               resetDemoData();
+              resetClarificationData();
               setOpen(false);
               window.location.reload();
             }}

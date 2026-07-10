@@ -31,8 +31,10 @@ import {
   closeCase,
   reopenCase,
 } from "@/lib/mock-service/store";
+import { useClarificationsForCase } from "@/lib/mock-service/clarification-store";
+import { getClarificationPortalSegment, getViewerRelation } from "@/lib/clarification-workflow";
 import { InternalNoteClassification } from "@/lib/types";
-import { ArrowRight, FileText, ShieldAlert } from "lucide-react";
+import { ArrowRight, FileText, MessageCircle, ShieldAlert } from "lucide-react";
 
 type ActionKind =
   | "request-reporter-info"
@@ -49,6 +51,7 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
   const c = useCaseData(base);
   const { showToast } = useToast();
   const { user } = useDemoSession();
+  const clarifications = useClarificationsForCase(ticket);
 
   const [noteText, setNoteText] = useState("");
   const [noteClass, setNoteClass] = useState<InternalNoteClassification>("Operasional");
@@ -84,6 +87,11 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
   const memberResponses = c.timeline.filter((t) => ["Platform", "Bursa", "Kliring"].includes(t.role));
   const internalNotes = c.internalNotes ?? [];
   const slaClocks = getSlaClocks(c);
+
+  const viewer = { role: user.role, institution: user.institution };
+  const openClarifications = clarifications.filter((cl) => cl.status !== "COMPLETED" && cl.status !== "CANCELLED");
+  const clarificationsNeedingAction = openClarifications.filter((cl) => getViewerRelation(cl, viewer) === "actor");
+  const latestClarification = [...clarifications].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
 
   function runAction(reason: string) {
     switch (activeAction) {
@@ -418,6 +426,41 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
         {/* Sticky regulator context panel */}
         <div className="flex flex-col gap-4 lg:sticky lg:top-18">
           <ResponsibilityPanel complaintCase={c} viewer="internal" />
+
+          <div className="rounded-lg border border-border bg-card p-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-2 flex items-center gap-1.5">
+              <MessageCircle className="size-3.5" /> Klarifikasi
+            </p>
+            {clarifications.length === 0 ? (
+              <p className="text-xs text-muted">Belum ada klarifikasi untuk kasus ini.</p>
+            ) : (
+              <div className="text-xs space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted">Klarifikasi Terbuka</span>
+                  <span className="font-medium">{openClarifications.length}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted">Perlu Tindakan Bappebti</span>
+                  <span className="font-medium">{clarificationsNeedingAction.length}</span>
+                </div>
+                {latestClarification && (
+                  <div className="pt-1.5 border-t border-border">
+                    <p className="text-muted">Klarifikasi Terbaru</p>
+                    <Link
+                      href={`/anggota/${getClarificationPortalSegment(latestClarification)}/klarifikasi/${latestClarification.id}`}
+                      className="font-medium text-navy hover:underline"
+                    >
+                      {latestClarification.id}
+                    </Link>
+                    <p className="text-foreground/80 mt-0.5 truncate" title={latestClarification.subject}>
+                      {latestClarification.subject}
+                    </p>
+                    <p className="text-muted mt-0.5">Batas waktu: {latestClarification.dueAt}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           <div className="rounded-lg border border-border bg-card p-3">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-2">Jam SLA Aktif</p>

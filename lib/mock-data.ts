@@ -1,6 +1,7 @@
 import {
   AdminUser,
   AuditLogEntry,
+  ClarificationRequest,
   ComplaintCase,
   FeedbackItem,
   IncidentRecord,
@@ -860,6 +861,339 @@ export function getCaseByTicket(ticket: string): ComplaintCase | undefined {
 
 export function getIncidentById(id: string): IncidentRecord | undefined {
   return INCIDENTS.find((i) => i.id === id);
+}
+
+// ---------------------------------------------------------------------------
+// Clarification module mock data (scenarios A-H).
+// Institutions used mirror each case's actual platform/bursa/kliring fields
+// so per-institution visibility scoping (Section 9) behaves correctly.
+// ---------------------------------------------------------------------------
+
+export const CLARIFICATIONS: ClarificationRequest[] = [
+  // Scenario A — completed reporter clarification (BPP-2026-000184)
+  {
+    id: "CLR-2026-000184-01",
+    caseTicket: "BPP-2026-000184",
+    requestDirection: "OUTGOING",
+    requestedBy: {
+      partyType: "PLATFORM",
+      institutionName: "PT Bursa Digital Nusantara",
+      userName: "Rina Kusuma",
+      roleLabel: "Tim Operasional Platform",
+    },
+    requestedFrom: {
+      partyType: "REPORTER",
+      institutionName: "Pelapor",
+      userName: "Andra Wicaksono",
+      roleLabel: "Pelapor",
+    },
+    subject: "Konfirmasi rekening tujuan penarikan",
+    question:
+      "Mohon konfirmasi nomor rekening tujuan yang digunakan dalam permintaan penarikan WD-88213471 serta unggah bukti bahwa rekening tersebut sama dengan rekening terdaftar.",
+    reason: "Diperlukan verifikasi kesesuaian rekening tujuan sebelum dana penarikan diteruskan, sebagai bagian dari prosedur pencegahan kesalahan transfer.",
+    requestedInformation: [
+      { label: "Nomor rekening tujuan", status: "Diterima" },
+      { label: "Nama pemilik rekening", status: "Diterima" },
+      { label: "Bank tujuan", status: "Diterima" },
+      { label: "Referensi withdrawal", status: "Diterima" },
+    ],
+    priority: "MEDIUM",
+    createdAt: "13 Jun 2026, 08:35",
+    dueAt: "13 Jun 2026, 17:00",
+    respondedAt: "13 Jun 2026, 10:12",
+    completedAt: "13 Jun 2026, 11:00",
+    status: "COMPLETED",
+    formalResponse: {
+      summary: "Rekening tujuan dikonfirmasi sesuai data terdaftar.",
+      detailedExplanation:
+        "Nomor rekening tujuan adalah BCA 1234567890 a.n. Andra Wicaksono, sesuai data terdaftar pada akun.",
+      referencedTransaction: "WD-88213471",
+      factsConfirmed: "Rekening tujuan sesuai dengan rekening terdaftar pelapor.",
+      respondingOfficer: "Andra Wicaksono",
+      submittedAt: "13 Jun 2026, 10:12",
+    },
+    attachments: [],
+    responseAttachments: [
+      { id: "ATT-184-01-1", filename: "Bukti rekening terdaftar.pdf", category: "Identitas/Otorisasi", uploadedBy: "Andra Wicaksono", uploadedAt: "13 Jun 2026, 10:12", sizeLabel: "1.2 MB" },
+    ],
+    history: [
+      { id: "CLR-2026-000184-01-h1", timestamp: "13 Jun 2026, 08:35", actor: "Rina Kusuma", role: "Tim Operasional Platform", institution: "PT Bursa Digital Nusantara", action: "Klarifikasi dikirim", visibility: "public", afterState: "SENT" },
+      { id: "CLR-2026-000184-01-h2", timestamp: "13 Jun 2026, 08:36", actor: "Sistem", role: "Sistem", institution: "-", action: "Menunggu respons pelapor", visibility: "public", beforeState: "SENT", afterState: "WAITING_RESPONSE" },
+      { id: "CLR-2026-000184-01-h3", timestamp: "13 Jun 2026, 10:12", actor: "Andra Wicaksono", role: "Pelapor", institution: "Pelapor", action: "Respons dikirim", note: "Rekening tujuan dikonfirmasi beserta bukti pendukung.", visibility: "public", beforeState: "WAITING_RESPONSE", afterState: "RESPONDED" },
+      { id: "CLR-2026-000184-01-h4", timestamp: "13 Jun 2026, 10:45", actor: "Rina Kusuma", role: "Tim Operasional Platform", institution: "PT Bursa Digital Nusantara", action: "Respons ditinjau", visibility: "public", beforeState: "RESPONDED", afterState: "UNDER_REVIEW" },
+      { id: "CLR-2026-000184-01-h5", timestamp: "13 Jun 2026, 11:00", actor: "Rina Kusuma", role: "Tim Operasional Platform", institution: "PT Bursa Digital Nusantara", action: "Klarifikasi diselesaikan", visibility: "public", beforeState: "UNDER_REVIEW", afterState: "COMPLETED" },
+    ],
+    visibility: { publicReporter: true, platform: true, bursa: false, clearing: false, bappebti: true },
+  },
+  // Scenario G — Bappebti requests revision on platform's earlier explanation (BPP-2026-000184)
+  {
+    id: "CLR-2026-000184-02",
+    caseTicket: "BPP-2026-000184",
+    requestDirection: "INCOMING",
+    requestedBy: {
+      partyType: "BAPPEBTI",
+      institutionName: "Bappebti",
+      userName: "Dewi Anjani",
+      roleLabel: "Petugas Kasus Bappebti",
+    },
+    requestedFrom: {
+      partyType: "PLATFORM",
+      institutionName: "PT Bursa Digital Nusantara",
+      userName: "Rina Kusuma",
+      roleLabel: "Tim Operasional Platform",
+    },
+    subject: "Kelengkapan bukti konfirmasi bank kustodian",
+    question:
+      "Mohon jelaskan kembali kronologi konfirmasi ke bank kustodian dan lampirkan tangkapan layar sistem internal yang menunjukkan waktu instruksi transfer dikirim, karena penjelasan sebelumnya belum menyertakan bukti waktu pengiriman instruksi.",
+    reason: "Jawaban awal platform hanya menyatakan 'menunggu konfirmasi bank' tanpa bukti waktu instruksi transfer dikirim, sehingga belum dapat dinilai apakah keterlambatan berada pada platform atau bank kustodian.",
+    priority: "HIGH",
+    createdAt: "14 Jun 2026, 16:00",
+    dueAt: "17 Jun 2026, 17:00",
+    respondedAt: "14 Jun 2026, 20:00",
+    status: "REVISION_REQUESTED",
+    formalResponse: {
+      summary: "Instruksi transfer telah dikirim ke bank pada 14 Juni 2026.",
+      detailedExplanation: "Tim operasional telah mengirimkan instruksi transfer ke bank kustodian dan sedang menunggu konfirmasi lebih lanjut.",
+      respondingOfficer: "Rina Kusuma",
+      submittedAt: "14 Jun 2026, 20:00",
+    },
+    reviewerComments: "Penjelasan belum menyertakan bukti waktu pengiriman instruksi maupun tangkapan layar sistem internal yang diminta.",
+    revisionReason: "Bukti waktu instruksi transfer dan tangkapan layar sistem internal belum dilampirkan.",
+    requiredCorrections: "Lampirkan tangkapan layar sistem internal beserta timestamp instruksi transfer ke bank kustodian.",
+    attachments: [],
+    responseAttachments: [],
+    history: [
+      { id: "CLR-2026-000184-02-h1", timestamp: "14 Jun 2026, 16:00", actor: "Dewi Anjani", role: "Petugas Kasus Bappebti", institution: "Bappebti", action: "Permintaan penjelasan resmi dikirim", visibility: "member", afterState: "SENT" },
+      { id: "CLR-2026-000184-02-h2", timestamp: "14 Jun 2026, 16:01", actor: "Sistem", role: "Sistem", institution: "-", action: "Menunggu respons platform", visibility: "member", beforeState: "SENT", afterState: "WAITING_RESPONSE" },
+      { id: "CLR-2026-000184-02-h3", timestamp: "14 Jun 2026, 20:00", actor: "Rina Kusuma", role: "Tim Operasional Platform", institution: "PT Bursa Digital Nusantara", action: "Respons dikirim", visibility: "member", beforeState: "WAITING_RESPONSE", afterState: "RESPONDED" },
+      { id: "CLR-2026-000184-02-h4", timestamp: "15 Jun 2026, 09:00", actor: "Dewi Anjani", role: "Petugas Kasus Bappebti", institution: "Bappebti", action: "Respons ditinjau", visibility: "member", beforeState: "RESPONDED", afterState: "UNDER_REVIEW" },
+      { id: "CLR-2026-000184-02-h5", timestamp: "15 Jun 2026, 09:30", actor: "Dewi Anjani", role: "Petugas Kasus Bappebti", institution: "Bappebti", action: "Perbaikan diminta", note: "Bukti waktu instruksi transfer belum dilampirkan.", reason: "Penjelasan belum menyertakan bukti waktu pengiriman instruksi.", visibility: "member", beforeState: "UNDER_REVIEW", afterState: "REVISION_REQUESTED" },
+    ],
+    visibility: { publicReporter: false, platform: true, bursa: false, clearing: false, bappebti: true },
+  },
+  // Scenario B — completed reporter identity clarification (BPP-2026-000185)
+  {
+    id: "CLR-2026-000185-01",
+    caseTicket: "BPP-2026-000185",
+    requestDirection: "OUTGOING",
+    requestedBy: {
+      partyType: "PLATFORM",
+      institutionName: "PT Crypto Indonesia Berkat",
+      userName: "Yoga Pratama",
+      roleLabel: "Tim CS Platform",
+    },
+    requestedFrom: {
+      partyType: "REPORTER",
+      institutionName: "Pelapor",
+      userName: "Melisa Hartono",
+      roleLabel: "Pelapor",
+    },
+    subject: "Verifikasi ulang identitas akun",
+    question: "Mohon kirimkan ulang foto KTP dan selfie untuk proses verifikasi keamanan akun sehubungan dengan dugaan akses tidak sah.",
+    reason: "Diperlukan verifikasi identitas ulang sebelum tim keamanan dapat memproses klaim transaksi tidak sah pada akun.",
+    requestedEvidenceTypes: ["Identitas atau Otorisasi"],
+    priority: "HIGH",
+    createdAt: "11 Jun 2026, 09:00",
+    dueAt: "12 Jun 2026, 12:00",
+    respondedAt: "11 Jun 2026, 12:40",
+    completedAt: "12 Jun 2026, 09:00",
+    status: "COMPLETED",
+    formalResponse: {
+      summary: "Dokumen identitas telah dikirimkan ulang.",
+      detailedExplanation: "Dokumen KTP dan foto selfie telah dikirimkan ulang melalui email dukungan sejak tanggal pendaftaran.",
+      respondingOfficer: "Melisa Hartono",
+      submittedAt: "11 Jun 2026, 12:40",
+    },
+    attachments: [],
+    responseAttachments: [
+      { id: "ATT-185-01-1", filename: "KTP dan selfie verifikasi.pdf", category: "Identitas/Otorisasi", uploadedBy: "Melisa Hartono", uploadedAt: "11 Jun 2026, 12:40", sizeLabel: "980 KB" },
+    ],
+    history: [
+      { id: "CLR-2026-000185-01-h1", timestamp: "11 Jun 2026, 09:00", actor: "Yoga Pratama", role: "Tim CS Platform", institution: "PT Crypto Indonesia Berkat", action: "Klarifikasi dikirim", visibility: "public", afterState: "SENT" },
+      { id: "CLR-2026-000185-01-h2", timestamp: "11 Jun 2026, 12:40", actor: "Melisa Hartono", role: "Pelapor", institution: "Pelapor", action: "Respons dikirim", visibility: "public", beforeState: "WAITING_RESPONSE", afterState: "RESPONDED" },
+      { id: "CLR-2026-000185-01-h3", timestamp: "12 Jun 2026, 09:00", actor: "Yoga Pratama", role: "Tim CS Platform", institution: "PT Crypto Indonesia Berkat", action: "Klarifikasi diselesaikan", visibility: "public", beforeState: "UNDER_REVIEW", afterState: "COMPLETED" },
+    ],
+    visibility: { publicReporter: true, platform: true, bursa: false, clearing: false, bappebti: true },
+  },
+  // Scenario C — waiting for reporter, due soon (BPP-2026-000190)
+  {
+    id: "CLR-2026-000190-01",
+    caseTicket: "BPP-2026-000190",
+    requestDirection: "OUTGOING",
+    requestedBy: {
+      partyType: "PLATFORM",
+      institutionName: "PT Indodax Nasional Indonesia",
+      userName: "Indra Kusnadi",
+      roleLabel: "Tim Operasional Platform",
+    },
+    requestedFrom: {
+      partyType: "REPORTER",
+      institutionName: "Pelapor",
+      userName: "Citra Lestari",
+      roleLabel: "Pelapor",
+    },
+    subject: "Bukti transfer dengan resolusi lebih jelas",
+    question: "Mohon unggah ulang bukti transfer dengan kualitas gambar yang lebih jelas, termasuk nomor referensi bank, untuk deposit sebesar Rp12.500.000.",
+    reason: "Bukti transfer yang dilampirkan sebelumnya tidak dapat dibaca dengan jelas sehingga tim tidak dapat mencocokkan mutasi rekening penampungan deposit.",
+    requestedInformation: [
+      { label: "Bukti transfer beresolusi tinggi", status: "Belum Diberikan" },
+      { label: "Nomor referensi bank", status: "Belum Diberikan" },
+    ],
+    priority: "MEDIUM",
+    createdAt: "15 Jun 2026, 09:46",
+    dueAt: "16 Jun 2026, 09:00",
+    status: "WAITING_RESPONSE",
+    attachments: [],
+    responseAttachments: [],
+    history: [
+      { id: "CLR-2026-000190-01-h1", timestamp: "15 Jun 2026, 09:46", actor: "Indra Kusnadi", role: "Tim Operasional Platform", institution: "PT Indodax Nasional Indonesia", action: "Klarifikasi dikirim", visibility: "public", afterState: "SENT" },
+      { id: "CLR-2026-000190-01-h2", timestamp: "15 Jun 2026, 09:47", actor: "Sistem", role: "Sistem", institution: "-", action: "Menunggu respons pelapor", visibility: "public", beforeState: "SENT", afterState: "WAITING_RESPONSE" },
+    ],
+    visibility: { publicReporter: true, platform: true, bursa: false, clearing: false, bappebti: true },
+  },
+  // Scenario D — incoming request from Bappebti, platform must respond (BPP-2026-000191)
+  {
+    id: "CLR-2026-000191-01",
+    caseTicket: "BPP-2026-000191",
+    requestDirection: "INCOMING",
+    requestedBy: {
+      partyType: "BAPPEBTI",
+      institutionName: "Bappebti",
+      userName: "Dewi Anjani",
+      roleLabel: "Petugas Kasus Bappebti",
+    },
+    requestedFrom: {
+      partyType: "PLATFORM",
+      institutionName: "PT Bursa Digital Nusantara",
+      userName: "Rina Kusuma",
+      roleLabel: "Tim Operasional Platform",
+    },
+    subject: "Penjelasan resmi status transaksi penarikan",
+    question:
+      "Mohon berikan penjelasan resmi mengenai status transaksi terkait referensi settlement STL-2026-06-330452 yang belum tercatat pada riwayat akun pelapor, termasuk tahapan rekonsiliasi yang telah dilakukan.",
+    reason: "Bappebti memerlukan penjelasan formal sebelum menentukan apakah diperlukan koreksi saldo atas keluhan referensi settlement yang tidak ditemukan.",
+    requestedFields: ["Status rekonsiliasi", "Tanggal penyelesaian yang diharapkan"],
+    priority: "HIGH",
+    createdAt: "15 Jun 2026, 13:00",
+    dueAt: "18 Jun 2026, 12:00",
+    status: "WAITING_RESPONSE",
+    attachments: [
+      { id: "ATT-191-01-1", filename: "Riwayat permintaan settlement.pdf", category: "Lainnya", uploadedBy: "Dewi Anjani", uploadedAt: "15 Jun 2026, 13:00", sizeLabel: "410 KB" },
+    ],
+    responseAttachments: [],
+    history: [
+      { id: "CLR-2026-000191-01-h1", timestamp: "15 Jun 2026, 13:00", actor: "Dewi Anjani", role: "Petugas Kasus Bappebti", institution: "Bappebti", action: "Permintaan penjelasan resmi dikirim", visibility: "member", afterState: "SENT" },
+      { id: "CLR-2026-000191-01-h2", timestamp: "15 Jun 2026, 13:01", actor: "Sistem", role: "Sistem", institution: "-", action: "Menunggu respons platform", visibility: "member", beforeState: "SENT", afterState: "WAITING_RESPONSE" },
+    ],
+    visibility: { publicReporter: false, platform: true, bursa: false, clearing: true, bappebti: true },
+  },
+  // Scenario F — overdue clarification from Bappebti to platform (BPP-2026-000191)
+  {
+    id: "CLR-2026-000191-02",
+    caseTicket: "BPP-2026-000191",
+    requestDirection: "INCOMING",
+    requestedBy: {
+      partyType: "BAPPEBTI",
+      institutionName: "Bappebti",
+      userName: "Dewi Anjani",
+      roleLabel: "Petugas Kasus Bappebti",
+    },
+    requestedFrom: {
+      partyType: "PLATFORM",
+      institutionName: "PT Bursa Digital Nusantara",
+      userName: "Rina Kusuma",
+      roleLabel: "Tim Operasional Platform",
+    },
+    subject: "Data transaksi rinci batch settlement",
+    question: "Mohon kirimkan data transaksi rinci untuk akun terkait pada batch settlement yang dipermasalahkan, sesuai permintaan tim kliring sebelumnya.",
+    reason: "Data rinci diperlukan agar tim kliring dapat menyelesaikan proses rekonsiliasi referensi settlement yang tertunda.",
+    priority: "HIGH",
+    createdAt: "12 Jun 2026, 10:00",
+    dueAt: "14 Jun 2026, 17:00",
+    originalDueAt: "14 Jun 2026, 17:00",
+    breachedAt: "14 Jun 2026, 17:01",
+    status: "OVERDUE",
+    attachments: [],
+    responseAttachments: [],
+    history: [
+      { id: "CLR-2026-000191-02-h1", timestamp: "12 Jun 2026, 10:00", actor: "Dewi Anjani", role: "Petugas Kasus Bappebti", institution: "Bappebti", action: "Permintaan data dikirim", visibility: "member", afterState: "SENT" },
+      { id: "CLR-2026-000191-02-h2", timestamp: "12 Jun 2026, 10:01", actor: "Sistem", role: "Sistem", institution: "-", action: "Menunggu respons platform", visibility: "member", beforeState: "SENT", afterState: "WAITING_RESPONSE" },
+      { id: "CLR-2026-000191-02-h3", timestamp: "14 Jun 2026, 17:01", actor: "Sistem", role: "Sistem", institution: "-", action: "Batas waktu terlampaui", note: "Platform belum memberikan tanggapan hingga batas waktu.", visibility: "member", beforeState: "WAITING_RESPONSE", afterState: "OVERDUE" },
+    ],
+    visibility: { publicReporter: false, platform: true, bursa: false, clearing: true, bappebti: true },
+  },
+  // Scenario H — platform requests settlement clarification from clearing (BPP-2026-000191)
+  {
+    id: "CLR-2026-000191-03",
+    caseTicket: "BPP-2026-000191",
+    requestDirection: "OUTGOING",
+    requestedBy: {
+      partyType: "PLATFORM",
+      institutionName: "PT Bursa Digital Nusantara",
+      userName: "Rina Kusuma",
+      roleLabel: "Tim Operasional Platform",
+    },
+    requestedFrom: {
+      partyType: "CLEARING",
+      institutionName: "Kliring Berjangka Indonesia",
+      userName: "Sari Wulandari",
+      roleLabel: "Tim Rekonsiliasi Kliring",
+    },
+    subject: "Verifikasi referensi settlement STL-2026-06-330452",
+    question: "Mohon konfirmasi status referensi settlement STL-2026-06-330452 pada sistem kliring, apakah telah dikonfirmasi oleh bank atau masih dalam proses.",
+    reason: "Diperlukan konfirmasi dari lembaga kliring sebelum platform dapat memberikan penjelasan resmi kepada Bappebti mengenai status settlement.",
+    priority: "MEDIUM",
+    createdAt: "14 Jun 2026, 11:00",
+    dueAt: "17 Jun 2026, 12:00",
+    status: "WAITING_RESPONSE",
+    attachments: [],
+    responseAttachments: [],
+    history: [
+      { id: "CLR-2026-000191-03-h1", timestamp: "14 Jun 2026, 11:00", actor: "Rina Kusuma", role: "Tim Operasional Platform", institution: "PT Bursa Digital Nusantara", action: "Klarifikasi dikirim ke kliring", visibility: "member", afterState: "SENT" },
+      { id: "CLR-2026-000191-03-h2", timestamp: "14 Jun 2026, 11:01", actor: "Sistem", role: "Sistem", institution: "-", action: "Menunggu respons kliring", visibility: "member", beforeState: "SENT", afterState: "WAITING_RESPONSE" },
+    ],
+    visibility: { publicReporter: false, platform: true, bursa: false, clearing: true, bappebti: true },
+  },
+  // Scenario E — incoming request from Bursa, platform must respond (BPP-2026-000192)
+  {
+    id: "CLR-2026-000192-01",
+    caseTicket: "BPP-2026-000192",
+    requestDirection: "INCOMING",
+    requestedBy: {
+      partyType: "BURSA",
+      institutionName: "Bursa Aset Kripto Indonesia",
+      userName: "Tim Supervisi Bursa",
+      roleLabel: "Petugas Kasus Bursa",
+    },
+    requestedFrom: {
+      partyType: "PLATFORM",
+      institutionName: "PT Crypto Indonesia Berkat",
+      userName: "Yoga Pratama",
+      roleLabel: "Tim Keamanan Platform",
+    },
+    subject: "Dasar pemblokiran akun pengguna",
+    question: "Mohon jelaskan dasar dan prosedur pemblokiran akses akun pelapor, serta apakah pemblokiran berkaitan dengan investigasi kasus BPP-2026-000185.",
+    reason: "Bursa memerlukan kepastian bahwa pemblokiran akun dilakukan sesuai prosedur dan bukan tindakan sepihak yang merugikan pelapor.",
+    priority: "MEDIUM",
+    createdAt: "15 Jun 2026, 08:30",
+    dueAt: "17 Jun 2026, 17:00",
+    status: "WAITING_RESPONSE",
+    attachments: [],
+    responseAttachments: [],
+    history: [
+      { id: "CLR-2026-000192-01-h1", timestamp: "15 Jun 2026, 08:30", actor: "Tim Supervisi Bursa", role: "Petugas Kasus Bursa", institution: "Bursa Aset Kripto Indonesia", action: "Klarifikasi dikirim", visibility: "member", afterState: "SENT" },
+      { id: "CLR-2026-000192-01-h2", timestamp: "15 Jun 2026, 08:31", actor: "Sistem", role: "Sistem", institution: "-", action: "Menunggu respons platform", visibility: "member", beforeState: "SENT", afterState: "WAITING_RESPONSE" },
+    ],
+    visibility: { publicReporter: false, platform: true, bursa: true, clearing: false, bappebti: true },
+  },
+];
+
+export function getClarificationById(id: string): ClarificationRequest | undefined {
+  return CLARIFICATIONS.find((c) => c.id === id);
+}
+
+export function getClarificationsForCase(ticket: string): ClarificationRequest[] {
+  return CLARIFICATIONS.filter((c) => c.caseTicket === ticket);
 }
 
 /** @deprecated use formatCurrencyIDR from lib/format.ts — kept for existing pages */

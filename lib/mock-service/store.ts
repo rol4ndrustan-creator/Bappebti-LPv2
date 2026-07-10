@@ -20,6 +20,7 @@ import {
   TimelineEvent,
 } from "../types";
 import { nowDateTimeID } from "../format";
+import { subscribe, emitChange, getVersion } from "./event-bus";
 
 const STORAGE_KEY = "bappebti-demo-overrides";
 const NOTIF_STORAGE_KEY = "bappebti-demo-notifications-read";
@@ -58,16 +59,6 @@ function writeOverrides(map: OverrideMap) {
     // ignore persistence failures in the prototype
   }
   emitChange();
-}
-
-const listeners = new Set<() => void>();
-function emitChange() {
-  listeners.forEach((l) => l());
-}
-
-function subscribe(listener: () => void): () => void {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
 }
 
 function mutate(ticket: string, fn: (o: CaseOverride) => void) {
@@ -206,8 +197,13 @@ export function resetDemoData() {
 }
 
 export function useCaseData(base: ComplaintCase | undefined): ComplaintCase | undefined {
-  const getSnapshot = React.useCallback(() => getMergedCase(base), [base]);
-  return React.useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  // useSyncExternalStore requires getSnapshot to return a stable reference
+  // between actual changes. getMergedCase builds a new object every call, so
+  // we subscribe to the (primitive, value-comparable) version counter and
+  // recompute the derived object in useMemo instead of inside getSnapshot.
+  const version = React.useSyncExternalStore(subscribe, getVersion, getVersion);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- version isn't read in the body, it only forces recomputation when the store changes
+  return React.useMemo(() => getMergedCase(base), [base, version]);
 }
 
 // --- Notifications read state ---

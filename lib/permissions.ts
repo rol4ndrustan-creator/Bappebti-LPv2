@@ -134,6 +134,8 @@ export interface DemoUser {
 export const DEMO_USERS: DemoUser[] = [
   { id: "andra", name: "Andra Wicaksono", role: "PUBLIC_REPORTER", institution: "Pelapor Publik", portalHref: "/publik/dashboard" },
   { id: "rina", name: "Rina Kusuma", role: "PLATFORM_CASE_OFFICER", institution: "PT Bursa Digital Nusantara", portalHref: "/anggota/platform" },
+  { id: "indra", name: "Indra Kusnadi", role: "PLATFORM_CASE_OFFICER", institution: "PT Indodax Nasional Indonesia", portalHref: "/anggota/platform" },
+  { id: "yoga", name: "Yoga Pratama", role: "PLATFORM_CASE_OFFICER", institution: "PT Crypto Indonesia Berkat", portalHref: "/anggota/platform" },
   { id: "ahmad", name: "Ahmad Pratama", role: "BURSA_CASE_OFFICER", institution: "Bursa Berjangka Jakarta", portalHref: "/anggota/bursa" },
   { id: "sari", name: "Sari Wulandari", role: "CLEARING_CASE_OFFICER", institution: "Kliring Berjangka Indonesia", portalHref: "/anggota/kliring" },
   { id: "dewi", name: "Dewi Anjani", role: "BAPPEBTI_CASE_OFFICER", institution: "Bappebti", portalHref: "/bappebti" },

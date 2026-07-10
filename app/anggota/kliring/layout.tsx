@@ -1,5 +1,5 @@
 import { PortalShell, SidebarItem } from "@/components/layout/portal-shell";
-import { LayoutDashboard, Landmark, FileSearch, FileCheck2, FileBarChart } from "lucide-react";
+import { LayoutDashboard, Landmark, FileSearch, FileCheck2, MessageCircle, FileBarChart } from "lucide-react";
 
 const iconCls = "size-4 shrink-0";
 
@@ -8,6 +8,7 @@ const sidebarItems: SidebarItem[] = [
   { label: "Settlement Queue", href: "/anggota/kliring/settlement-queue", icon: <Landmark className={iconCls} /> },
   { label: "Reconciliation Review", href: "/anggota/kliring/reconciliation-review", icon: <FileSearch className={iconCls} /> },
   { label: "Settlement Evidence", href: "/anggota/kliring/settlement-evidence", icon: <FileCheck2 className={iconCls} /> },
+  { label: "Klarifikasi", href: "/anggota/kliring/klarifikasi", icon: <MessageCircle className={iconCls} /> },
   { label: "Reporting", href: "/anggota/kliring/reporting", icon: <FileBarChart className={iconCls} /> },
 ];
 

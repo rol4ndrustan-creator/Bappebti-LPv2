@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,21 @@ export function PortalShell({
 }) {
   const pathname = usePathname();
 
+  // Only the single most-specific matching item should be highlighted — a
+  // naive per-item startsWith check would also match a portal's root
+  // "Dashboard" entry for every one of its sub-routes.
+  const activeHref = useMemo(() => {
+    if (!pathname) return null;
+    let best: string | null = null;
+    for (const item of sidebarItems) {
+      const matches = pathname === item.href || pathname.startsWith(item.href + "/");
+      if (matches && (!best || item.href.length > best.length)) {
+        best = item.href;
+      }
+    }
+    return best;
+  }, [pathname, sidebarItems]);
+
   return (
     <div className="flex flex-1 min-h-0">
       <aside className="hidden md:flex w-56 shrink-0 flex-col border-r border-border bg-card">
@@ -34,7 +50,7 @@ export function PortalShell({
         </div>
         <nav className="flex flex-col gap-0.5 p-2">
           {sidebarItems.map((item) => {
-            const active = pathname === item.href || (item.href !== "" && pathname?.startsWith(item.href + "/"));
+            const active = item.href === activeHref;
             return (
               <Link
                 key={item.href}

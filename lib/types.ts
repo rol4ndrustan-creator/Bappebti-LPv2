@@ -357,3 +357,111 @@ export interface IncidentRecord {
   resolutionDate?: string;
   relatedCases: string[];
 }
+
+// ---------------------------------------------------------------------------
+// Clarification module — a clarification is a distinct business object with
+// its own ID (a case can contain multiple clarifications), separate from the
+// generic ComplaintCase.clarifications message array used by older pages.
+// ---------------------------------------------------------------------------
+
+export type ClarificationStatus =
+  | "DRAFT"
+  | "SENT"
+  | "WAITING_RESPONSE"
+  | "PARTIALLY_RESPONDED"
+  | "RESPONDED"
+  | "UNDER_REVIEW"
+  | "REVISION_REQUESTED"
+  | "COMPLETED"
+  | "OVERDUE"
+  | "CANCELLED";
+
+export type ClarificationPartyType = "REPORTER" | "PLATFORM" | "BURSA" | "CLEARING" | "BAPPEBTI";
+
+export type ClarificationPriority = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+
+export interface ClarificationParty {
+  partyType: ClarificationPartyType;
+  institutionId?: string;
+  institutionName: string;
+  userId?: string;
+  userName?: string;
+  roleLabel: string;
+}
+
+export interface ClarificationAttachment {
+  id: string;
+  filename: string;
+  category: string;
+  uploadedBy: string;
+  uploadedAt: string;
+  sizeLabel?: string;
+}
+
+export type ClarificationEventVisibility = "public" | "member" | "internal";
+
+export interface ClarificationHistoryEvent {
+  id: string;
+  timestamp: string;
+  actor: string;
+  role: string;
+  institution: string;
+  action: string;
+  note?: string;
+  visibility: ClarificationEventVisibility;
+  beforeState?: ClarificationStatus;
+  afterState?: ClarificationStatus;
+  reason?: string;
+}
+
+export interface RequestedInformationItem {
+  label: string;
+  status: "Belum Diberikan" | "Sudah Diberikan" | "Perlu Diperbaiki" | "Diterima";
+}
+
+export interface ClarificationRequest {
+  id: string;
+  caseTicket: string;
+  requestDirection: "INCOMING" | "OUTGOING";
+  requestedBy: ClarificationParty;
+  requestedFrom: ClarificationParty;
+  subject: string;
+  question: string;
+  reason: string;
+  requestedInformation?: RequestedInformationItem[];
+  requestedEvidenceTypes?: string[];
+  requestedFields?: string[];
+  priority: ClarificationPriority;
+  createdAt: string;
+  dueAt: string;
+  originalDueAt?: string;
+  respondedAt?: string;
+  completedAt?: string;
+  breachedAt?: string;
+  status: ClarificationStatus;
+  responseDraft?: string;
+  formalResponse?: {
+    summary: string;
+    detailedExplanation: string;
+    referencedTransaction?: string;
+    factsConfirmed?: string;
+    factsNotConfirmed?: string;
+    respondingOfficer: string;
+    supervisorApproval?: string;
+    submittedAt: string;
+  };
+  reviewerComments?: string;
+  revisionReason?: string;
+  requiredCorrections?: string;
+  attachments: ClarificationAttachment[];
+  responseAttachments: ClarificationAttachment[];
+  history: ClarificationHistoryEvent[];
+  internalNote?: string;
+  visibility: {
+    publicReporter: boolean;
+    platform: boolean;
+    bursa: boolean;
+    clearing: boolean;
+    bappebti: boolean;
+  };
+}
