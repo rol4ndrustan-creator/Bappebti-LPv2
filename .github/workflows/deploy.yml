@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - claude/peaceful-feynman-7oxt1n
+      - claude/bappebti-complaint-platform-r86iya
   workflow_dispatch:
 
 permissions:
