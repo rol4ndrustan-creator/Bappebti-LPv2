@@ -27,7 +27,7 @@ export function TopNav() {
           </span>
           <span className="leading-tight hidden sm:block">
             <span className="block text-sm font-semibold">Layanan Pengaduan Bappebti</span>
-            <span className="block text-[10px] text-white/70">
+            <span className="hidden xl:block text-[10px] text-white/70">
               Badan Pengawas Perdagangan Berjangka Komoditi
             </span>
           </span>
