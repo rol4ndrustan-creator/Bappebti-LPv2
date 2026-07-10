@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { DemoRoleSwitcher } from "@/components/shared/demo-role-switcher";
 
 const PORTALS = [
   { label: "Situs Publik", href: "/publik" },
@@ -46,6 +47,9 @@ export function TopNav() {
             );
           })}
         </nav>
+        <div className="ml-auto shrink-0">
+          <DemoRoleSwitcher />
+        </div>
       </div>
     </header>
   );
