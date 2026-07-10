@@ -15,7 +15,6 @@ import { StatusBadge } from "@/components/shared/badges";
 import { useToast } from "@/components/shared/toast-provider";
 import { CATEGORY_LIST, PLATFORM_LIST, PROVINCE_LIST } from "@/lib/mock-data";
 import { usePublikAuth } from "@/lib/publik-auth";
-import { Severity } from "@/lib/types";
 import {
   CheckCircle2,
   ChevronRight,
@@ -36,8 +35,6 @@ const STEP_LABELS = [
   "Status / Tiket",
 ];
 
-const SEVERITY_LIST: Severity[] = ["Rendah", "Sedang", "Tinggi", "Kritis"];
-
 interface FormData {
   // step 2
   nama: string;
@@ -57,8 +54,6 @@ interface FormData {
   platformUserId: string;
   kronologi: string;
   permintaan: string;
-  // step 5
-  severity: Severity;
 }
 
 const INITIAL_FORM: FormData = {
@@ -78,7 +73,6 @@ const INITIAL_FORM: FormData = {
   platformUserId: "",
   kronologi: "",
   permintaan: "",
-  severity: "Sedang",
 };
 
 const PANDUAN_EXAMPLES = [
@@ -552,7 +546,7 @@ export default function BuatPengaduanPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="nomorTransaksi">Nomor transaksi/referensi</Label>
+                <Label htmlFor="nomorTransaksi">Nomor transaksi/referensi (Opsional)</Label>
                 <Input
                   id="nomorTransaksi"
                   value={form.nomorTransaksi}
@@ -560,7 +554,7 @@ export default function BuatPengaduanPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="platformUserId">Platform User ID</Label>
+                <Label htmlFor="platformUserId">Platform User ID (Opsional)</Label>
                 <Input
                   id="platformUserId"
                   value={form.platformUserId}
@@ -654,22 +648,6 @@ export default function BuatPengaduanPage() {
                   <dt className="text-muted">Kategori / Subkategori</dt>
                   <dd className="font-medium">
                     {form.kategori || "-"} / {form.subkategori || "-"}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted mb-1">Tingkat urgensi</dt>
-                  <dd>
-                    <Select
-                      className="h-8 text-xs max-w-[180px]"
-                      value={form.severity}
-                      onChange={(e) => update("severity", e.target.value as Severity)}
-                    >
-                      {SEVERITY_LIST.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                    </Select>
                   </dd>
                 </div>
               </dl>
