@@ -7,12 +7,12 @@ import { DemoRoleSwitcher } from "@/components/shared/demo-role-switcher";
 import { ResetDemoDataButton } from "@/components/shared/reset-demo-data-button";
 
 const PORTALS = [
-  { label: "Situs Publik", href: "/publik" },
-  { label: "Portal Bappebti", href: "/bappebti" },
-  { label: "Portal Platform", href: "/platform" },
-  { label: "Akun Ekosistem", href: "/ekosistem" },
+  { label: "Publik", href: "/publik" },
+  { label: "Bappebti", href: "/bappebti" },
+  { label: "Platform", href: "/platform" },
+  { label: "Ekosistem", href: "/ekosistem" },
   { label: "Asosiasi", href: "/asosiasi" },
-  { label: "Konsol Admin", href: "/admin" },
+  { label: "Admin", href: "/admin" },
 ];
 
 export function TopNav() {
@@ -32,7 +32,7 @@ export function TopNav() {
             </span>
           </span>
         </Link>
-        <nav className="flex items-center gap-1 overflow-x-auto scrollbar-thin">
+        <nav className="flex items-center gap-0.5 overflow-x-auto scrollbar-thin">
           {PORTALS.map((p) => {
             const active = pathname?.startsWith(p.href);
             return (
@@ -40,7 +40,7 @@ export function TopNav() {
                 key={p.href}
                 href={p.href}
                 className={cn(
-                  "rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors",
+                  "rounded-md px-2 py-1.5 text-xs font-medium whitespace-nowrap transition-colors",
                   active ? "bg-white text-navy" : "text-white/80 hover:bg-white/10 hover:text-white"
                 )}
               >

@@ -24,7 +24,7 @@ export function DemoRoleSwitcher() {
             setUserId(e.target.value);
             if (next) router.push(next.portalHref);
           }}
-          className="bg-transparent text-[11px] font-medium text-white outline-none max-w-[150px] sm:max-w-none [&>option]:text-foreground"
+          className="bg-transparent text-[11px] font-medium text-white outline-none max-w-[110px] sm:max-w-[160px] lg:max-w-[200px] truncate [&>option]:text-foreground"
         >
           {DEMO_USERS.map((u) => (
             <option key={u.id} value={u.id}>
