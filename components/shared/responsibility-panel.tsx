@@ -38,15 +38,15 @@ export function ResponsibilityPanel({
     <div className="rounded-lg border border-border bg-card p-3 space-y-2">
       <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">Struktur Tanggung Jawab</p>
       <dl className="text-xs space-y-1.5">
-        <Row label="Regulatory Owner" value={inst.regulatoryOwner} />
-        <Row label="Lead Institution" value={inst.leadInstitution} />
-        <Row label="Current Action Owner" value={getActionOwnerLabel(complaintCase.currentOwner)} />
+        <Row label="Pemilik Pengawasan" value={inst.regulatoryOwner} />
+        <Row label="Pelaku Usaha Utama" value={inst.leadInstitution} />
+        <Row label="Penanggung Jawab Saat Ini" value={getActionOwnerLabel(complaintCase.currentOwner)} />
         <Row label="Case Officer" value={inst.caseOfficer ?? "-"} />
         <Row
           label="Supporting Institutions"
           value={inst.supportingInstitutions && inst.supportingInstitutions.length > 0 ? inst.supportingInstitutions.join(", ") : "-"}
         />
-        <Row label="Decision Authority" value={inst.decisionAuthority} />
+        <Row label="Otoritas Keputusan" value={inst.decisionAuthority} />
       </dl>
       <div className="flex items-center justify-between pt-1 border-t border-border">
         <span className="text-[11px] text-muted">Escalation Level</span>

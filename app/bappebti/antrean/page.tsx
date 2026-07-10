@@ -1,17 +1,14 @@
 "use client";
 
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { PageHeader } from "@/components/shared/page-header";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import {
-  SeverityBadge,
-  StatusBadge,
-  OwnerBadge,
-  ResponsibilityBadge,
-  SlaBadge,
-} from "@/components/shared/badges";
+import { SeverityBadge, StatusBadge, OwnerBadge, SlaBadge } from "@/components/shared/badges";
 import { CASES } from "@/lib/mock-data";
+import { useCasesData } from "@/lib/mock-service/store";
 import { ComplaintCase } from "@/lib/types";
 import { ArrowRight } from "lucide-react";
 
@@ -24,10 +21,9 @@ function CaseTable({ cases }: { cases: ComplaintCase[] }) {
           <TableHead>Pengaduan</TableHead>
           <TableHead>Platform</TableHead>
           <TableHead>Kategori</TableHead>
-          <TableHead>Tingkat</TableHead>
+          <TableHead>Prioritas</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead>Current Owner</TableHead>
-          <TableHead>Tanggung Jawab</TableHead>
+          <TableHead>Penanggung Jawab</TableHead>
           <TableHead>SLA</TableHead>
           <TableHead>Aksi</TableHead>
         </TableRow>
@@ -49,9 +45,6 @@ function CaseTable({ cases }: { cases: ComplaintCase[] }) {
               <OwnerBadge owner={c.currentOwner} />
             </TableCell>
             <TableCell>
-              <ResponsibilityBadge responsibility={c.responsibility} />
-            </TableCell>
-            <TableCell>
               <SlaBadge sla={c.slaStatus} />
             </TableCell>
             <TableCell>
@@ -66,7 +59,7 @@ function CaseTable({ cases }: { cases: ComplaintCase[] }) {
         ))}
         {cases.length === 0 && (
           <TableRow>
-            <TableCell colSpan={10} className="text-center text-muted py-6">
+            <TableCell colSpan={9} className="text-center text-muted py-6">
               Tidak ada kasus pada kategori ini.
             </TableCell>
           </TableRow>
@@ -76,29 +69,39 @@ function CaseTable({ cases }: { cases: ComplaintCase[] }) {
   );
 }
 
-export default function AntreanOperasionalPage() {
-  const all = CASES;
-  const bappebtiOwned = CASES.filter((c) => c.responsibility === "BAPPEBTI OWNED");
-  const memberAssigned = CASES.filter((c) => c.responsibility === "MEMBER ASSIGNED");
-  const waitingPublic = CASES.filter((c) => c.responsibility === "WAITING PUBLIC");
-  const critical = CASES.filter((c) => c.severity === "Kritis");
-  const overdue = CASES.filter((c) => c.slaStatus === "Lewat SLA");
+export default function DaftarPengaduanPage() {
+  return (
+    <Suspense fallback={null}>
+      <DaftarPengaduanContent />
+    </Suspense>
+  );
+}
+
+function DaftarPengaduanContent() {
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get("tab") ?? "semua";
+  const cases = useCasesData(CASES);
+
+  const all = cases;
+  const bappebtiOwned = cases.filter((c) => c.responsibility === "BAPPEBTI OWNED");
+  const memberAssigned = cases.filter((c) => c.responsibility === "MEMBER ASSIGNED");
+  const waitingPublic = cases.filter((c) => c.responsibility === "WAITING PUBLIC");
+  const overdue = cases.filter((c) => c.slaStatus === "Lewat SLA");
 
   return (
     <div>
       <PageHeader
-        title="Antrean Operasional"
+        title="Daftar Pengaduan"
         description="Daftar seluruh kasus pengaduan yang dapat difilter berdasarkan tanggung jawab, prioritas, dan status SLA."
       />
 
-      <Tabs defaultValue="semua">
+      <Tabs defaultValue={initialTab}>
         <TabsList>
           <TabsTrigger value="semua">Semua Kasus ({all.length})</TabsTrigger>
-          <TabsTrigger value="bappebti">Bappebti-Owned ({bappebtiOwned.length})</TabsTrigger>
-          <TabsTrigger value="member">Member-Assigned ({memberAssigned.length})</TabsTrigger>
+          <TabsTrigger value="bappebti">Dalam Penanganan Bappebti ({bappebtiOwned.length})</TabsTrigger>
+          <TabsTrigger value="member">Ditangani Pelaku Usaha ({memberAssigned.length})</TabsTrigger>
           <TabsTrigger value="public">Menunggu Publik ({waitingPublic.length})</TabsTrigger>
-          <TabsTrigger value="critical">Critical Queue ({critical.length})</TabsTrigger>
-          <TabsTrigger value="overdue">Overdue ({overdue.length})</TabsTrigger>
+          <TabsTrigger value="overdue">Melewati SLA ({overdue.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="semua">
@@ -112,9 +115,6 @@ export default function AntreanOperasionalPage() {
         </TabsContent>
         <TabsContent value="public">
           <CaseTable cases={waitingPublic} />
-        </TabsContent>
-        <TabsContent value="critical">
-          <CaseTable cases={critical} />
         </TabsContent>
         <TabsContent value="overdue">
           <CaseTable cases={overdue} />

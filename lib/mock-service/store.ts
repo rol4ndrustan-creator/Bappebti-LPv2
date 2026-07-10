@@ -15,11 +15,14 @@ import {
   ComplaintCase,
   InternalNote,
   InternalWorkflowState,
+  OwnerType,
   PublicStatus,
   ReporterResolutionDecision,
+  Severity,
   TimelineEvent,
 } from "../types";
 import { nowDateTimeID } from "../format";
+import { getInstitution } from "../workflow-config";
 import { subscribe, emitChange, getVersion } from "./event-bus";
 
 const STORAGE_KEY = "bappebti-demo-overrides";
@@ -34,6 +37,10 @@ interface CaseOverride {
   resolutionDecision?: ReporterResolutionDecision;
   resolutionDisagreementReason?: string;
   closed?: boolean;
+  /** Priority/severity is no longer collected at submission — only Bappebti may assign it. */
+  severityOverride?: Severity;
+  currentOwnerOverride?: OwnerType;
+  caseOfficerOverride?: string;
 }
 
 type OverrideMap = Record<string, CaseOverride>;
@@ -81,6 +88,11 @@ export function getMergedCase(base: ComplaintCase | undefined): ComplaintCase | 
     workflowState: o.workflowStateOverride ?? base.workflowState,
     publicStatus: o.publicStatusOverride ?? base.publicStatus,
     status: o.closed ? "Selesai" : base.status,
+    severity: o.severityOverride ?? base.severity,
+    currentOwner: o.currentOwnerOverride ?? base.currentOwner,
+    institution: o.caseOfficerOverride
+      ? { ...getInstitution(base), caseOfficer: o.caseOfficerOverride }
+      : base.institution,
     resolution: base.resolution
       ? {
           ...base.resolution,
@@ -137,6 +149,25 @@ export function setWorkflowState(
     o.workflowStateOverride = state;
     o.publicStatusOverride = publicStatus;
     o.timelineAdditions.push({ ...auditEvent, datetime: nowDateTimeID() });
+  });
+}
+
+/** Only Bappebti roles may call this — enforced at the UI layer, not here (prototype has no real backend). */
+export function setSeverity(ticket: string, severity: Severity) {
+  mutate(ticket, (o) => {
+    o.severityOverride = severity;
+  });
+}
+
+export function setCurrentOwner(ticket: string, owner: OwnerType) {
+  mutate(ticket, (o) => {
+    o.currentOwnerOverride = owner;
+  });
+}
+
+export function setCaseOfficer(ticket: string, name: string) {
+  mutate(ticket, (o) => {
+    o.caseOfficerOverride = name;
   });
 }
 
@@ -204,6 +235,13 @@ export function useCaseData(base: ComplaintCase | undefined): ComplaintCase | un
   const version = React.useSyncExternalStore(subscribe, getVersion, getVersion);
   // eslint-disable-next-line react-hooks/exhaustive-deps -- version isn't read in the body, it only forces recomputation when the store changes
   return React.useMemo(() => getMergedCase(base), [base, version]);
+}
+
+/** Same as useCaseData but for a list of cases, e.g. the operational queue tables. */
+export function useCasesData(base: ComplaintCase[]): ComplaintCase[] {
+  const version = React.useSyncExternalStore(subscribe, getVersion, getVersion);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- version isn't read in the body, it only forces recomputation when the store changes
+  return React.useMemo(() => base.map((c) => getMergedCase(c)!), [base, version]);
 }
 
 // --- Notifications read state ---

@@ -2,7 +2,7 @@ import { PortalShell, SidebarItem } from "@/components/layout/portal-shell";
 import {
   LayoutDashboard,
   ListChecks,
-  FileSearch,
+  ShieldCheck,
   ShieldAlert,
   Users,
   MessageSquareWarning,
@@ -13,8 +13,8 @@ const iconCls = "size-4 shrink-0";
 
 const sidebarItems: SidebarItem[] = [
   { label: "Dashboard Eksekutif", href: "/bappebti", icon: <LayoutDashboard className={iconCls} /> },
-  { label: "Antrean Operasional", href: "/bappebti/antrean", icon: <ListChecks className={iconCls} /> },
-  { label: "Detail Kasus", href: "/bappebti/kasus", icon: <FileSearch className={iconCls} /> },
+  { label: "Daftar Pengaduan", href: "/bappebti/antrean", icon: <ListChecks className={iconCls} /> },
+  { label: "Penanganan Bappebti", href: "/bappebti/antrean?tab=bappebti", icon: <ShieldCheck className={iconCls} /> },
   { label: "Pemantauan Risiko", href: "/bappebti/risiko", icon: <ShieldAlert className={iconCls} /> },
   { label: "Kinerja Anggota", href: "/bappebti/kinerja-anggota", icon: <Users className={iconCls} /> },
   { label: "Kritik / Masukan", href: "/bappebti/kritik-masukan", icon: <MessageSquareWarning className={iconCls} /> },

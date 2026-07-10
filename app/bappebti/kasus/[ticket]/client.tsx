@@ -16,35 +16,24 @@ import { EscalationBanner } from "@/components/shared/escalation-banner";
 import { ClarificationThread } from "@/components/shared/clarification-thread";
 import { EvidenceList } from "@/components/shared/evidence-list";
 import { ResolutionPanel } from "@/components/shared/resolution-panel";
-import { WorkflowTransitionDialog } from "@/components/shared/workflow-transition-dialog";
+import { NextActionCard } from "@/components/shared/next-action-card";
 import { useToast } from "@/components/shared/toast-provider";
 import { useDemoSession } from "@/lib/demo-session";
-import { can } from "@/lib/permissions";
 import { getCaseByTicket, formatCurrency } from "@/lib/mock-data";
 import { getSlaClocks } from "@/lib/workflow-config";
+import { CASE_ACTIONS, CaseActionId, executeCaseAction } from "@/lib/case-actions";
 import {
   useCaseData,
   addClarificationReply,
   addInternalNote,
-  addTimelineEvent,
-  setWorkflowState,
-  closeCase,
-  reopenCase,
+  setSeverity,
 } from "@/lib/mock-service/store";
 import { useClarificationsForCase } from "@/lib/mock-service/clarification-store";
 import { getClarificationPortalBasePath, getViewerRelation } from "@/lib/clarification-workflow";
-import { InternalNoteClassification } from "@/lib/types";
-import { ArrowRight, FileText, MessageCircle, ShieldAlert } from "lucide-react";
+import { InternalNoteClassification, Severity } from "@/lib/types";
+import { FileText, MessageCircle, ShieldAlert } from "lucide-react";
 
-type ActionKind =
-  | "request-reporter-info"
-  | "request-member-explanation"
-  | "escalate-supervisor"
-  | "escalate-enforcement"
-  | "approve-resolution"
-  | "close-resolved"
-  | "close-administrative"
-  | "reopen";
+const SEVERITY_OPTIONS: Severity[] = ["Rendah", "Sedang", "Tinggi", "Kritis"];
 
 export default function KasusDetailClient({ ticket }: { ticket: string }) {
   const base = getCaseByTicket(ticket);
@@ -55,7 +44,6 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
 
   const [noteText, setNoteText] = useState("");
   const [noteClass, setNoteClass] = useState<InternalNoteClassification>("Operasional");
-  const [activeAction, setActiveAction] = useState<ActionKind | null>(null);
 
   if (!c) {
     return (
@@ -65,9 +53,9 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
           <CardContent className="text-sm text-muted py-6 text-center">
             Kasus dengan tiket <span className="font-medium text-foreground">{ticket}</span> tidak ditemukan.
             <div className="mt-3">
-              <Link href="/bappebti/kasus">
+              <Link href="/bappebti/antrean">
                 <Button variant="secondary" size="sm">
-                  Kembali ke Daftar Kasus
+                  Kembali ke Daftar Pengaduan
                 </Button>
               </Link>
             </div>
@@ -78,11 +66,6 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
   }
 
   const isBappebtiRole = user.role.startsWith("BAPPEBTI_") || user.role === "SYSTEM_ADMIN";
-  const canApprove = can(user.role, "approve_resolution");
-  const canClose = can(user.role, "close_case");
-  const canReopen = can(user.role, "reopen_case");
-  const canEscalate = can(user.role, "escalate_case");
-  const canRequestClarification = can(user.role, "request_clarification");
 
   const memberResponses = c.timeline.filter((t) => ["Platform", "Bursa", "Kliring"].includes(t.role));
   const internalNotes = c.internalNotes ?? [];
@@ -93,96 +76,17 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
   const clarificationsNeedingAction = openClarifications.filter((cl) => getViewerRelation(cl, viewer) === "actor");
   const latestClarification = [...clarifications].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
 
-  function runAction(reason: string) {
-    switch (activeAction) {
-      case "request-reporter-info":
-        setWorkflowState(ticket, "WAITING_REPORTER_INFORMATION", "Menunggu Data dari Anda", {
-          actor: user.name,
-          role: "Bappebti",
-          action: "Permintaan data pelapor",
-          note: reason,
-          status: "warning",
-          visibility: "public",
-        });
-        showToast("Permintaan data telah dikirim kepada pelapor.");
-        break;
-      case "request-member-explanation":
-        addTimelineEvent(ticket, {
-          actor: user.name,
-          role: "Bappebti",
-          action: "Permintaan penjelasan resmi anggota",
-          note: reason,
-          status: "warning",
-          visibility: "public",
-        });
-        showToast("Permintaan penjelasan resmi telah dikirim kepada anggota.");
-        break;
-      case "escalate-supervisor":
-        setWorkflowState(ticket, "BAPPEBTI_SUPERVISOR_REVIEW", "Dalam Review Bappebti", {
-          actor: user.name,
-          role: "Bappebti",
-          action: "Eskalasi ke Supervisor Bappebti",
-          note: reason,
-          status: "warning",
-          visibility: "internal",
-        });
-        showToast("Kasus dieskalasi ke Supervisor Bappebti.");
-        break;
-      case "escalate-enforcement":
-        setWorkflowState(ticket, "ENFORCEMENT_REVIEW", "Dalam Review Bappebti", {
-          actor: user.name,
-          role: "Bappebti",
-          action: "Eskalasi ke Unit Penegakan",
-          note: reason,
-          status: "danger",
-          visibility: "internal",
-        });
-        showToast("Kasus dieskalasi ke Unit Penegakan.");
-        break;
-      case "approve-resolution":
-        setWorkflowState(ticket, "RESOLUTION_IMPLEMENTATION", "Solusi Sedang Dilaksanakan", {
-          actor: user.name,
-          role: "Bappebti",
-          action: "Resolusi disetujui",
-          note: reason,
-          status: "success",
-          visibility: "public",
-        });
-        showToast("Resolusi kasus telah disetujui.");
-        break;
-      case "close-resolved":
-        closeCase(ticket, reason, user.name);
-        showToast("Kasus berhasil ditutup sebagai selesai.");
-        break;
-      case "close-administrative":
-        setWorkflowState(ticket, "CLOSED_ADMINISTRATIVE", "Ditutup Secara Administratif", {
-          actor: user.name,
-          role: "Bappebti",
-          action: "Ditutup secara administratif",
-          note: reason,
-          status: "warning",
-          visibility: "public",
-        });
-        showToast("Kasus ditutup secara administratif.");
-        break;
-      case "reopen":
-        reopenCase(ticket, reason, user.name);
-        showToast("Kasus berhasil dibuka kembali.");
-        break;
-    }
-    setActiveAction(null);
+  function handleExecuteAction(actionId: CaseActionId, values: Record<string, string>) {
+    executeCaseAction(actionId, { ticket, actor: user.name, values });
+    showToast(`${CASE_ACTIONS[actionId].label} berhasil dijalankan.`);
   }
 
-  const ACTION_COPY: Record<ActionKind, { title: string; description: string }> = {
-    "request-reporter-info": { title: "Minta Data Tambahan dari Pelapor", description: "Kasus akan berpindah ke status Menunggu Data dari Anda hingga pelapor melengkapi informasi." },
-    "request-member-explanation": { title: "Minta Penjelasan Resmi Anggota", description: "Anggota akan diminta memberikan penjelasan resmi tertulis atas penanganan kasus ini." },
-    "escalate-supervisor": { title: "Eskalasi ke Supervisor Bappebti", description: "Kasus akan ditinjau oleh Supervisor Bappebti untuk keputusan pengawasan lanjutan." },
-    "escalate-enforcement": { title: "Eskalasi ke Unit Penegakan", description: "Kasus akan diinvestigasi lebih lanjut oleh unit Penegakan Bappebti." },
-    "approve-resolution": { title: "Setujui Resolusi", description: "Solusi yang diajukan anggota akan disetujui dan berpindah ke tahap implementasi." },
-    "close-resolved": { title: "Tutup Kasus sebagai Selesai", description: "Kasus akan ditutup dan dinyatakan selesai setelah solusi diverifikasi terlaksana." },
-    "close-administrative": { title: "Tutup Kasus Secara Administratif", description: "Kasus ditutup karena pelapor tidak memberikan data yang diminta dalam batas waktu." },
-    reopen: { title: "Buka Kembali Kasus", description: "Kasus yang telah ditutup akan dibuka kembali untuk peninjauan lanjutan." },
-  };
+  const riskIndicators = [
+    c.suspectedFraud && "Dugaan Fraud",
+    c.activeSecurityRisk && "Risiko Keamanan Aktif",
+    c.illegalEntitySuspected && "Dugaan Entitas Tidak Berizin",
+    c.massIncident && "Bagian dari Insiden Massal",
+  ].filter(Boolean) as string[];
 
   return (
     <div>
@@ -190,7 +94,7 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
         title={`${c.ticket} — ${c.title}`}
         description="Tampilan regulator atas detail pengaduan, riwayat penanganan, dan tindakan pengawasan yang tersedia."
         actions={
-          <Link href="/bappebti/kasus">
+          <Link href="/bappebti/antrean">
             <Button variant="secondary" size="sm">
               Kembali ke Daftar
             </Button>
@@ -210,7 +114,27 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
       )}
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <SeverityBadge severity={c.severity} />
+        {isBappebtiRole ? (
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] text-muted">Prioritas:</span>
+            <Select
+              className="h-7 text-xs w-auto"
+              value={c.severity ?? ""}
+              onChange={(e) => setSeverity(ticket, e.target.value as Severity)}
+            >
+              <option value="" disabled>
+                Belum ditentukan
+              </option>
+              {SEVERITY_OPTIONS.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </Select>
+          </div>
+        ) : (
+          <SeverityBadge severity={c.severity} />
+        )}
         <span className="text-xs text-muted">
           Pelapor: <span className="font-medium text-foreground">{c.reporterName}</span> (identitas
           lengkap disamarkan pada tampilan ringkas ini demi kepatuhan privasi data)
@@ -225,16 +149,21 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
         <CaseStatusExplanation complaintCase={c} viewer="internal" />
       </div>
 
+      {isBappebtiRole && (
+        <div className="mb-4">
+          <NextActionCard complaintCase={c} onExecute={handleExecuteAction} />
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
         <div className="lg:col-span-2">
           <Tabs defaultValue="ringkasan">
             <TabsList>
               <TabsTrigger value="ringkasan">Ringkasan Pengaduan</TabsTrigger>
               <TabsTrigger value="bukti">Bukti</TabsTrigger>
-              <TabsTrigger value="respons">Respons Anggota</TabsTrigger>
+              <TabsTrigger value="respons">Respons Pelaku Usaha</TabsTrigger>
               <TabsTrigger value="catatan">Catatan Internal</TabsTrigger>
               <TabsTrigger value="resolusi">Resolusi</TabsTrigger>
-              <TabsTrigger value="terkait">Kasus Terkait</TabsTrigger>
             </TabsList>
 
             <TabsContent value="ringkasan">
@@ -259,19 +188,6 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
                   <div>
                     <p className="text-[11px] uppercase text-muted font-medium mb-1">ID Pengguna Platform</p>
                     <p>{c.platformUserId || "-"}</p>
-                  </div>
-                  <div>
-                    <p className="text-[11px] uppercase text-muted font-medium mb-1">Indikator Risiko</p>
-                    <p>
-                      {[
-                        c.suspectedFraud && "Dugaan Fraud",
-                        c.activeSecurityRisk && "Risiko Keamanan Aktif",
-                        c.illegalEntitySuspected && "Dugaan Entitas Tidak Berizin",
-                        c.massIncident && "Bagian dari Insiden Massal",
-                      ]
-                        .filter(Boolean)
-                        .join(", ") || "Tidak ada indikator khusus"}
-                    </p>
                   </div>
                   <div className="sm:col-span-2">
                     <p className="text-[11px] uppercase text-muted font-medium mb-1">Kronologi</p>
@@ -302,7 +218,7 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
                   <ClarificationThread
                     messages={c.clarifications}
                     onReply={
-                      canRequestClarification
+                      isBappebtiRole
                         ? (message) => {
                             addClarificationReply(ticket, user.name, "Bappebti", message);
                             showToast("Klarifikasi telah dikirim.");
@@ -394,32 +310,6 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
             <TabsContent value="resolusi">
               <ResolutionPanel complaintCase={c} />
             </TabsContent>
-
-            <TabsContent value="terkait">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Kasus Terkait</CardTitle>
-                </CardHeader>
-                <CardContent className="py-4">
-                  {!c.relatedCases || c.relatedCases.length === 0 ? (
-                    <p className="text-sm text-muted">Tidak ada kasus terkait.</p>
-                  ) : (
-                    <ul className="space-y-2">
-                      {c.relatedCases.map((rt) => (
-                        <li key={rt}>
-                          <Link
-                            href={`/bappebti/kasus/${rt}`}
-                            className="text-navy inline-flex items-center gap-1 hover:underline text-sm"
-                          >
-                            {rt} <ArrowRight className="size-3" />
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
           </Tabs>
         </div>
 
@@ -468,72 +358,28 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
           </div>
 
           <div className="rounded-lg border border-border bg-card p-3">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-2">Tindakan Regulator</p>
-            <div className="flex flex-col gap-1.5">
-              {canRequestClarification && (
-                <Button variant="secondary" size="sm" className="justify-start" onClick={() => setActiveAction("request-reporter-info")}>
-                  Minta Data Tambahan Pelapor
-                </Button>
-              )}
-              {canRequestClarification && (
-                <Button variant="secondary" size="sm" className="justify-start" onClick={() => setActiveAction("request-member-explanation")}>
-                  Minta Penjelasan Resmi Anggota
-                </Button>
-              )}
-              {canEscalate && (
-                <Button variant="secondary" size="sm" className="justify-start" onClick={() => setActiveAction("escalate-supervisor")}>
-                  Eskalasi ke Supervisor
-                </Button>
-              )}
-              {canEscalate && (
-                <Button variant="destructive" size="sm" className="justify-start" onClick={() => setActiveAction("escalate-enforcement")}>
-                  Eskalasi ke Penegakan
-                </Button>
-              )}
-              {canApprove && (
-                <Button variant="success" size="sm" className="justify-start" onClick={() => setActiveAction("approve-resolution")}>
-                  Setujui Resolusi
-                </Button>
-              )}
-              {canClose && (
-                <Button variant="secondary" size="sm" className="justify-start" onClick={() => setActiveAction("close-resolved")}>
-                  Tutup Kasus — Selesai
-                </Button>
-              )}
-              {canClose && (
-                <Button variant="outline" size="sm" className="justify-start" onClick={() => setActiveAction("close-administrative")}>
-                  Tutup Secara Administratif
-                </Button>
-              )}
-              {canReopen && (
-                <Button variant="ghost" size="sm" className="justify-start" onClick={() => setActiveAction("reopen")}>
-                  Buka Kembali Kasus
-                </Button>
-              )}
-              {!canRequestClarification && !canEscalate && !canApprove && !canClose && !canReopen && (
-                <p className="text-[11px] text-muted">Tidak ada tindakan yang tersedia untuk peran demonstrasi ini.</p>
-              )}
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-border bg-card p-3">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-2 flex items-center gap-1.5">
               <FileText className="size-3.5" /> Bukti Terlampir
             </p>
             <p className="text-xs text-muted">{c.evidences.length} berkas — lihat tab Bukti untuk detail.</p>
           </div>
+
+          <div className="rounded-lg border border-border bg-card p-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-2">Indikator Risiko</p>
+            {riskIndicators.length === 0 ? (
+              <p className="text-xs text-muted">Tidak ada indikator khusus.</p>
+            ) : (
+              <ul className="text-xs space-y-1">
+                {riskIndicators.map((r) => (
+                  <li key={r} className="flex items-center gap-1.5 text-foreground">
+                    <ShieldAlert className="size-3 text-red shrink-0" /> {r}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
       </div>
-
-      {activeAction && (
-        <WorkflowTransitionDialog
-          open={!!activeAction}
-          onOpenChange={(v) => !v && setActiveAction(null)}
-          title={ACTION_COPY[activeAction].title}
-          description={ACTION_COPY[activeAction].description}
-          onConfirm={runAction}
-        />
-      )}
     </div>
   );
 }

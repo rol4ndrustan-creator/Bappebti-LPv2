@@ -122,7 +122,7 @@ export const WORKFLOW_STATES: Record<InternalWorkflowState, WorkflowStateConfig>
   WAITING_REPORTER_INFORMATION: {
     code: "WAITING_REPORTER_INFORMATION",
     publicLabel: "Menunggu Data dari Anda",
-    internalLabel: "Menunggu data pelapor",
+    internalLabel: "Menunggu Data Pelapor",
     description: "Bappebti atau anggota memerlukan data atau dokumen tambahan dari pelapor.",
     allowedNext: ["ROUTING_REVIEW", "MEMBER_INVESTIGATION", "WITHDRAWN_BY_REPORTER", "CLOSED_ADMINISTRATIVE"],
     rolesAllowed: [...BAPPEBTI_ROLES, ...REPORTER_ROLES],
@@ -206,8 +206,8 @@ export const WORKFLOW_STATES: Record<InternalWorkflowState, WorkflowStateConfig>
   MEMBER_INVESTIGATION: {
     code: "MEMBER_INVESTIGATION",
     publicLabel: "Sedang Diinvestigasi",
-    internalLabel: "Investigasi anggota",
-    description: "Anggota sedang memeriksa transaksi/permasalahan yang dilaporkan.",
+    internalLabel: "Dalam Tindak Lanjut Pelaku Usaha",
+    description: "Pelaku usaha terkait sedang memeriksa dan menindaklanjuti pengaduan yang ditugaskan.",
     allowedNext: [
       "WAITING_MEMBER_INFORMATION",
       "WAITING_SUPPORTING_INSTITUTION",
@@ -267,7 +267,7 @@ export const WORKFLOW_STATES: Record<InternalWorkflowState, WorkflowStateConfig>
   BAPPEBTI_SUPERVISOR_REVIEW: {
     code: "BAPPEBTI_SUPERVISOR_REVIEW",
     publicLabel: "Dalam Review Bappebti",
-    internalLabel: "Review supervisor Bappebti",
+    internalLabel: "Dalam Review Supervisor",
     description: "Supervisor Bappebti meninjau kasus untuk keputusan pengawasan lanjutan.",
     allowedNext: ["ENFORCEMENT_REVIEW", "PROPOSED_RESOLUTION", "REFERRED_EXTERNAL", "CLOSED_ADMINISTRATIVE"],
     rolesAllowed: ["BAPPEBTI_SUPERVISOR", "BAPPEBTI_EXECUTIVE"],
@@ -281,7 +281,7 @@ export const WORKFLOW_STATES: Record<InternalWorkflowState, WorkflowStateConfig>
   ENFORCEMENT_REVIEW: {
     code: "ENFORCEMENT_REVIEW",
     publicLabel: "Dalam Review Bappebti",
-    internalLabel: "Review penegakan",
+    internalLabel: "Dalam Proses Penegakan",
     description: "Unit Penegakan Bappebti menginvestigasi dugaan pelanggaran lebih lanjut.",
     allowedNext: ["PROPOSED_RESOLUTION", "REFERRED_EXTERNAL", "CLOSED_ADMINISTRATIVE"],
     rolesAllowed: ["BAPPEBTI_ENFORCEMENT", "BAPPEBTI_EXECUTIVE"],
@@ -323,8 +323,8 @@ export const WORKFLOW_STATES: Record<InternalWorkflowState, WorkflowStateConfig>
   RESOLUTION_IMPLEMENTATION: {
     code: "RESOLUTION_IMPLEMENTATION",
     publicLabel: "Solusi Sedang Dilaksanakan",
-    internalLabel: "Implementasi resolusi",
-    description: "Solusi telah disetujui pelapor dan sedang dilaksanakan oleh anggota.",
+    internalLabel: "Penyelesaian Disetujui",
+    description: "Penyelesaian telah disetujui Bappebti dan sedang dilaksanakan oleh pelaku usaha.",
     allowedNext: ["IMPLEMENTATION_VERIFICATION", "BAPPEBTI_OPERATIONAL_REVIEW"],
     rolesAllowed: MEMBER_OFFICER_ROLES,
     reporterActionRequired: false,

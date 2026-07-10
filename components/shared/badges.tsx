@@ -5,7 +5,8 @@ import type { VariantProps } from "class-variance-authority";
 
 type BadgeVariant = VariantProps<typeof badgeVariants>["variant"];
 
-export function SeverityBadge({ severity }: { severity: Severity }) {
+export function SeverityBadge({ severity }: { severity?: Severity }) {
+  if (!severity) return <Badge variant="muted">NOT DEFINED YET</Badge>;
   const map: Record<Severity, BadgeVariant> = {
     Rendah: "green",
     Sedang: "amber",
