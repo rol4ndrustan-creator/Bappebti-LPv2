@@ -1,37 +1,42 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { FileCheck2, ShieldCheck, History, ClipboardList, Upload, ScanSearch, MessageSquareWarning, CheckCircle2 } from "lucide-react";
+import {
+  ShieldCheck,
+  History,
+  ClipboardList,
+  IdCard,
+  Building2,
+  Hash,
+  FileClock,
+  MessageSquareText,
+  Receipt,
+  Target,
+  ShieldAlert,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+} from "lucide-react";
 
 const HIGHLIGHTS = [
-  {
-    icon: FileCheck2,
-    title: "TIKET RESMI",
-    desc: "1 tiket per pengaduan",
-  },
-  {
-    icon: ShieldCheck,
-    title: "SLA",
-    desc: "Tindak lanjut terpantau",
-  },
-  {
-    icon: History,
-    title: "AUDIT",
-    desc: "Riwayat tercatat",
-  },
+  { icon: ClipboardList, title: "TIKET RESMI", desc: "1 tiket per pengaduan, dapat dipantau kapan saja" },
+  { icon: ShieldCheck, title: "BATAS WAKTU TINDAK LANJUT", desc: "Setiap tahapan memiliki batas waktu yang dipantau" },
+  { icon: History, title: "JEJAK AUDIT", desc: "Seluruh riwayat penanganan tercatat" },
 ];
 
-const STEPS = [
-  { icon: ClipboardList, title: "Isi data pengaduan" },
-  { icon: Upload, title: "Unggah bukti pendukung" },
-  { icon: ScanSearch, title: "Verifikasi Bappebti / sistem" },
-  { icon: MessageSquareWarning, title: "Tindak lanjut pelaku usaha" },
-  { icon: MessageSquareWarning, title: "Klarifikasi / eskalasi jika diperlukan" },
-  { icon: CheckCircle2, title: "Resolusi dan penutupan kasus" },
+const CHECKLIST = [
+  { icon: IdCard, text: "Identitas dan kontak yang dapat diverifikasi" },
+  { icon: Building2, text: "Nama pelaku usaha yang dilaporkan" },
+  { icon: Hash, text: "Nomor akun atau ID pengguna" },
+  { icon: Receipt, text: "Referensi transaksi (jika ada)" },
+  { icon: FileClock, text: "Kronologi kejadian secara berurutan" },
+  { icon: MessageSquareText, text: "Bukti komunikasi dengan pelaku usaha" },
+  { icon: Receipt, text: "Bukti pembayaran atau transaksi" },
+  { icon: Target, text: "Solusi yang diharapkan" },
 ];
 
 export default function PublikLandingPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background w-full">
       {/* Top header with login/register links */}
       <header className="bg-navy-dark">
         <div className="max-w-[1200px] mx-auto px-4 md:px-6 h-12 flex items-center justify-between">
@@ -62,21 +67,22 @@ export default function PublikLandingPage() {
             Layanan Pengaduan Online Bappebti
           </span>
           <h1 className="text-2xl md:text-4xl font-semibold text-white max-w-2xl leading-tight">
-            Sampaikan pengaduan Anda secara resmi, mudah, dan terpantau.
+            Sampaikan pengaduan secara resmi dan pantau penanganannya dengan jelas.
           </h1>
           <p className="text-sm text-white/70 max-w-2xl leading-relaxed">
-            Laporkan kendala transaksi, layanan pelaku usaha, penarikan dana, akses akun, dugaan
-            pelanggaran, atau permasalahan lain dalam ruang lingkup pengawasan Bappebti.
+            Layanan Pengaduan Online Bappebti membantu masyarakat menyampaikan permasalahan terkait
+            kegiatan yang berada dalam pengawasan Bappebti, melengkapi bukti, memantau tindak lanjut,
+            dan memberikan tanggapan atas solusi yang diajukan.
           </p>
           <div className="flex flex-wrap gap-3 mt-2">
-            <Link href="/publik/login">
+            <Link href="/publik/cek-kelayakan">
               <Button size="lg" className="bg-white text-navy hover:bg-white/90">
-                BUAT PENGADUAN
+                Periksa dan Buat Pengaduan
               </Button>
             </Link>
             <Link href="/publik/login">
               <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
-                CEK STATUS TIKET
+                Cek Status Pengaduan
               </Button>
             </Link>
           </div>
@@ -106,26 +112,73 @@ export default function PublikLandingPage() {
         </div>
       </section>
 
-      {/* Process section */}
+      {/* Emergency alert */}
+      <section className="max-w-[1200px] mx-auto px-4 md:px-6 mt-8 md:mt-10 w-full">
+        <div className="flex items-start gap-3 rounded-lg border border-red/30 bg-red-bg px-4 py-3">
+          <ShieldAlert className="size-5 text-red shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-red">Jika akun Anda sedang diakses pihak lain atau dana sedang dipindahkan</p>
+            <p className="text-xs text-foreground/80 mt-1">
+              Segera amankan akun Anda dan hubungi pelaku usaha melalui saluran resmi. Jangan
+              membagikan OTP, PIN, kata sandi, atau kode pemulihan kepada siapa pun.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Preparation checklist */}
       <section className="max-w-[1200px] mx-auto px-4 md:px-6 py-12 md:py-16 w-full">
-        <h2 className="text-base font-semibold text-navy uppercase tracking-wide mb-6">
-          Alur Pengaduan
+        <h2 className="text-base font-semibold text-navy uppercase tracking-wide mb-1">
+          Sebelum Mengajukan Pengaduan, Siapkan
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {STEPS.map((step, i) => {
-            const Icon = step.icon;
+        <p className="text-xs text-muted mb-6 max-w-2xl">
+          Melengkapi hal berikut sejak awal akan mempercepat proses pemeriksaan pengaduan Anda.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+          {CHECKLIST.map((item) => {
+            const Icon = item.icon;
             return (
-              <div key={step.title} className="rounded-lg border border-border bg-card p-4 flex gap-3">
-                <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-navy text-white text-xs font-semibold">
-                  {i + 1}
-                </div>
-                <div className="flex flex-col gap-1">
-                  <Icon className="size-4 text-navy" />
-                  <p className="text-xs font-medium text-foreground leading-snug">{step.title}</p>
-                </div>
+              <div key={item.text} className="rounded-lg border border-border bg-card p-3 flex items-start gap-2.5">
+                <Icon className="size-4 text-navy shrink-0 mt-0.5" />
+                <p className="text-xs text-foreground leading-snug">{item.text}</p>
               </div>
             );
           })}
+        </div>
+      </section>
+
+      {/* Service explanation */}
+      <section className="bg-card border-y border-border">
+        <div className="max-w-[1200px] mx-auto px-4 md:px-6 py-12 md:py-16 w-full">
+          <h2 className="text-base font-semibold text-navy uppercase tracking-wide mb-6">
+            Yang Perlu Anda Ketahui
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <InfoRow
+              icon={CheckCircle2}
+              tone="green"
+              title="Setelah pengaduan disampaikan"
+              text="Bappebti melakukan pemeriksaan awal, memverifikasi kelengkapan data, lalu meneruskan pengaduan kepada pihak yang berwenang menindaklanjuti."
+            />
+            <InfoRow
+              icon={AlertTriangle}
+              tone="amber"
+              title="Informasi yang mungkin dibagikan"
+              text="Sebagian informasi pengaduan Anda (di luar data sensitif) dapat diteruskan kepada pihak yang dilaporkan agar dapat memberikan tanggapan, kecuali pada laporan entitas tidak berizin."
+            />
+            <InfoRow
+              icon={XCircle}
+              tone="red"
+              title="Tidak ada jaminan kompensasi"
+              text="Penyampaian pengaduan tidak secara otomatis menjamin pengembalian dana atau kompensasi. Setiap kasus dinilai berdasarkan bukti dan fakta yang ada."
+            />
+            <InfoRow
+              icon={ShieldAlert}
+              tone="navy"
+              title="Informasi yang tidak benar"
+              text="Informasi yang tidak akurat atau tidak benar dapat memperlambat proses, dan dapat memengaruhi keputusan atas pengaduan Anda."
+            />
+          </div>
         </div>
       </section>
 
@@ -136,6 +189,31 @@ export default function PublikLandingPage() {
           Demo Proposal PT Capio Teknologi Indonesia.
         </div>
       </footer>
+    </div>
+  );
+}
+
+function InfoRow({
+  icon: Icon,
+  tone,
+  title,
+  text,
+}: {
+  icon: typeof CheckCircle2;
+  tone: "green" | "amber" | "red" | "navy";
+  title: string;
+  text: string;
+}) {
+  const toneMap = { green: "text-green bg-green-bg", amber: "text-amber bg-amber-bg", red: "text-red bg-red-bg", navy: "text-navy bg-navy/10" };
+  return (
+    <div className="flex items-start gap-3 rounded-lg border border-border bg-background p-3.5">
+      <div className={`flex size-8 shrink-0 items-center justify-center rounded-md ${toneMap[tone]}`}>
+        <Icon className="size-4" />
+      </div>
+      <div>
+        <p className="text-sm font-medium text-foreground">{title}</p>
+        <p className="text-xs text-muted mt-0.5 leading-relaxed">{text}</p>
+      </div>
     </div>
   );
 }

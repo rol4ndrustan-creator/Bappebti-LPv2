@@ -5,8 +5,11 @@
 import {
   ComplaintCase,
   EscalationLevel,
+  InstitutionStructure,
   InternalWorkflowState,
   PublicStatus,
+  SlaClock,
+  SlaClockStatus,
 } from "./types";
 import { Role } from "./permissions";
 import { getActionOwnerLabel } from "./format";
@@ -461,6 +464,52 @@ export function deriveWorkflowState(c: ComplaintCase): InternalWorkflowState {
 export function getPublicStatus(c: ComplaintCase): PublicStatus {
   if (c.publicStatus) return c.publicStatus;
   return WORKFLOW_STATES[deriveWorkflowState(c)].publicLabel;
+}
+
+/** Derives the full institution/accountability structure for cases authored before the richer model existed. */
+export function getInstitution(c: ComplaintCase): InstitutionStructure {
+  if (c.institution) return c.institution;
+  const supportingInstitutions: string[] = [];
+  if (c.category.toLowerCase().includes("settlement") && c.currentOwner !== "Kliring") {
+    supportingInstitutions.push(c.kliringEntity);
+  }
+  const escalationLevel: EscalationLevel =
+    c.currentOwner === "Bappebti" ? (c.severity === "Kritis" ? 3 : 2) : c.slaStatus === "Lewat SLA" ? 1 : 0;
+  return {
+    regulatoryOwner: "Bappebti",
+    leadInstitution: c.platform,
+    currentActionOwner: c.currentOwner,
+    supportingInstitutions,
+    bursa: c.bursaEntity,
+    clearing: c.kliringEntity,
+    decisionAuthority: c.currentOwner === "Bappebti" ? "Bappebti Supervisor" : "Bappebti Case Officer",
+    escalationLevel,
+    escalationReason: c.escalationReason,
+  };
+}
+
+/** Derives a minimal but real SLA clock set for cases authored before the multi-clock model existed. */
+export function getSlaClocks(c: ComplaintCase): SlaClock[] {
+  if (c.slaClocks) return c.slaClocks;
+  const status: SlaClockStatus =
+    c.slaStatus === "Aman" ? "Aman" : c.slaStatus === "Mendekati SLA" ? "Mendekati Batas Waktu" : "Lewat Batas Waktu";
+  const primaryType = c.currentOwner === "Bappebti" ? "Review Bappebti" : c.currentOwner === "Pelapor" ? "Klarifikasi Pelapor" : "Respons Substantif Anggota";
+  return [
+    {
+      type: primaryType,
+      startTime: c.createdAt,
+      deadline: c.slaDeadline,
+      status,
+      responsibleParty: c.currentOwner,
+    },
+    {
+      type: "Usia Kasus Keseluruhan",
+      startTime: c.createdAt,
+      deadline: c.slaDeadline,
+      status: status === "Lewat Batas Waktu" ? "Perlu Perhatian" : "Aman",
+      responsibleParty: "Bappebti",
+    },
+  ];
 }
 
 export function getAllowedTransitions(c: ComplaintCase, userRole: Role): WorkflowStateConfig[] {

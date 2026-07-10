@@ -1,10 +1,11 @@
 import { ComplaintCase } from "@/lib/types";
-import { ESCALATION_LEVEL_LABEL } from "@/lib/workflow-config";
+import { ESCALATION_LEVEL_LABEL, getInstitution } from "@/lib/workflow-config";
 import { ShieldAlert } from "lucide-react";
 
 export function EscalationBanner({ complaintCase }: { complaintCase: ComplaintCase }) {
-  const level = complaintCase.institution?.escalationLevel ?? 0;
-  const reason = complaintCase.institution?.escalationReason ?? complaintCase.escalationReason;
+  const inst = getInstitution(complaintCase);
+  const level = inst.escalationLevel;
+  const reason = inst.escalationReason ?? complaintCase.escalationReason;
   if (level === 0 || !reason) return null;
 
   return (

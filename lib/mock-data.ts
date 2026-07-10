@@ -3,6 +3,7 @@ import {
   AuditLogEntry,
   ComplaintCase,
   FeedbackItem,
+  IncidentRecord,
   Member,
   NotificationItem,
 } from "./types";
@@ -91,8 +92,34 @@ export const CASES: ComplaintCase[] = [
     ],
     clarifications: [
       { from: "Tim Operasional Platform", role: "Platform", datetime: "13 Jun 2026, 08:35", message: "Mohon konfirmasi nomor rekening tujuan penarikan untuk pengecekan lebih lanjut." },
-      { from: "Andra Wicaksono", role: "Pelapor", datetime: "13 Jun 2026, 10:12", message: "Nomor rekening tujuan adalah BCA 1234567890 a.n. Andra Wicaksono, sesuai data terdaftar." },
+      { from: "Andra Wicaksono", role: "Pelapor", datetime: "13 Jun 2026, 10:12", message: "Nomor rekening tujuan adalah BCA 1234567890 a.n. Andra Wicaksono, sesuai data terdaftar.", kind: "reply" },
     ],
+    workflowState: "MEMBER_INVESTIGATION",
+    publicStatus: "Sedang Diinvestigasi",
+    reporter: {
+      reporterType: "Perorangan",
+      verifiedEmail: "andra.wicaksono@email.com",
+      verifiedPhone: "+62 812-3456-7890",
+      province: "DKI Jakarta",
+      city: "Jakarta Selatan",
+      vulnerableConsumer: false,
+      preferredChannel: "Email",
+      consentStatus: "Diberikan",
+    },
+    institution: {
+      regulatoryOwner: "Bappebti",
+      leadInstitution: "PT Bursa Digital Nusantara",
+      currentActionOwner: "Platform",
+      caseOfficer: "Rina Kusuma",
+      supportingInstitutions: [],
+      bursa: "Bursa Komoditi Nusantara",
+      clearing: "Kliring Berjangka Indonesia",
+      decisionAuthority: "Bappebti Case Officer",
+      escalationLevel: 0,
+    },
+    financialExposure: 25000000,
+    massIncident: true,
+    parentIncidentId: "INC-2026-004",
   },
   {
     ticket: "BPP-2026-000185",
@@ -133,6 +160,53 @@ export const CASES: ComplaintCase[] = [
       { from: "Melisa Hartono", role: "Pelapor", datetime: "11 Jun 2026, 12:40", message: "Dokumen sudah dikirimkan melalui email dukungan sejak tanggal pendaftaran, mohon segera ditindaklanjuti." },
     ],
     relatedCases: ["BPP-2026-000192"],
+    workflowState: "BAPPEBTI_SUPERVISOR_REVIEW",
+    publicStatus: "Dalam Review Bappebti",
+    suspectedFraud: true,
+    activeSecurityRisk: true,
+    financialExposure: 158000000,
+    reporter: {
+      reporterType: "Perorangan",
+      verifiedEmail: "melisa.hartono@email.com",
+      verifiedPhone: "+62 813-9988-2211",
+      province: "Jawa Timur",
+      city: "Surabaya",
+      vulnerableConsumer: false,
+      preferredChannel: "WhatsApp",
+      consentStatus: "Diberikan",
+    },
+    institution: {
+      regulatoryOwner: "Bappebti",
+      leadInstitution: "PT Crypto Indonesia Berkat",
+      currentActionOwner: "Bappebti",
+      caseOfficer: "Dewi Anjani",
+      supportingInstitutions: [],
+      bursa: "Bursa Aset Kripto Indonesia",
+      clearing: "Kliring Aset Digital Nusantara",
+      decisionAuthority: "Bappebti Supervisor",
+      escalationLevel: 3,
+      escalationReason: "Platform tidak memberikan tanggapan substantif dalam batas waktu SLA dan indikasi fraud bernilai tinggi.",
+    },
+    internalNotes: [
+      {
+        author: "Dewi Anjani",
+        role: "Bappebti Case Officer",
+        institution: "Bappebti",
+        timestamp: "14 Jun 2026, 10:20",
+        classification: "Operasional",
+        text: "Riwayat login akun menunjukkan akses dari perangkat dan lokasi yang tidak dikenali pelapor pada rentang waktu transaksi tidak sah terjadi.",
+        visibility: "internal",
+      },
+      {
+        author: "Bambang Setiawan",
+        role: "Bappebti Supervisor",
+        institution: "Bappebti",
+        timestamp: "15 Jun 2026, 09:00",
+        classification: "Supervisi",
+        text: "Perlu ditentukan apakah kasus ini dieskalasi ke unit Penegakan mengingat nilai kerugian tinggi dan indikasi keterlambatan respons platform yang berulang.",
+        visibility: "internal",
+      },
+    ],
   },
   {
     ticket: "BPP-2026-000186",
@@ -168,8 +242,22 @@ export const CASES: ComplaintCase[] = [
       { datetime: "15 Jun 2026, 08:20", actor: "Tim Rekonsiliasi Kliring", role: "Kliring", action: "Permintaan data platform", note: "Meminta data transaksi rinci dari platform untuk proses rekonsiliasi.", status: "info" },
     ],
     clarifications: [
-      { from: "Tim Rekonsiliasi Kliring", role: "Kliring", datetime: "14 Jun 2026, 09:05", message: "Mohon platform mengirimkan rincian transaksi batch STL-2026-06-330217 untuk akun terkait." },
+      { from: "Tim Rekonsiliasi Kliring", role: "Kliring", datetime: "14 Jun 2026, 09:05", message: "Mohon platform mengirimkan rincian transaksi batch STL-2026-06-330217 untuk akun terkait.", kind: "formal-request" },
     ],
+    workflowState: "WAITING_SUPPORTING_INSTITUTION",
+    publicStatus: "Sedang Diinvestigasi",
+    financialExposure: 4200000,
+    institution: {
+      regulatoryOwner: "Bappebti",
+      leadInstitution: "PT Pintu Kemana Saja",
+      currentActionOwner: "Kliring",
+      caseOfficer: "Sari Wulandari",
+      supportingInstitutions: ["PT Pintu Kemana Saja"],
+      bursa: "Bursa Aset Kripto Indonesia",
+      clearing: "Kliring Aset Digital Nusantara",
+      decisionAuthority: "Bappebti Case Officer",
+      escalationLevel: 0,
+    },
   },
   {
     ticket: "BPP-2026-000187",
@@ -238,6 +326,39 @@ export const CASES: ComplaintCase[] = [
       { datetime: "14 Jun 2026, 16:45", actor: "Tim Operasional Platform", role: "Platform", action: "Resolusi diajukan", note: "Akun telah dinonaktifkan, menunggu konfirmasi penerimaan dari pelapor.", status: "success" },
     ],
     clarifications: [],
+    workflowState: "WAITING_REPORTER_DECISION",
+    publicStatus: "Solusi Diajukan",
+    reporter: {
+      reporterType: "Perorangan",
+      verifiedEmail: "yuni.astuti@email.com",
+      verifiedPhone: "+62 851-2233-4455",
+      province: "Bali",
+      city: "Denpasar",
+      vulnerableConsumer: false,
+      preferredChannel: "Email",
+      consentStatus: "Diberikan",
+    },
+    institution: {
+      regulatoryOwner: "Bappebti",
+      leadInstitution: "PT Indodax Nasional Indonesia",
+      currentActionOwner: "Pelapor",
+      caseOfficer: "Dewi Anjani",
+      supportingInstitutions: [],
+      bursa: "Bursa Aset Kripto Indonesia",
+      clearing: "Kliring Aset Digital Nusantara",
+      decisionAuthority: "Bappebti Case Officer",
+      escalationLevel: 0,
+    },
+    resolution: {
+      proposal: "Akun telah dinonaktifkan secara permanen pada 14 Juni 2026. Mohon konfirmasi penerimaan resolusi.",
+      resolutionType: "Penutupan Akun",
+      proposedBy: "PT Indodax Nasional Indonesia",
+      proposedDate: "14 Jun 2026",
+      nonMonetaryAction: "Penutupan permanen akun pengguna dan penghapusan akses aplikasi.",
+      implementationDeadline: "16 Jun 2026",
+      implementationEvidence: ["Konfirmasi penutupan akun.pdf"],
+      bappebtiDecision: "Menunggu Review",
+    },
   },
   {
     ticket: "BPP-2026-000189",
@@ -272,7 +393,35 @@ export const CASES: ComplaintCase[] = [
       { datetime: "15 Jun 2026, 11:00", actor: "Rangga Saputra", role: "Bappebti", action: "Eskalasi ke Penegakan", note: "Kasus dieskalasi ke unit Penegakan untuk investigasi lebih lanjut atas dugaan pelanggaran.", status: "danger" },
     ],
     clarifications: [
-      { from: "Rangga Saputra", role: "Bappebti", datetime: "12 Jun 2026, 10:05", message: "Mohon konfirmasi apakah pihak yang disebutkan pelapor merupakan mitra resmi atau agen terdaftar dari platform." },
+      { from: "Rangga Saputra", role: "Bappebti", datetime: "12 Jun 2026, 10:05", message: "Mohon konfirmasi apakah pihak yang disebutkan pelapor merupakan mitra resmi atau agen terdaftar dari platform.", kind: "formal-request" },
+    ],
+    workflowState: "ENFORCEMENT_REVIEW",
+    publicStatus: "Dalam Review Bappebti",
+    suspectedFraud: true,
+    illegalEntitySuspected: true,
+    financialExposure: 320000000,
+    institution: {
+      regulatoryOwner: "Bappebti",
+      leadInstitution: "PT Rifan Financindo Berjangka",
+      currentActionOwner: "Bappebti",
+      caseOfficer: "Rangga Saputra",
+      supportingInstitutions: [],
+      bursa: "Bursa Berjangka Jakarta",
+      clearing: "Kliring Berjangka Indonesia",
+      decisionAuthority: "Bappebti Enforcement",
+      escalationLevel: 4,
+      escalationReason: "Indikasi penipuan berskala besar dengan dugaan keterlibatan pihak ketiga yang mengatasnamakan platform berizin.",
+    },
+    internalNotes: [
+      {
+        author: "Rangga Saputra",
+        role: "Bappebti Case Officer",
+        institution: "Bappebti",
+        timestamp: "15 Jun 2026, 11:10",
+        classification: "Penegakan",
+        text: "Mitra pemasaran yang disebutkan pelapor tidak terdaftar dalam basis data agen resmi platform. Direkomendasikan investigasi lanjutan oleh unit Penegakan dan koordinasi dengan pihak kepolisian bila ditemukan indikasi pidana.",
+        visibility: "internal",
+      },
     ],
   },
   {
@@ -307,8 +456,11 @@ export const CASES: ComplaintCase[] = [
       { datetime: "15 Jun 2026, 09:45", actor: "Tim Operasional Platform", role: "Platform", action: "Menunggu bukti tambahan", note: "Meminta bukti transfer dengan resolusi lebih tinggi dari pelapor.", status: "warning" },
     ],
     clarifications: [
-      { from: "Tim Operasional Platform", role: "Platform", datetime: "15 Jun 2026, 09:46", message: "Mohon unggah ulang bukti transfer dengan kualitas gambar yang lebih jelas, termasuk nomor referensi bank." },
+      { from: "Tim Operasional Platform", role: "Platform", datetime: "15 Jun 2026, 09:46", message: "Mohon unggah ulang bukti transfer dengan kualitas gambar yang lebih jelas, termasuk nomor referensi bank.", kind: "formal-request" },
     ],
+    massIncident: true,
+    parentIncidentId: "INC-2026-004",
+    financialExposure: 12500000,
   },
   {
     ticket: "BPP-2026-000191",
@@ -471,8 +623,46 @@ export const CASES: ComplaintCase[] = [
       { datetime: "15 Jun 2026, 14:00", actor: "Dewi Anjani", role: "Bappebti", action: "Permintaan data rekonsiliasi", note: "Meminta data rekonsiliasi transfer dari platform dan kliring terkait.", status: "info" },
     ],
     clarifications: [
-      { from: "Dewi Anjani", role: "Bappebti", datetime: "15 Jun 2026, 14:05", message: "Mohon platform melampirkan bukti instruksi transfer dan data rekening tujuan yang digunakan saat proses penutupan akun." },
+      { from: "Dewi Anjani", role: "Bappebti", datetime: "15 Jun 2026, 14:05", message: "Mohon platform melampirkan bukti instruksi transfer dan data rekening tujuan yang digunakan saat proses penutupan akun.", kind: "formal-request" },
     ],
+    workflowState: "BAPPEBTI_OPERATIONAL_REVIEW",
+    publicStatus: "Dalam Review Bappebti",
+    financialExposure: 89000000,
+    institution: {
+      regulatoryOwner: "Bappebti",
+      leadInstitution: "PT Indodax Nasional Indonesia",
+      currentActionOwner: "Bappebti",
+      caseOfficer: "Dewi Anjani",
+      supportingInstitutions: ["Kliring Aset Digital Nusantara"],
+      bursa: "Bursa Aset Kripto Indonesia",
+      clearing: "Kliring Aset Digital Nusantara",
+      decisionAuthority: "Bappebti Supervisor",
+      escalationLevel: 3,
+      escalationReason: "Sengketa kepemilikan dana bernilai tinggi dengan indikasi kesalahan rekening tujuan pada sistem platform.",
+    },
+  },
+];
+
+export const INCIDENTS: IncidentRecord[] = [
+  {
+    id: "INC-2026-004",
+    title: "Pola keterlambatan transaksi lintas platform terkait bank kustodian",
+    description:
+      "Beberapa pelapor pada platform berbeda melaporkan keterlambatan penarikan dan deposit dana pada rentang waktu yang berdekatan, dengan pola kegagalan konfirmasi dari bank kustodian yang sama.",
+    leadInstitution: "Bappebti",
+    affectedEntities: ["PT Bursa Digital Nusantara", "PT Indodax Nasional Indonesia"],
+    relatedCaseCount: 2,
+    estimatedConsumersAffected: 46,
+    estimatedFinancialExposure: 37500000,
+    rootCause: "Diduga keterlambatan sistem konfirmasi pada bank kustodian bersama, belum dikonfirmasi.",
+    severity: "Tinggi",
+    status: "Aktif",
+    commandOwner: "Dewi Anjani (Bappebti Case Officer)",
+    publicCommunicationStatus: "Disiapkan",
+    correctiveActions: "Koordinasi dengan bank kustodian untuk mempercepat proses konfirmasi transaksi tertunda.",
+    preventiveActions: "Evaluasi SLA konfirmasi bank kustodian dan potensi kewajiban notifikasi dini ke platform anggota.",
+    startDate: "13 Jun 2026",
+    relatedCases: ["BPP-2026-000184", "BPP-2026-000190"],
   },
 ];
 
@@ -668,7 +858,9 @@ export function getCaseByTicket(ticket: string): ComplaintCase | undefined {
   return CASES.find((c) => c.ticket === ticket);
 }
 
-export function formatCurrency(value?: number): string {
-  if (!value) return "-";
-  return "Rp" + value.toLocaleString("id-ID");
+export function getIncidentById(id: string): IncidentRecord | undefined {
+  return INCIDENTS.find((i) => i.id === id);
 }
+
+/** @deprecated use formatCurrencyIDR from lib/format.ts — kept for existing pages */
+export { formatCurrencyIDR as formatCurrency } from "./format";

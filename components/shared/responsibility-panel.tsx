@@ -1,6 +1,6 @@
 import { ComplaintCase } from "@/lib/types";
 import { getActionOwnerLabel } from "@/lib/format";
-import { ESCALATION_LEVEL_LABEL } from "@/lib/workflow-config";
+import { ESCALATION_LEVEL_LABEL, getInstitution } from "@/lib/workflow-config";
 import { Badge } from "@/components/ui/badge";
 
 /**
@@ -14,7 +14,7 @@ export function ResponsibilityPanel({
   complaintCase: ComplaintCase;
   viewer?: "public" | "internal";
 }) {
-  const inst = complaintCase.institution;
+  const inst = getInstitution(complaintCase);
 
   if (viewer === "public") {
     return (
@@ -38,20 +38,20 @@ export function ResponsibilityPanel({
     <div className="rounded-lg border border-border bg-card p-3 space-y-2">
       <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">Struktur Tanggung Jawab</p>
       <dl className="text-xs space-y-1.5">
-        <Row label="Regulatory Owner" value={inst?.regulatoryOwner ?? "Bappebti"} />
-        <Row label="Lead Institution" value={inst?.leadInstitution ?? complaintCase.platform} />
+        <Row label="Regulatory Owner" value={inst.regulatoryOwner} />
+        <Row label="Lead Institution" value={inst.leadInstitution} />
         <Row label="Current Action Owner" value={getActionOwnerLabel(complaintCase.currentOwner)} />
-        <Row label="Case Officer" value={inst?.caseOfficer ?? "-"} />
+        <Row label="Case Officer" value={inst.caseOfficer ?? "-"} />
         <Row
           label="Supporting Institutions"
-          value={inst?.supportingInstitutions && inst.supportingInstitutions.length > 0 ? inst.supportingInstitutions.join(", ") : "-"}
+          value={inst.supportingInstitutions && inst.supportingInstitutions.length > 0 ? inst.supportingInstitutions.join(", ") : "-"}
         />
-        <Row label="Decision Authority" value={inst?.decisionAuthority ?? "Bappebti Supervisor"} />
+        <Row label="Decision Authority" value={inst.decisionAuthority} />
       </dl>
       <div className="flex items-center justify-between pt-1 border-t border-border">
         <span className="text-[11px] text-muted">Escalation Level</span>
-        <Badge variant={inst && inst.escalationLevel >= 3 ? "red" : inst && inst.escalationLevel >= 1 ? "amber" : "navy"}>
-          {ESCALATION_LEVEL_LABEL[inst?.escalationLevel ?? 0]}
+        <Badge variant={inst.escalationLevel >= 3 ? "red" : inst.escalationLevel >= 1 ? "amber" : "navy"}>
+          {ESCALATION_LEVEL_LABEL[inst.escalationLevel]}
         </Badge>
       </div>
     </div>
