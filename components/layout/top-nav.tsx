@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { DemoRoleSwitcher } from "@/components/shared/demo-role-switcher";
+import { ResetDemoDataButton } from "@/components/shared/reset-demo-data-button";
 
 const PORTALS = [
   { label: "Situs Publik", href: "/publik" },
@@ -47,7 +48,8 @@ export function TopNav() {
             );
           })}
         </nav>
-        <div className="ml-auto shrink-0">
+        <div className="ml-auto shrink-0 flex items-center gap-2">
+          <ResetDemoDataButton />
           <DemoRoleSwitcher />
         </div>
       </div>
