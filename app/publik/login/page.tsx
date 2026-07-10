@@ -7,15 +7,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
+import { usePublikAuth } from "@/lib/publik-auth";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = usePublikAuth();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    router.push("/publik/dashboard");
+    setError("");
+    if (login(identifier, password)) {
+      router.push("/publik/dashboard");
+    } else {
+      setError("Email/nomor HP atau password salah, atau Anda belum memiliki akun. Silakan daftar terlebih dahulu.");
+    }
   }
 
   return (
@@ -38,6 +46,11 @@ export default function LoginPage() {
               Gunakan email/nomor HP terdaftar untuk memantau status pengaduan.
             </p>
             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+              {error && (
+                <p className="rounded-md border border-red/30 bg-red-bg px-3 py-2 text-xs text-red">
+                  {error}
+                </p>
+              )}
               <div>
                 <Label htmlFor="identifier">Email atau Nomor HP</Label>
                 <Input

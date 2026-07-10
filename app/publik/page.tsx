@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { usePublikAuth } from "@/lib/publik-auth";
 import {
   ShieldCheck,
   History,
@@ -35,6 +38,10 @@ const CHECKLIST = [
 ];
 
 export default function PublikLandingPage() {
+  const { isAuthenticated } = usePublikAuth();
+  const buatPengaduanHref = isAuthenticated ? "/publik/cek-kelayakan" : "/publik/login";
+  const cekStatusHref = isAuthenticated ? "/publik/dashboard" : "/publik/login";
+
   return (
     <div className="min-h-screen flex flex-col bg-background w-full">
       {/* Top header with login/register links */}
@@ -75,12 +82,12 @@ export default function PublikLandingPage() {
             dan memberikan tanggapan atas solusi yang diajukan.
           </p>
           <div className="flex flex-wrap gap-3 mt-2">
-            <Link href="/publik/cek-kelayakan">
+            <Link href={buatPengaduanHref}>
               <Button size="lg" className="bg-white text-navy hover:bg-white/90">
                 Periksa dan Buat Pengaduan
               </Button>
             </Link>
-            <Link href="/publik/login">
+            <Link href={cekStatusHref}>
               <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
                 Cek Status Pengaduan
               </Button>

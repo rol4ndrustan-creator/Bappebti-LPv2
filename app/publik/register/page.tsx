@@ -9,9 +9,12 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { PROVINCE_LIST } from "@/lib/mock-data";
+import { getRegenciesForProvince } from "@/lib/indonesia-regions";
+import { usePublikAuth } from "@/lib/publik-auth";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { register } = usePublikAuth();
   const [form, setForm] = useState({
     nama: "",
     nomorIdentitas: "",
@@ -19,16 +22,35 @@ export default function RegisterPage() {
     hp: "",
     provinsi: "",
     kota: "",
+    platformUserId: "",
     password: "",
     konfirmasiPassword: "",
   });
 
+  const kotaOptions = getRegenciesForProvince(form.provinsi);
+
   function update(field: string, value: string) {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setForm((prev) => ({
+      ...prev,
+      [field]: value,
+      // Reset the selected city whenever the province changes so it never
+      // holds a value from a different province's regency list.
+      ...(field === "provinsi" ? { kota: "" } : {}),
+    }));
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    register({
+      nama: form.nama,
+      nomorIdentitas: form.nomorIdentitas,
+      email: form.email,
+      hp: form.hp,
+      provinsi: form.provinsi,
+      kota: form.kota,
+      platformUserId: form.platformUserId,
+      password: form.password,
+    });
     router.push("/publik/dashboard");
   }
 
@@ -112,12 +134,30 @@ export default function RegisterPage() {
                 </div>
                 <div>
                   <Label htmlFor="kota">Kota / Kabupaten</Label>
-                  <Input
+                  <Select
                     id="kota"
-                    placeholder="contoh: Jakarta Selatan"
                     value={form.kota}
                     onChange={(e) => update("kota", e.target.value)}
+                    disabled={!form.provinsi}
                     required
+                  >
+                    <option value="">
+                      {form.provinsi ? "Pilih kota/kabupaten" : "Pilih provinsi terlebih dahulu"}
+                    </option>
+                    {kotaOptions.map((k) => (
+                      <option key={k} value={k}>
+                        {k}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="platformUserId">Platform User ID (Opsional)</Label>
+                  <Input
+                    id="platformUserId"
+                    placeholder="ID akun Anda pada platform terkait"
+                    value={form.platformUserId}
+                    onChange={(e) => update("platformUserId", e.target.value)}
                   />
                 </div>
                 <div>

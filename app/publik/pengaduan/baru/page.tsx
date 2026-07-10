@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { StatusBadge } from "@/components/shared/badges";
 import { useToast } from "@/components/shared/toast-provider";
 import { CATEGORY_LIST, PLATFORM_LIST, PROVINCE_LIST } from "@/lib/mock-data";
+import { usePublikAuth } from "@/lib/publik-auth";
 import { Severity } from "@/lib/types";
 import {
   CheckCircle2,
@@ -113,10 +114,40 @@ const PANDUAN_EXAMPLES = [
 
 export default function BuatPengaduanPage() {
   const { showToast } = useToast();
+  const { account } = usePublikAuth();
   const [step, setStep] = useState(1);
   const [serviceType, setServiceType] = useState<ServiceType>(null);
-  const [form, setForm] = useState<FormData>(INITIAL_FORM);
+  const [form, setForm] = useState<FormData>(() =>
+    account
+      ? {
+          ...INITIAL_FORM,
+          nama: account.nama,
+          noIdentitas: account.nomorIdentitas,
+          email: account.email,
+          noHp: account.hp,
+          provinsi: account.provinsi,
+          kota: account.kota,
+        }
+      : INITIAL_FORM
+  );
   const [agree, setAgree] = useState(false);
+
+  // Identitas Pelapor is auto-filled from the reporter's registration data
+  // once the account has loaded from localStorage.
+  useEffect(() => {
+    if (!account) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time sync once the registered account loads from localStorage
+    setForm((prev) => ({
+      ...prev,
+      nama: prev.nama || account.nama,
+      noIdentitas: prev.noIdentitas || account.nomorIdentitas,
+      email: prev.email || account.email,
+      noHp: prev.noHp || account.hp,
+      provinsi: prev.provinsi || account.provinsi,
+      kota: prev.kota || account.kota,
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-sync when the account identity changes
+  }, [account?.email]);
 
   // evidence state (pre-populated mock files)
   const [files, setFiles] = useState<string[]>([
@@ -137,7 +168,19 @@ export default function BuatPengaduanPage() {
   function resetWizard() {
     setStep(1);
     setServiceType(null);
-    setForm(INITIAL_FORM);
+    setForm(
+      account
+        ? {
+            ...INITIAL_FORM,
+            nama: account.nama,
+            noIdentitas: account.nomorIdentitas,
+            email: account.email,
+            noHp: account.hp,
+            provinsi: account.provinsi,
+            kota: account.kota,
+          }
+        : INITIAL_FORM
+    );
     setAgree(false);
     setFiles([
       "Bukti transfer.pdf",

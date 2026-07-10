@@ -1,8 +1,10 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { usePublikAuth } from "@/lib/publik-auth";
 import { Bell, FileText, LayoutDashboard, PlusCircle, UserCircle } from "lucide-react";
 
 const LINKS = [
@@ -17,11 +19,28 @@ const NO_NAV_PATHS = ["/publik", "/publik/login", "/publik/register"];
 
 export default function PublikLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const showNav = !NO_NAV_PATHS.includes(pathname || "");
+  const router = useRouter();
+  const { isAuthenticated, ready, logout } = usePublikAuth();
+  const requiresAuth = !NO_NAV_PATHS.includes(pathname || "");
+
+  React.useEffect(() => {
+    if (requiresAuth && ready && !isAuthenticated) {
+      router.replace("/publik/login");
+    }
+  }, [requiresAuth, ready, isAuthenticated, router]);
+
+  function handleLogout() {
+    logout();
+    router.push("/publik");
+  }
+
+  // Only registered users who have logged in can reach the authenticated
+  // portal pages (dashboard, pengaduan, notifikasi, profil).
+  if (requiresAuth && (!ready || !isAuthenticated)) return null;
 
   return (
     <div className="flex flex-1 min-h-0 flex-col">
-      {showNav && (
+      {requiresAuth && (
         <div className="border-b border-border bg-card px-4 py-2 flex items-center gap-1 overflow-x-auto scrollbar-thin">
           {LINKS.map((l) => {
             const active = pathname === l.href || (l.href !== "/publik/pengaduan" && pathname?.startsWith(l.href)) || (l.href === "/publik/pengaduan" && pathname?.startsWith("/publik/pengaduan") && !pathname?.startsWith("/publik/pengaduan/baru"));
@@ -40,12 +59,13 @@ export default function PublikLayout({ children }: { children: React.ReactNode }
               </Link>
             );
           })}
-          <Link
-            href="/publik"
+          <button
+            type="button"
+            onClick={handleLogout}
             className="ml-auto rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap text-muted hover:bg-muted-bg hover:text-foreground"
           >
             Keluar
-          </Link>
+          </button>
         </div>
       )}
       <main className="flex-1 max-w-[1400px] w-full mx-auto p-4 md:p-6">{children}</main>
