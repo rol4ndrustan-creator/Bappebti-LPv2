@@ -6,7 +6,7 @@ export default function ClarificationDetailClient({ clarificationId }: { clarifi
   return (
     <ClarificationDetailView
       clarificationId={clarificationId}
-      listHref="/anggota/kliring/klarifikasi"
+      listHref="/ekosistem/bursa/klarifikasi"
       caseHrefBase="/bappebti/kasus"
     />
   );

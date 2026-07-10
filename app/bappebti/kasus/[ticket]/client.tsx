@@ -32,7 +32,7 @@ import {
   reopenCase,
 } from "@/lib/mock-service/store";
 import { useClarificationsForCase } from "@/lib/mock-service/clarification-store";
-import { getClarificationPortalSegment, getViewerRelation } from "@/lib/clarification-workflow";
+import { getClarificationPortalBasePath, getViewerRelation } from "@/lib/clarification-workflow";
 import { InternalNoteClassification } from "@/lib/types";
 import { ArrowRight, FileText, MessageCircle, ShieldAlert } from "lucide-react";
 
@@ -447,7 +447,7 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
                   <div className="pt-1.5 border-t border-border">
                     <p className="text-muted">Klarifikasi Terbaru</p>
                     <Link
-                      href={`/anggota/${getClarificationPortalSegment(latestClarification)}/klarifikasi/${latestClarification.id}`}
+                      href={`${getClarificationPortalBasePath(latestClarification)}/klarifikasi/${latestClarification.id}`}
                       className="font-medium text-navy hover:underline"
                     >
                       {latestClarification.id}

@@ -5,9 +5,9 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@
 const COLUMNS = [
   "Situs Publik",
   "Portal Bappebti",
-  "Portal Anggota (Platform)",
-  "Portal Anggota (Bursa)",
-  "Portal Anggota (Kliring)",
+  "Portal Platform",
+  "Akun Ekosistem (Bursa)",
+  "Akun Ekosistem (Kliring)",
   "Asosiasi",
   "Konsol Admin",
   "Kelola Kasus",

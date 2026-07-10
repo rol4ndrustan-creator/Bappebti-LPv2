@@ -65,7 +65,7 @@ export default function PlatformDashboardPage() {
           <CardHeader className="flex items-center justify-between flex-row">
             <CardTitle>Antrean Aksi Hari Ini</CardTitle>
             <Button asChild variant="outline" size="sm">
-              <Link href="/anggota/platform/case-queue">Lihat Case Queue</Link>
+              <Link href="/platform/case-queue">Lihat Case Queue</Link>
             </Button>
           </CardHeader>
           <CardContent className="p-0">

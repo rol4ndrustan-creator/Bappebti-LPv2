@@ -114,7 +114,7 @@ export default function DashboardBursaPage() {
           <CardHeader className="flex items-center justify-between flex-row">
             <CardTitle>Eskalasi Terbaru</CardTitle>
             <Button asChild variant="outline" size="sm">
-              <Link href="/anggota/bursa/escalation-queue">Lihat Escalation Queue</Link>
+              <Link href="/ekosistem/bursa/escalation-queue">Lihat Escalation Queue</Link>
             </Button>
           </CardHeader>
           <CardContent className="p-0">

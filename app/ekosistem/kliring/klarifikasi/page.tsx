@@ -1,5 +1,5 @@
 import { ClarificationListPage } from "@/components/clarification/list-page";
 
 export default function KlarifikasiPage() {
-  return <ClarificationListPage basePath="/anggota/platform/klarifikasi" />;
+  return <ClarificationListPage basePath="/ekosistem/kliring/klarifikasi" />;
 }

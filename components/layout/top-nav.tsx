@@ -9,7 +9,8 @@ import { ResetDemoDataButton } from "@/components/shared/reset-demo-data-button"
 const PORTALS = [
   { label: "Situs Publik", href: "/publik" },
   { label: "Portal Bappebti", href: "/bappebti" },
-  { label: "Portal Anggota", href: "/anggota" },
+  { label: "Portal Platform", href: "/platform" },
+  { label: "Akun Ekosistem", href: "/ekosistem" },
   { label: "Asosiasi", href: "/asosiasi" },
   { label: "Konsol Admin", href: "/admin" },
 ];

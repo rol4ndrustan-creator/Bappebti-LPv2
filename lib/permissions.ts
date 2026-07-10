@@ -44,15 +44,15 @@ export type Ability =
   | "create_incident"
   | "merge_duplicate_cases";
 
-export const ROLE_GROUP: Record<Role, "Publik" | "Anggota" | "Bappebti" | "Administrasi"> = {
+export const ROLE_GROUP: Record<Role, "Publik" | "Platform" | "Ekosistem" | "Bappebti" | "Administrasi"> = {
   PUBLIC_REPORTER: "Publik",
   PUBLIC_REPRESENTATIVE: "Publik",
-  PLATFORM_CASE_OFFICER: "Anggota",
-  PLATFORM_SUPERVISOR: "Anggota",
-  BURSA_CASE_OFFICER: "Anggota",
-  BURSA_SUPERVISOR: "Anggota",
-  CLEARING_CASE_OFFICER: "Anggota",
-  CLEARING_SUPERVISOR: "Anggota",
+  PLATFORM_CASE_OFFICER: "Platform",
+  PLATFORM_SUPERVISOR: "Platform",
+  BURSA_CASE_OFFICER: "Ekosistem",
+  BURSA_SUPERVISOR: "Ekosistem",
+  CLEARING_CASE_OFFICER: "Ekosistem",
+  CLEARING_SUPERVISOR: "Ekosistem",
   BAPPEBTI_INTAKE_OFFICER: "Bappebti",
   BAPPEBTI_CASE_OFFICER: "Bappebti",
   BAPPEBTI_SUPERVISOR: "Bappebti",
@@ -133,11 +133,11 @@ export interface DemoUser {
 // Demo personas used by the "Mode Demonstrasi" role switcher (Section 5).
 export const DEMO_USERS: DemoUser[] = [
   { id: "andra", name: "Andra Wicaksono", role: "PUBLIC_REPORTER", institution: "Pelapor Publik", portalHref: "/publik/dashboard" },
-  { id: "rina", name: "Rina Kusuma", role: "PLATFORM_CASE_OFFICER", institution: "PT Bursa Digital Nusantara", portalHref: "/anggota/platform" },
-  { id: "indra", name: "Indra Kusnadi", role: "PLATFORM_CASE_OFFICER", institution: "PT Indodax Nasional Indonesia", portalHref: "/anggota/platform" },
-  { id: "yoga", name: "Yoga Pratama", role: "PLATFORM_CASE_OFFICER", institution: "PT Crypto Indonesia Berkat", portalHref: "/anggota/platform" },
-  { id: "ahmad", name: "Ahmad Pratama", role: "BURSA_CASE_OFFICER", institution: "Bursa Berjangka Jakarta", portalHref: "/anggota/bursa" },
-  { id: "sari", name: "Sari Wulandari", role: "CLEARING_CASE_OFFICER", institution: "Kliring Berjangka Indonesia", portalHref: "/anggota/kliring" },
+  { id: "rina", name: "Rina Kusuma", role: "PLATFORM_CASE_OFFICER", institution: "PT Bursa Digital Nusantara", portalHref: "/platform" },
+  { id: "indra", name: "Indra Kusnadi", role: "PLATFORM_CASE_OFFICER", institution: "PT Indodax Nasional Indonesia", portalHref: "/platform" },
+  { id: "yoga", name: "Yoga Pratama", role: "PLATFORM_CASE_OFFICER", institution: "PT Crypto Indonesia Berkat", portalHref: "/platform" },
+  { id: "ahmad", name: "Ahmad Pratama", role: "BURSA_CASE_OFFICER", institution: "Bursa Berjangka Jakarta", portalHref: "/ekosistem/bursa" },
+  { id: "sari", name: "Sari Wulandari", role: "CLEARING_CASE_OFFICER", institution: "Kliring Berjangka Indonesia", portalHref: "/ekosistem/kliring" },
   { id: "dewi", name: "Dewi Anjani", role: "BAPPEBTI_CASE_OFFICER", institution: "Bappebti", portalHref: "/bappebti" },
   { id: "bambang", name: "Bambang Setiawan", role: "BAPPEBTI_SUPERVISOR", institution: "Bappebti", portalHref: "/bappebti" },
   { id: "ratna", name: "Ratna Maharani", role: "BAPPEBTI_EXECUTIVE", institution: "Bappebti", portalHref: "/bappebti" },

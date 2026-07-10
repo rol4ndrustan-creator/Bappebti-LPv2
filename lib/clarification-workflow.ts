@@ -198,7 +198,7 @@ export function getClarificationActionOwnerParty(cl: ClarificationRequest): Clar
 export function getMaxHistoryVisibility(role: Role): "public" | "member" | "internal" {
   const group = ROLE_GROUP[role];
   if (group === "Bappebti" || group === "Administrasi") return "internal";
-  if (group === "Anggota") return "member";
+  if (group === "Platform" || group === "Ekosistem") return "member";
   return "public";
 }
 
@@ -360,11 +360,11 @@ export interface ClarificationSummaryCounts {
   completed: number;
 }
 
-/** Which member portal's Klarifikasi route a case-workspace link should point at (Bappebti has full oversight access to all of them). */
-export function getClarificationPortalSegment(cl: ClarificationRequest): "platform" | "bursa" | "kliring" {
-  if (cl.requestedBy.partyType === "BURSA" || cl.requestedFrom.partyType === "BURSA") return "bursa";
-  if (cl.requestedBy.partyType === "CLEARING" || cl.requestedFrom.partyType === "CLEARING") return "kliring";
-  return "platform";
+/** Which member portal's Klarifikasi route a case-workspace link should point at (Bappebti has full oversight access to all of them). Platform is its own top-level portal; Bursa and Kliring live under the Akun Ekosistem portal. */
+export function getClarificationPortalBasePath(cl: ClarificationRequest): string {
+  if (cl.requestedBy.partyType === "BURSA" || cl.requestedFrom.partyType === "BURSA") return "/ekosistem/bursa";
+  if (cl.requestedBy.partyType === "CLEARING" || cl.requestedFrom.partyType === "CLEARING") return "/ekosistem/kliring";
+  return "/platform";
 }
 
 export function getClarificationSummaryCounts(
