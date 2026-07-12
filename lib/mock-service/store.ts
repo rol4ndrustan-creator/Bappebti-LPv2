@@ -20,6 +20,7 @@ import {
   OwnerType,
   PublicStatus,
   ReporterResolutionDecision,
+  Responsibility,
   Severity,
   SlaStatus,
   TimelineEvent,
@@ -44,6 +45,7 @@ interface CaseOverride {
   /** Priority/severity is no longer collected at submission — only Bappebti may assign it. */
   severityOverride?: Severity;
   currentOwnerOverride?: OwnerType;
+  responsibilityOverride?: Responsibility;
   caseOfficerOverride?: string;
   escalationLevelOverride?: EscalationLevel;
   statusOverride?: CaseStatus;
@@ -102,6 +104,7 @@ export function getMergedCase(base: ComplaintCase | undefined): ComplaintCase | 
     status: o.closed ? "Selesai" : o.statusOverride ?? base.status,
     severity: o.severityOverride ?? base.severity,
     currentOwner: o.currentOwnerOverride ?? base.currentOwner,
+    responsibility: o.responsibilityOverride ?? base.responsibility,
     resolutionProposal: o.resolutionProposalOverride ?? base.resolutionProposal,
     institution:
       o.caseOfficerOverride || o.escalationLevelOverride !== undefined
@@ -185,6 +188,8 @@ export function setSeverity(ticket: string, severity: Severity) {
 export function setCurrentOwner(ticket: string, owner: OwnerType) {
   mutate(ticket, (o) => {
     o.currentOwnerOverride = owner;
+    o.responsibilityOverride =
+      owner === "Bappebti" ? "BAPPEBTI OWNED" : owner === "Pelapor" ? "WAITING PUBLIC" : "MEMBER ASSIGNED";
     const base = getCaseByTicket(ticket);
     if (base) {
       const severity = o.severityOverride ?? base.severity;
@@ -266,6 +271,7 @@ export function resetDemoData() {
     window.localStorage.removeItem(STORAGE_KEY);
     window.localStorage.removeItem(NOTIF_STORAGE_KEY);
     window.localStorage.removeItem("bappebti-demo-supervisory-actions");
+    window.localStorage.removeItem("bappebti-demo-added-members");
   } catch {
     // ignore
   }

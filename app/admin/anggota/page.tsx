@@ -6,16 +6,42 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RiskBadge, TrendBadge } from "@/components/shared/badges";
-import { MEMBERS } from "@/lib/mock-data";
+import { MEMBERS, BURSA_LIST, KLIRING_LIST } from "@/lib/mock-data";
+import { useMembers, addMember } from "@/lib/mock-service/member-store";
+import { Member } from "@/lib/types";
 import { useToast } from "@/components/shared/toast-provider";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { AddMemberDialog } from "@/components/shared/add-member-dialog";
+import { ChevronDown, ChevronUp, Plus } from "lucide-react";
 
 export default function MasterDataAnggotaPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
   const { showToast } = useToast();
+  const members = useMembers(MEMBERS);
 
   function toggleExpand(name: string) {
     setExpanded((prev) => (prev === name ? null : name));
+  }
+
+  function handleAddMember(values: { name: string; type: string; license: string; bursa: string; kliring: string }) {
+    const member: Member = {
+      name: values.name,
+      type: values.type,
+      license: values.license,
+      status: "Aktif",
+      bursa: values.bursa,
+      kliring: values.kliring,
+      totalCases: 0,
+      handled: 0,
+      unhandled: 0,
+      slaBreach: 0,
+      critical: 0,
+      avgResolution: "-",
+      slaPercent: 100,
+      risk: "Rendah",
+    };
+    addMember(member);
+    showToast(`Anggota ${values.name} berhasil ditambahkan.`);
   }
 
   return (
@@ -23,6 +49,11 @@ export default function MasterDataAnggotaPage() {
       <PageHeader
         title="Master Data Anggota"
         description="Data master anggota terdaftar (Platform/Pialang, Bursa, Kliring) beserta informasi izin dan routing."
+        actions={
+          <Button size="sm" onClick={() => setAddOpen(true)}>
+            <Plus className="size-3.5" /> Tambah Anggota
+          </Button>
+        }
       />
 
       <Table>
@@ -38,7 +69,7 @@ export default function MasterDataAnggotaPage() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {MEMBERS.map((m) => (
+          {members.map((m) => (
             <>
               <TableRow key={m.name}>
                 <TableCell className="font-medium text-navy">{m.name}</TableCell>
@@ -118,6 +149,14 @@ export default function MasterDataAnggotaPage() {
           ))}
         </TableBody>
       </Table>
+
+      <AddMemberDialog
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        bursaOptions={BURSA_LIST}
+        kliringOptions={KLIRING_LIST}
+        onConfirm={handleAddMember}
+      />
     </div>
   );
 }

@@ -25,7 +25,6 @@ export type CaseActionId =
   | "send-reminder"
   | "request-resolution-revision"
   | "escalate-enforcement"
-  | "reassign-pic"
   | "close-administrative"
   | "reopen-case";
 
@@ -64,7 +63,7 @@ export interface CaseActionDefinition {
 
 export const DEADLINE_OPTIONS = ["1 hari kerja", "3 hari kerja", "5 hari kerja", "7 hari kerja"];
 
-/** PIC candidates for "Alihkan PIC" / "Buka Kembali Pengaduan": internal Bappebti staff, or hand the case back to the platform / bursa / kliring ecosystem. */
+/** PIC candidates for "Tugaskan / Alihkan Penanggung Jawab" / "Buka Kembali Pengaduan": internal Bappebti staff, or hand the case to the platform / bursa / kliring ecosystem. */
 const PIC_OPTION_GROUPS = [
   { label: "Internal Bappebti", options: DEMO_USERS.filter((u) => u.role.startsWith("BAPPEBTI_")).map((u) => u.name) },
   { label: "Platform", options: PLATFORM_LIST.filter((p) => p !== "Tidak tahu / belum terdaftar") },
@@ -84,20 +83,20 @@ export const CLOSE_ADMINISTRATIVE_REASONS = [
 export const CASE_ACTIONS: Record<CaseActionId, CaseActionDefinition> = {
   "assign-to-member": {
     id: "assign-to-member",
-    label: "Tugaskan ke Pelaku Usaha",
+    label: "Tugaskan / Alihkan Penanggung Jawab",
     tone: "primary",
-    modalTitle: "Tugaskan Pengaduan ke Pelaku Usaha",
-    body: (c) =>
-      `Anda akan menugaskan pengaduan ini kepada ${c.platform} untuk pemeriksaan dan tindak lanjut.`,
+    modalTitle: "Tugaskan / Alihkan Penanggung Jawab",
+    body: () =>
+      "Pengaduan akan ditugaskan atau dialihkan penanggung jawabnya. Pilih pelaku usaha (platform), unit ekosistem (bursa/kliring), atau staf internal Bappebti yang akan menangani selanjutnya.",
     impact: (c) => ({ status: "Dalam Tindak Lanjut Pelaku Usaha", owner: c.platform, sla: "3 hari kerja" }),
     fields: [
-      { id: "targetInstitution", label: "Pelaku usaha tujuan", type: "text", required: true, defaultValue: (c) => c.platform },
-      { id: "instructions", label: "Instruksi untuk pelaku usaha", type: "textarea", required: true },
+      { id: "targetInstitution", label: "Tujuan penugasan", type: "select", required: true, optionGroups: PIC_OPTION_GROUPS, defaultValue: (c) => c.platform },
+      { id: "instructions", label: "Instruksi / alasan", type: "textarea", required: true },
       { id: "deadline", label: "Batas waktu", type: "select", required: true, options: DEADLINE_OPTIONS, defaultValue: () => "3 hari kerja" },
-      { id: "internalNote", label: "Catatan internal Bappebti", type: "textarea", required: true },
+      { id: "internalNote", label: "Catatan internal Bappebti", type: "textarea", required: false },
       { id: "attachmentNote", label: "Lampiran (opsional)", type: "text", required: false },
     ],
-    confirmLabel: "Tugaskan Pengaduan",
+    confirmLabel: "Tugaskan / Alihkan",
   },
   "request-reporter-data": {
     id: "request-reporter-data",
@@ -189,19 +188,6 @@ export const CASE_ACTIONS: Record<CaseActionId, CaseActionDefinition> = {
     ],
     confirmLabel: "Eskalasi ke Penegakan",
   },
-  "reassign-pic": {
-    id: "reassign-pic",
-    label: "Alihkan PIC",
-    tone: "secondary",
-    modalTitle: "Alihkan Penanggung Jawab (PIC)",
-    body: () => "Petugas atau unit yang bertanggung jawab menangani kasus ini di internal Bappebti akan diganti.",
-    impact: () => ({ status: "Tidak berubah", owner: "PIC baru", sla: "Tidak berubah" }),
-    fields: [
-      { id: "newPic", label: "PIC baru", type: "select", required: true, optionGroups: PIC_OPTION_GROUPS },
-      { id: "reason", label: "Alasan pengalihan", type: "textarea", required: true },
-    ],
-    confirmLabel: "Alihkan PIC",
-  },
   "close-administrative": {
     id: "close-administrative",
     label: "Tutup Secara Administratif",
@@ -273,7 +259,7 @@ export function getContextualActions(c: ComplaintCase): ContextualActions {
 
   let visible: CaseActionId[];
   if (WAITING_STATES.includes(state)) {
-    visible = ["send-reminder", "close-administrative", "reassign-pic"];
+    visible = ["send-reminder", "close-administrative", "assign-to-member"];
   } else if (MEMBER_WORKING.includes(state)) {
     visible = ["send-reminder", "request-supervisor-review", "escalate-enforcement"];
   } else if (RESOLUTION_PROPOSED.includes(state)) {
@@ -290,7 +276,7 @@ export function getContextualActions(c: ComplaintCase): ContextualActions {
     visible = ["assign-to-member", "request-reporter-data", "request-supervisor-review"];
   }
 
-  const overflowCandidates: CaseActionId[] = ["escalate-enforcement", "reassign-pic", "close-administrative", "reopen-case"];
+  const overflowCandidates: CaseActionId[] = ["escalate-enforcement", "assign-to-member", "close-administrative", "reopen-case"];
   const overflow = overflowCandidates.filter((id) => {
     if (visible.includes(id)) return false;
     if (id === "reopen-case") return isClosed;
@@ -341,17 +327,37 @@ export function executeCaseAction(actionId: CaseActionId, { ticket, actor, value
   const note = noteFromValues(def.fields, values);
 
   switch (actionId) {
-    case "assign-to-member":
-      setCurrentOwner(ticket, "Platform" as OwnerType);
-      transitionTo(ticket, "MEMBER_INVESTIGATION", {
-        actor,
-        role: "Bappebti",
-        action: "Tugaskan ke Pelaku Usaha",
-        note,
-        status: "info",
-        visibility: "public",
-      });
+    case "assign-to-member": {
+      const target = values.targetInstitution?.trim() || "-";
+      const newOwner = resolvePicOwner(target);
+      if (newOwner === "Bappebti") {
+        // Purely an internal PIC reassignment — no member/ecosystem workflow transition.
+        setCaseOfficer(ticket, target);
+        addTimelineEvent(ticket, {
+          actor,
+          role: "Bappebti",
+          action: "Penanggung jawab (PIC) dialihkan",
+          note,
+          status: "info",
+          visibility: "internal",
+        });
+      } else {
+        const owner = newOwner ?? "Platform";
+        setCurrentOwner(ticket, owner);
+        setCaseOfficer(ticket, target);
+        const targetState: InternalWorkflowState =
+          owner === "Bursa" ? "ASSIGNED_TO_BURSA" : owner === "Kliring" ? "ASSIGNED_TO_CLEARING" : "MEMBER_INVESTIGATION";
+        transitionTo(ticket, targetState, {
+          actor,
+          role: "Bappebti",
+          action: "Tugaskan / Alihkan Penanggung Jawab",
+          note,
+          status: "info",
+          visibility: "public",
+        });
+      }
       break;
+    }
     case "request-reporter-data":
       setCurrentOwner(ticket, "Pelapor");
       transitionTo(ticket, "WAITING_REPORTER_INFORMATION", {
@@ -419,21 +425,6 @@ export function executeCaseAction(actionId: CaseActionId, { ticket, actor, value
         visibility: "internal",
       });
       break;
-    case "reassign-pic": {
-      const newPic = values.newPic?.trim() || "-";
-      const newOwner = resolvePicOwner(newPic);
-      if (newOwner) setCurrentOwner(ticket, newOwner);
-      setCaseOfficer(ticket, newPic);
-      addTimelineEvent(ticket, {
-        actor,
-        role: "Bappebti",
-        action: "PIC dialihkan",
-        note,
-        status: "info",
-        visibility: "internal",
-      });
-      break;
-    }
     case "close-administrative":
       transitionTo(ticket, "CLOSED_ADMINISTRATIVE", {
         actor,
