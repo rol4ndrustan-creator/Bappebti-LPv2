@@ -9,7 +9,7 @@ export default function DetailKasusIndexPage() {
   return (
     <div>
       <PageHeader
-        title="Detail Kasus"
+        title="Penanganan Bappebti"
         description="Pilih kasus untuk melihat detail lengkap, termasuk kronologi, bukti, respons anggota, dan jejak audit."
       />
 

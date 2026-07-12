@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge, SlaBadge } from "@/components/shared/badges";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { CASES, formatCurrency } from "@/lib/mock-data";
-import { ComplaintCase, CaseStatus } from "@/lib/types";
+import { CaseStatus } from "@/lib/types";
 import { useToast } from "@/components/shared/toast-provider";
+import { useDemoSession } from "@/lib/demo-session";
+import { useMergedCases, proposeResolution, reassignOwner } from "@/lib/mock-service/store";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 function actionRequired(status: CaseStatus): string {
@@ -34,9 +36,9 @@ function actionRequired(status: CaseStatus): string {
 
 export default function CaseQueuePage() {
   const { showToast } = useToast();
-  const [cases, setCases] = useState<ComplaintCase[]>(
-    CASES.filter((c) => c.currentOwner === "Platform")
-  );
+  const { user } = useDemoSession();
+  const baseCases = useMemo(() => CASES.filter((c) => c.currentOwner === "Platform"), []);
+  const cases = useMergedCases(baseCases).filter((c) => c.currentOwner === "Platform");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [noteText, setNoteText] = useState("");
   const [clarificationText, setClarificationText] = useState("");
@@ -65,9 +67,6 @@ export default function CaseQueuePage() {
     }
     showToast(`Permintaan klarifikasi untuk ${ticket} telah dikirim ke pelapor.`);
     setClarificationText("");
-    setCases((prev) =>
-      prev.map((c) => (c.ticket === ticket ? { ...c, status: "Menunggu Klarifikasi" } : c))
-    );
   }
 
   function handleUploadEvidence(ticket: string) {
@@ -79,22 +78,22 @@ export default function CaseQueuePage() {
       showToast("Usulan resolusi tidak boleh kosong.");
       return;
     }
-    showToast(`Usulan resolusi untuk ${ticket} telah diajukan kepada pelapor.`);
-    setCases((prev) =>
-      prev.map((c) =>
-        c.ticket === ticket
-          ? { ...c, status: "Resolusi Diajukan", resolutionProposal: resolutionText }
-          : c
-      )
-    );
+    proposeResolution(ticket, resolutionText, user.name, "Platform");
+    showToast(`Usulan resolusi untuk ${ticket} telah diajukan kepada pelapor dan tercatat di Bappebti.`);
     setResolutionText("");
   }
 
   function handleEscalate(ticket: string) {
-    showToast("Kasus dieskalasi ke Bappebti");
-    setCases((prev) =>
-      prev.map((c) => (c.ticket === ticket ? { ...c, currentOwner: "Bappebti" } : c))
+    const target = cases.find((c) => c.ticket === ticket);
+    reassignOwner(
+      ticket,
+      "Bappebti",
+      "Kasus dieskalasi oleh platform ke Bappebti untuk supervisi lebih lanjut.",
+      user.name,
+      "Platform",
+      { severity: target?.severity ?? "Sedang", slaStatus: target?.slaStatus ?? "Aman" }
     );
+    showToast("Kasus dieskalasi ke Bappebti");
   }
 
   return (

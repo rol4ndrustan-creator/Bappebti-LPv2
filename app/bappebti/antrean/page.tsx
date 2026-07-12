@@ -87,7 +87,7 @@ export default function AntreanOperasionalPage() {
   return (
     <div>
       <PageHeader
-        title="Antrean Operasional"
+        title="Daftar Pengaduan"
         description="Daftar seluruh kasus pengaduan yang dapat difilter berdasarkan tanggung jawab, prioritas, dan status SLA."
       />
 

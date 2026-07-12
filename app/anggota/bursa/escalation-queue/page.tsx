@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge, SlaBadge } from "@/components/shared/badges";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,14 +8,15 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/shared/toast-provider";
+import { useDemoSession } from "@/lib/demo-session";
+import { useMergedCases, reassignOwner } from "@/lib/mock-service/store";
 import { CASES, ACTIVE_BURSA } from "@/lib/mock-data";
-
-const escalationCases = CASES.filter(
-  (c) => c.currentOwner === "Bursa" && c.bursaEntity === ACTIVE_BURSA
-);
 
 export default function EscalationQueuePage() {
   const { showToast } = useToast();
+  const { user } = useDemoSession();
+  const baseCases = useMemo(() => CASES.filter((c) => c.bursaEntity === ACTIVE_BURSA), []);
+  const escalationCases = useMergedCases(baseCases).filter((c) => c.currentOwner === "Bursa");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [followUpOpen, setFollowUpOpen] = useState<string | null>(null);
   const [followUpText, setFollowUpText] = useState("");
@@ -96,7 +97,17 @@ export default function EscalationQueuePage() {
                           <Button
                             variant="destructive"
                             size="sm"
-                            onClick={() => showToast("Kasus dieskalasi ke Bappebti sebagai BAPPEBTI OWNED")}
+                            onClick={() => {
+                              reassignOwner(
+                                c.ticket,
+                                "Bappebti",
+                                `Dieskalasikan oleh ${ACTIVE_BURSA} ke Bappebti untuk supervisi langsung.`,
+                                user.name,
+                                "Bursa",
+                                { severity: c.severity, slaStatus: c.slaStatus }
+                              );
+                              showToast("Kasus dieskalasi ke Bappebti sebagai BAPPEBTI OWNED");
+                            }}
                           >
                             Eskalasi ke Bappebti
                           </Button>

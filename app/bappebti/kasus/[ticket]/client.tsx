@@ -17,6 +17,7 @@ import { ClarificationThread } from "@/components/shared/clarification-thread";
 import { EvidenceList } from "@/components/shared/evidence-list";
 import { ResolutionPanel } from "@/components/shared/resolution-panel";
 import { WorkflowTransitionDialog } from "@/components/shared/workflow-transition-dialog";
+import { ReassignPicDialog } from "@/components/shared/reassign-pic-dialog";
 import { useToast } from "@/components/shared/toast-provider";
 import { useDemoSession } from "@/lib/demo-session";
 import { can } from "@/lib/permissions";
@@ -30,11 +31,15 @@ import {
   setWorkflowState,
   closeCase,
   reopenCase,
+  setSeverity,
+  reassignOwner,
 } from "@/lib/mock-service/store";
 import { useClarificationsForCase } from "@/lib/mock-service/clarification-store";
 import { getClarificationPortalSegment, getViewerRelation } from "@/lib/clarification-workflow";
-import { InternalNoteClassification } from "@/lib/types";
+import { InternalNoteClassification, OwnerType, Severity } from "@/lib/types";
 import { ArrowRight, FileText, MessageCircle, ShieldAlert } from "lucide-react";
+
+const SEVERITY_OPTIONS: Severity[] = ["Rendah", "Sedang", "Tinggi", "Kritis"];
 
 type ActionKind =
   | "request-reporter-info"
@@ -56,6 +61,7 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
   const [noteText, setNoteText] = useState("");
   const [noteClass, setNoteClass] = useState<InternalNoteClassification>("Operasional");
   const [activeAction, setActiveAction] = useState<ActionKind | null>(null);
+  const [picDialogOpen, setPicDialogOpen] = useState(false);
 
   if (!c) {
     return (
@@ -210,7 +216,31 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
       )}
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <SeverityBadge severity={c.severity} />
+        {isBappebtiRole ? (
+          <div className="flex items-center gap-1.5">
+            <label htmlFor="case-priority" className="text-xs text-muted">
+              Prioritas:
+            </label>
+            <Select
+              id="case-priority"
+              value={c.severity}
+              onChange={(e) => {
+                const value = e.target.value as Severity;
+                setSeverity(ticket, value, { currentOwner: c.currentOwner, slaStatus: c.slaStatus }, user.name);
+                showToast(`Prioritas kasus diubah menjadi ${value}.`);
+              }}
+              className="h-7 w-32 text-xs"
+            >
+              {SEVERITY_OPTIONS.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </Select>
+          </div>
+        ) : (
+          <SeverityBadge severity={c.severity} />
+        )}
         <span className="text-xs text-muted">
           Pelapor: <span className="font-medium text-foreground">{c.reporterName}</span> (identitas
           lengkap disamarkan pada tampilan ringkas ini demi kepatuhan privasi data)
@@ -510,6 +540,11 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
                   Buka Kembali Kasus
                 </Button>
               )}
+              {isBappebtiRole && (
+                <Button variant="outline" size="sm" className="justify-start" onClick={() => setPicDialogOpen(true)}>
+                  Alihkan PIC
+                </Button>
+              )}
               {!canRequestClarification && !canEscalate && !canApprove && !canClose && !canReopen && (
                 <p className="text-[11px] text-muted">Tidak ada tindakan yang tersedia untuk peran demonstrasi ini.</p>
               )}
@@ -534,6 +569,15 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
           onConfirm={runAction}
         />
       )}
+
+      <ReassignPicDialog
+        open={picDialogOpen}
+        onOpenChange={setPicDialogOpen}
+        onConfirm={(owner: OwnerType, picName: string, reason: string) => {
+          reassignOwner(ticket, owner, reason, user.name, "Bappebti", { severity: c.severity, slaStatus: c.slaStatus }, picName);
+          showToast(`Penanggung jawab kasus dialihkan ke ${picName}.`);
+        }}
+      />
     </div>
   );
 }
