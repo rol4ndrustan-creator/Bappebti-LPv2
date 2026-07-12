@@ -11,12 +11,18 @@
 
 import * as React from "react";
 import {
+  CaseStatus,
   ClarificationMessage,
   ComplaintCase,
+  EscalationLevel,
   InternalNote,
   InternalWorkflowState,
+  OwnerType,
   PublicStatus,
+  Responsibility,
   ReporterResolutionDecision,
+  Severity,
+  SlaStatus,
   TimelineEvent,
 } from "../types";
 import { nowDateTimeID } from "../format";
@@ -34,6 +40,13 @@ interface CaseOverride {
   resolutionDecision?: ReporterResolutionDecision;
   resolutionDisagreementReason?: string;
   closed?: boolean;
+  severityOverride?: Severity;
+  escalationLevelOverride?: EscalationLevel;
+  ownerOverride?: OwnerType;
+  responsibilityOverride?: Responsibility;
+  caseOfficerOverride?: string;
+  statusOverride?: CaseStatus;
+  resolutionProposalOverride?: string;
 }
 
 type OverrideMap = Record<string, CaseOverride>;
@@ -80,7 +93,19 @@ export function getMergedCase(base: ComplaintCase | undefined): ComplaintCase | 
     internalNotes: [...(base.internalNotes ?? []), ...o.internalNoteAdditions],
     workflowState: o.workflowStateOverride ?? base.workflowState,
     publicStatus: o.publicStatusOverride ?? base.publicStatus,
-    status: o.closed ? "Selesai" : base.status,
+    status: o.closed ? "Selesai" : o.statusOverride ?? base.status,
+    severity: o.severityOverride ?? base.severity,
+    currentOwner: o.ownerOverride ?? base.currentOwner,
+    responsibility: o.responsibilityOverride ?? base.responsibility,
+    resolutionProposal: o.resolutionProposalOverride ?? base.resolutionProposal,
+    institution: base.institution
+      ? {
+          ...base.institution,
+          currentActionOwner: o.ownerOverride ?? base.institution.currentActionOwner,
+          caseOfficer: o.caseOfficerOverride ?? base.institution.caseOfficer,
+          escalationLevel: o.escalationLevelOverride ?? base.institution.escalationLevel,
+        }
+      : base.institution,
     resolution: base.resolution
       ? {
           ...base.resolution,
@@ -186,6 +211,84 @@ export function reopenCase(ticket: string, reason: string, actor = "Bappebti") {
   });
 }
 
+/** Derives the same fallback escalation level formula used by getInstitution() in workflow-config.ts, so a manual priority change is immediately reflected even on cases whose institution structure was pre-authored in the seed data. */
+function deriveEscalationLevel(owner: OwnerType, severity: Severity, slaStatus: SlaStatus): EscalationLevel {
+  return owner === "Bappebti" ? (severity === "Kritis" ? 3 : 2) : slaStatus === "Lewat SLA" ? 1 : 0;
+}
+
+export function setSeverity(
+  ticket: string,
+  severity: Severity,
+  context: { currentOwner: OwnerType; slaStatus: SlaStatus },
+  actor = "Bappebti"
+) {
+  mutate(ticket, (o) => {
+    o.severityOverride = severity;
+    o.escalationLevelOverride = deriveEscalationLevel(context.currentOwner, severity, context.slaStatus);
+    o.timelineAdditions.push({
+      datetime: nowDateTimeID(),
+      actor,
+      role: "Bappebti",
+      action: "Prioritas kasus diperbarui",
+      note: `Prioritas diubah menjadi ${severity}.`,
+      status: "info",
+      visibility: "internal",
+    });
+  });
+}
+
+/**
+ * Reassigns who currently owns/handles a case. Used both by the internal
+ * "Alihkan PIC" action on the Bappebti case-detail page (newOwner can be
+ * Bappebti staff, a platform, a bursa or a kliring) and by the Platform/
+ * Ekosistem "Eskalasi ke Bappebti" buttons (newOwner is always "Bappebti").
+ */
+export function reassignOwner(
+  ticket: string,
+  newOwner: OwnerType,
+  reason: string,
+  actor: string,
+  actorRole: string,
+  context: { severity: Severity; slaStatus: SlaStatus },
+  caseOfficer?: string
+) {
+  const responsibility: Responsibility =
+    newOwner === "Bappebti" ? "BAPPEBTI OWNED" : newOwner === "Pelapor" ? "WAITING PUBLIC" : "MEMBER ASSIGNED";
+  mutate(ticket, (o) => {
+    o.ownerOverride = newOwner;
+    o.responsibilityOverride = responsibility;
+    o.escalationLevelOverride = deriveEscalationLevel(newOwner, context.severity, context.slaStatus);
+    if (caseOfficer) o.caseOfficerOverride = caseOfficer;
+    o.timelineAdditions.push({
+      datetime: nowDateTimeID(),
+      actor,
+      role: actorRole,
+      action: caseOfficer ? "Penanggung jawab (PIC) dialihkan" : "Kasus dieskalasi ke Bappebti",
+      note: reason,
+      status: "warning",
+      visibility: "internal",
+    });
+  });
+}
+
+export function proposeResolution(ticket: string, proposalText: string, actor: string, actorRole: string) {
+  mutate(ticket, (o) => {
+    o.resolutionProposalOverride = proposalText;
+    o.statusOverride = "Resolusi Diajukan";
+    o.workflowStateOverride = "PROPOSED_RESOLUTION";
+    o.publicStatusOverride = "Solusi Diajukan";
+    o.timelineAdditions.push({
+      datetime: nowDateTimeID(),
+      actor,
+      role: actorRole,
+      action: "Usulan resolusi diajukan",
+      note: proposalText,
+      status: "info",
+      visibility: "public",
+    });
+  });
+}
+
 export function resetDemoData() {
   try {
     window.localStorage.removeItem(STORAGE_KEY);
@@ -204,6 +307,13 @@ export function useCaseData(base: ComplaintCase | undefined): ComplaintCase | un
   const version = React.useSyncExternalStore(subscribe, getVersion, getVersion);
   // eslint-disable-next-line react-hooks/exhaustive-deps -- version isn't read in the body, it only forces recomputation when the store changes
   return React.useMemo(() => getMergedCase(base), [base, version]);
+}
+
+/** Same idea as useCaseData but for a list of cases, e.g. a portal's case queue table. */
+export function useMergedCases(bases: ComplaintCase[]): ComplaintCase[] {
+  const version = React.useSyncExternalStore(subscribe, getVersion, getVersion);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- version isn't read in the body, it only forces recomputation when the store changes
+  return React.useMemo(() => bases.map((b) => getMergedCase(b)!), [bases, version]);
 }
 
 // --- Notifications read state ---
