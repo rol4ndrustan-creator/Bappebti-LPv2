@@ -11,7 +11,7 @@ import { usePublikAuth } from "@/lib/publik-auth";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = usePublikAuth();
+  const { login, loginAsDemo } = usePublikAuth();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -77,6 +77,27 @@ export default function LoginPage() {
                 Masuk
               </Button>
             </form>
+
+            <div className="flex items-center gap-2 my-4">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-[11px] text-muted">atau</span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                loginAsDemo();
+                router.push("/publik/dashboard");
+              }}
+            >
+              Lanjutkan sebagai Demo
+            </Button>
+            <p className="text-center text-[11px] text-muted mt-2">
+              Masuk langsung dengan akun contoh, tanpa perlu mendaftar — untuk keperluan demonstrasi.
+            </p>
           </CardContent>
         </Card>
 

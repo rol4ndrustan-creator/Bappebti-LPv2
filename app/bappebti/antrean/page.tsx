@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { PageHeader } from "@/components/shared/page-header";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -77,9 +77,21 @@ export default function DaftarPengaduanPage() {
   );
 }
 
+const TAB_HEADER: Record<string, { title: string; description: string }> = {
+  semua: {
+    title: "Daftar Pengaduan",
+    description: "Daftar seluruh kasus pengaduan yang dapat difilter berdasarkan tanggung jawab, prioritas, dan status SLA.",
+  },
+  bappebti: {
+    title: "Penanganan Bappebti",
+    description: "Kasus yang sedang ditangani langsung oleh Bappebti sebagai penanggung jawab saat ini.",
+  },
+};
+
 function DaftarPengaduanContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const initialTab = searchParams.get("tab") ?? "semua";
+  const activeTab = searchParams.get("tab") ?? "semua";
   const cases = useCasesData(CASES);
 
   const all = cases;
@@ -88,14 +100,16 @@ function DaftarPengaduanContent() {
   const waitingPublic = cases.filter((c) => c.responsibility === "WAITING PUBLIC");
   const overdue = cases.filter((c) => c.slaStatus === "Lewat SLA");
 
+  const header = TAB_HEADER[activeTab] ?? TAB_HEADER.semua;
+
   return (
     <div>
-      <PageHeader
-        title="Daftar Pengaduan"
-        description="Daftar seluruh kasus pengaduan yang dapat difilter berdasarkan tanggung jawab, prioritas, dan status SLA."
-      />
+      <PageHeader title={header.title} description={header.description} />
 
-      <Tabs defaultValue={initialTab}>
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => router.push(value === "semua" ? "/bappebti/antrean" : `/bappebti/antrean?tab=${value}`)}
+      >
         <TabsList>
           <TabsTrigger value="semua">Semua Kasus ({all.length})</TabsTrigger>
           <TabsTrigger value="bappebti">Dalam Penanganan Bappebti ({bappebtiOwned.length})</TabsTrigger>

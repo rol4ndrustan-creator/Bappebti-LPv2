@@ -28,10 +28,23 @@ interface PublikAuthContextValue {
   ready: boolean;
   register: (account: PublikAccount) => void;
   login: (identifier: string, password: string) => boolean;
+  loginAsDemo: () => void;
   logout: () => void;
 }
 
 const PublikAuthContext = React.createContext<PublikAuthContextValue | null>(null);
+
+/** Seeded account used by the "Lanjutkan sebagai Demo" shortcut on the login page, so reviewers don't have to register first. */
+const DEMO_ACCOUNT: PublikAccount = {
+  nama: "Andra Wicaksono",
+  nomorIdentitas: "3175012345670001",
+  email: "andra.wicaksono@email.com",
+  hp: "081234567890",
+  provinsi: "DKI Jakarta",
+  kota: "Jakarta Selatan",
+  platformUserId: "USR-1029384",
+  password: "demo1234",
+};
 
 function readAccount(): PublikAccount | null {
   try {
@@ -88,6 +101,10 @@ export function PublikAuthProvider({ children }: { children: React.ReactNode }) 
     return true;
   }, []);
 
+  const loginAsDemo = React.useCallback(() => {
+    register(DEMO_ACCOUNT);
+  }, [register]);
+
   const logout = React.useCallback(() => {
     setIsAuthenticated(false);
     try {
@@ -98,8 +115,8 @@ export function PublikAuthProvider({ children }: { children: React.ReactNode }) 
   }, []);
 
   const value = React.useMemo(
-    () => ({ account, isAuthenticated, ready, register, login, logout }),
-    [account, isAuthenticated, ready, register, login, logout]
+    () => ({ account, isAuthenticated, ready, register, login, loginAsDemo, logout }),
+    [account, isAuthenticated, ready, register, login, loginAsDemo, logout]
   );
 
   return <PublikAuthContext.Provider value={value}>{children}</PublikAuthContext.Provider>;
