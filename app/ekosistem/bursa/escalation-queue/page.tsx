@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge, SlaBadge } from "@/components/shared/badges";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,14 +8,20 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/shared/toast-provider";
+import { useDemoSession } from "@/lib/demo-session";
+import { useCasesData, addTimelineEvent, addInternalNote, setCurrentOwner } from "@/lib/mock-service/store";
 import { CASES, ACTIVE_BURSA } from "@/lib/mock-data";
-
-const escalationCases = CASES.filter(
-  (c) => c.currentOwner === "Bursa" && c.bursaEntity === ACTIVE_BURSA
-);
 
 export default function EscalationQueuePage() {
   const { showToast } = useToast();
+  const { user } = useDemoSession();
+  const baseCases = useMemo(
+    () => CASES.filter((c) => c.currentOwner === "Bursa" && c.bursaEntity === ACTIVE_BURSA),
+    []
+  );
+  const escalationCases = useCasesData(baseCases).filter(
+    (c) => c.currentOwner === "Bursa" && c.bursaEntity === ACTIVE_BURSA
+  );
   const [expanded, setExpanded] = useState<string | null>(null);
   const [followUpOpen, setFollowUpOpen] = useState<string | null>(null);
   const [followUpText, setFollowUpText] = useState("");
@@ -88,7 +94,18 @@ export default function EscalationQueuePage() {
                               variant="secondary"
                               size="sm"
                               disabled={!settlementRelated}
-                              onClick={() => showToast(`Kasus ${c.ticket} ditugaskan ke Kliring untuk pengecekan settlement`)}
+                              onClick={() => {
+                                setCurrentOwner(c.ticket, "Kliring");
+                                addTimelineEvent(c.ticket, {
+                                  actor: user.name,
+                                  role: "Bursa",
+                                  action: "Ditugaskan ke Kliring",
+                                  note: `${ACTIVE_BURSA} menugaskan kasus ke kliring untuk pengecekan settlement.`,
+                                  status: "warning",
+                                  visibility: "internal",
+                                });
+                                showToast(`Kasus ${c.ticket} ditugaskan ke Kliring untuk pengecekan settlement`);
+                              }}
                             >
                               Tugaskan ke Kliring
                             </Button>
@@ -96,7 +113,18 @@ export default function EscalationQueuePage() {
                           <Button
                             variant="destructive"
                             size="sm"
-                            onClick={() => showToast("Kasus dieskalasi ke Bappebti sebagai BAPPEBTI OWNED")}
+                            onClick={() => {
+                              setCurrentOwner(c.ticket, "Bappebti");
+                              addTimelineEvent(c.ticket, {
+                                actor: user.name,
+                                role: "Bursa",
+                                action: "Kasus dieskalasi ke Bappebti",
+                                note: `Dieskalasikan oleh ${ACTIVE_BURSA} ke Bappebti untuk supervisi langsung.`,
+                                status: "warning",
+                                visibility: "internal",
+                              });
+                              showToast("Kasus dieskalasi ke Bappebti sebagai BAPPEBTI OWNED");
+                            }}
                           >
                             Eskalasi ke Bappebti
                           </Button>
@@ -143,7 +171,16 @@ export default function EscalationQueuePage() {
                             <div className="flex gap-2">
                               <Button
                                 size="sm"
+                                disabled={!followUpText.trim()}
                                 onClick={() => {
+                                  addTimelineEvent(c.ticket, {
+                                    actor: user.name,
+                                    role: "Bursa",
+                                    action: "Tindak lanjut ditanyakan ke platform",
+                                    note: followUpText.trim(),
+                                    status: "info",
+                                    visibility: "internal",
+                                  });
                                   showToast(`Pertanyaan tindak lanjut terkirim ke ${c.platform}`);
                                   setFollowUpText("");
                                   setFollowUpOpen(null);
@@ -173,7 +210,15 @@ export default function EscalationQueuePage() {
                             <div className="flex gap-2">
                               <Button
                                 size="sm"
+                                disabled={!noteText.trim()}
                                 onClick={() => {
+                                  addInternalNote(c.ticket, {
+                                    author: user.name,
+                                    role: "Bursa Case Officer",
+                                    institution: ACTIVE_BURSA,
+                                    classification: "Supervisi",
+                                    text: noteText.trim(),
+                                  });
                                   showToast("Catatan supervisi disimpan");
                                   setNoteText("");
                                   setNoteOpen(null);

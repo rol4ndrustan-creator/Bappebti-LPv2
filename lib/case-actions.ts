@@ -5,6 +5,8 @@
 
 import { ComplaintCase, InternalWorkflowState, OwnerType, TimelineEvent } from "./types";
 import { WORKFLOW_STATES, deriveWorkflowState } from "./workflow-config";
+import { BURSA_LIST, KLIRING_LIST, PLATFORM_LIST } from "./mock-data";
+import { DEMO_USERS } from "./permissions";
 import {
   addTimelineEvent,
   closeCase,
@@ -37,6 +39,8 @@ export interface ActionFieldSpec {
   type: ActionFieldType;
   required: boolean;
   options?: string[];
+  /** Grouped <optgroup> options for "select" fields, e.g. PIC candidates split by Internal Bappebti / Platform / Bursa / Kliring. Takes precedence over `options` when present. */
+  optionGroups?: { label: string; options: string[] }[];
   placeholder?: string;
   defaultValue?: (c: ComplaintCase) => string;
 }
@@ -59,6 +63,14 @@ export interface CaseActionDefinition {
 }
 
 export const DEADLINE_OPTIONS = ["1 hari kerja", "3 hari kerja", "5 hari kerja", "7 hari kerja"];
+
+/** PIC candidates for "Alihkan PIC" / "Buka Kembali Pengaduan": internal Bappebti staff, or hand the case back to the platform / bursa / kliring ecosystem. */
+const PIC_OPTION_GROUPS = [
+  { label: "Internal Bappebti", options: DEMO_USERS.filter((u) => u.role.startsWith("BAPPEBTI_")).map((u) => u.name) },
+  { label: "Platform", options: PLATFORM_LIST.filter((p) => p !== "Tidak tahu / belum terdaftar") },
+  { label: "Bursa", options: BURSA_LIST },
+  { label: "Kliring", options: KLIRING_LIST },
+];
 
 export const CLOSE_ADMINISTRATIVE_REASONS = [
   "Duplikat",
@@ -185,7 +197,7 @@ export const CASE_ACTIONS: Record<CaseActionId, CaseActionDefinition> = {
     body: () => "Petugas atau unit yang bertanggung jawab menangani kasus ini di internal Bappebti akan diganti.",
     impact: () => ({ status: "Tidak berubah", owner: "PIC baru", sla: "Tidak berubah" }),
     fields: [
-      { id: "newPic", label: "PIC baru", type: "text", required: true },
+      { id: "newPic", label: "PIC baru", type: "select", required: true, optionGroups: PIC_OPTION_GROUPS },
       { id: "reason", label: "Alasan pengalihan", type: "textarea", required: true },
     ],
     confirmLabel: "Alihkan PIC",
@@ -212,7 +224,7 @@ export const CASE_ACTIONS: Record<CaseActionId, CaseActionDefinition> = {
     impact: () => ({ status: "Dibuka Kembali", owner: "Bappebti", sla: "Ditentukan ulang" }),
     fields: [
       { id: "reason", label: "Alasan pembukaan kembali", type: "textarea", required: true },
-      { id: "newPic", label: "PIC baru", type: "text", required: true },
+      { id: "newPic", label: "PIC baru", type: "select", required: true, optionGroups: PIC_OPTION_GROUPS },
       { id: "newSla", label: "SLA baru", type: "select", required: true, options: DEADLINE_OPTIONS },
     ],
     confirmLabel: "Buka Kembali Pengaduan",
@@ -291,6 +303,15 @@ export function getContextualActions(c: ComplaintCase): ContextualActions {
     secondary: visible.slice(1, 4),
     overflow,
   };
+}
+
+/** Infers the case's new owner type from a selected PIC name (Section: Alihkan PIC / Buka Kembali Pengaduan). */
+function resolvePicOwner(name: string): OwnerType | null {
+  if (DEMO_USERS.some((u) => u.role.startsWith("BAPPEBTI_") && u.name === name)) return "Bappebti";
+  if (PLATFORM_LIST.includes(name)) return "Platform";
+  if (BURSA_LIST.includes(name)) return "Bursa";
+  if (KLIRING_LIST.includes(name)) return "Kliring";
+  return null;
 }
 
 interface CaseActionExecutionContext {
@@ -398,8 +419,11 @@ export function executeCaseAction(actionId: CaseActionId, { ticket, actor, value
         visibility: "internal",
       });
       break;
-    case "reassign-pic":
-      setCaseOfficer(ticket, values.newPic?.trim() || "-");
+    case "reassign-pic": {
+      const newPic = values.newPic?.trim() || "-";
+      const newOwner = resolvePicOwner(newPic);
+      if (newOwner) setCurrentOwner(ticket, newOwner);
+      setCaseOfficer(ticket, newPic);
       addTimelineEvent(ticket, {
         actor,
         role: "Bappebti",
@@ -409,6 +433,7 @@ export function executeCaseAction(actionId: CaseActionId, { ticket, actor, value
         visibility: "internal",
       });
       break;
+    }
     case "close-administrative":
       transitionTo(ticket, "CLOSED_ADMINISTRATIVE", {
         actor,
@@ -419,9 +444,15 @@ export function executeCaseAction(actionId: CaseActionId, { ticket, actor, value
         visibility: "public",
       });
       break;
-    case "reopen-case":
-      if (values.newPic?.trim()) setCaseOfficer(ticket, values.newPic.trim());
+    case "reopen-case": {
+      const newPic = values.newPic?.trim();
+      if (newPic) {
+        setCaseOfficer(ticket, newPic);
+        const newOwner = resolvePicOwner(newPic);
+        if (newOwner) setCurrentOwner(ticket, newOwner);
+      }
       reopenCase(ticket, note, actor);
       break;
+    }
   }
 }

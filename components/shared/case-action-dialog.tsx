@@ -117,11 +117,21 @@ export function CaseActionDialog({
                   onChange={(e) => setValues((prev) => ({ ...prev, [f.id]: e.target.value }))}
                 >
                   <option value="">Pilih...</option>
-                  {f.options?.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
+                  {f.optionGroups
+                    ? f.optionGroups.map((group) => (
+                        <optgroup key={group.label} label={group.label}>
+                          {group.options.map((opt) => (
+                            <option key={opt} value={opt}>
+                              {opt}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))
+                    : f.options?.map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
                 </Select>
               )}
             </div>

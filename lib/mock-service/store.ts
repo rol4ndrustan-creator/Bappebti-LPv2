@@ -11,18 +11,22 @@
 
 import * as React from "react";
 import {
+  CaseStatus,
   ClarificationMessage,
   ComplaintCase,
+  EscalationLevel,
   InternalNote,
   InternalWorkflowState,
   OwnerType,
   PublicStatus,
   ReporterResolutionDecision,
   Severity,
+  SlaStatus,
   TimelineEvent,
 } from "../types";
 import { nowDateTimeID } from "../format";
 import { getInstitution } from "../workflow-config";
+import { getCaseByTicket } from "../mock-data";
 import { subscribe, emitChange, getVersion } from "./event-bus";
 
 const STORAGE_KEY = "bappebti-demo-overrides";
@@ -41,6 +45,14 @@ interface CaseOverride {
   severityOverride?: Severity;
   currentOwnerOverride?: OwnerType;
   caseOfficerOverride?: string;
+  escalationLevelOverride?: EscalationLevel;
+  statusOverride?: CaseStatus;
+  resolutionProposalOverride?: string;
+}
+
+/** Same fallback formula as getInstitution() in workflow-config.ts, kept in sync so a live owner/severity change is reflected immediately even on cases whose institution structure was pre-authored in the seed data. */
+function deriveEscalationLevel(owner: OwnerType, severity: Severity, slaStatus: SlaStatus): EscalationLevel {
+  return owner === "Bappebti" ? (severity === "Kritis" ? 3 : 2) : slaStatus === "Lewat SLA" ? 1 : 0;
 }
 
 type OverrideMap = Record<string, CaseOverride>;
@@ -87,12 +99,18 @@ export function getMergedCase(base: ComplaintCase | undefined): ComplaintCase | 
     internalNotes: [...(base.internalNotes ?? []), ...o.internalNoteAdditions],
     workflowState: o.workflowStateOverride ?? base.workflowState,
     publicStatus: o.publicStatusOverride ?? base.publicStatus,
-    status: o.closed ? "Selesai" : base.status,
+    status: o.closed ? "Selesai" : o.statusOverride ?? base.status,
     severity: o.severityOverride ?? base.severity,
     currentOwner: o.currentOwnerOverride ?? base.currentOwner,
-    institution: o.caseOfficerOverride
-      ? { ...getInstitution(base), caseOfficer: o.caseOfficerOverride }
-      : base.institution,
+    resolutionProposal: o.resolutionProposalOverride ?? base.resolutionProposal,
+    institution:
+      o.caseOfficerOverride || o.escalationLevelOverride !== undefined
+        ? {
+            ...getInstitution(base),
+            caseOfficer: o.caseOfficerOverride ?? getInstitution(base).caseOfficer,
+            escalationLevel: o.escalationLevelOverride ?? getInstitution(base).escalationLevel,
+          }
+        : base.institution,
     resolution: base.resolution
       ? {
           ...base.resolution,
@@ -156,18 +174,44 @@ export function setWorkflowState(
 export function setSeverity(ticket: string, severity: Severity) {
   mutate(ticket, (o) => {
     o.severityOverride = severity;
+    const base = getCaseByTicket(ticket);
+    if (base) {
+      const owner = o.currentOwnerOverride ?? base.currentOwner;
+      o.escalationLevelOverride = deriveEscalationLevel(owner, severity, base.slaStatus);
+    }
   });
 }
 
 export function setCurrentOwner(ticket: string, owner: OwnerType) {
   mutate(ticket, (o) => {
     o.currentOwnerOverride = owner;
+    const base = getCaseByTicket(ticket);
+    if (base) {
+      const severity = o.severityOverride ?? base.severity;
+      o.escalationLevelOverride = deriveEscalationLevel(owner, severity, base.slaStatus);
+    }
   });
 }
 
 export function setCaseOfficer(ticket: string, name: string) {
   mutate(ticket, (o) => {
     o.caseOfficerOverride = name;
+  });
+}
+
+export function proposeResolution(ticket: string, proposalText: string, actor: string, actorRole: string) {
+  mutate(ticket, (o) => {
+    o.resolutionProposalOverride = proposalText;
+    o.statusOverride = "Resolusi Diajukan";
+    o.timelineAdditions.push({
+      datetime: nowDateTimeID(),
+      actor,
+      role: actorRole,
+      action: "Usulan resolusi diajukan",
+      note: proposalText,
+      status: "info",
+      visibility: "public",
+    });
   });
 }
 
@@ -221,6 +265,7 @@ export function resetDemoData() {
   try {
     window.localStorage.removeItem(STORAGE_KEY);
     window.localStorage.removeItem(NOTIF_STORAGE_KEY);
+    window.localStorage.removeItem("bappebti-demo-supervisory-actions");
   } catch {
     // ignore
   }

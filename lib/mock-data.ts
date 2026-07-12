@@ -121,6 +121,9 @@ export const ACTIVE_PLATFORM = "PT Bursa Digital Nusantara";
 export const ACTIVE_BURSA = "Bursa Berjangka Jakarta"; // oversees Monex & Rifan
 export const ACTIVE_KLIRING = "Kliring Berjangka Indonesia"; // serves Bursa Digital Nusantara, Monex, Rifan
 
+export const BURSA_LIST = Array.from(new Set(Object.values(ROUTING_MAP).map((r) => r.bursa)));
+export const KLIRING_LIST = Array.from(new Set(Object.values(ROUTING_MAP).map((r) => r.kliring)));
+
 export const CASES: ComplaintCase[] = [
   {
     ticket: "BPP-2026-000184",

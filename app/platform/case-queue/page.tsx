@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge, SlaBadge } from "@/components/shared/badges";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { CASES, formatCurrency } from "@/lib/mock-data";
-import { ComplaintCase, CaseStatus } from "@/lib/types";
+import { CaseStatus } from "@/lib/types";
 import { useToast } from "@/components/shared/toast-provider";
+import { useDemoSession } from "@/lib/demo-session";
+import { useCasesData, addTimelineEvent, setWorkflowState, setCurrentOwner, proposeResolution } from "@/lib/mock-service/store";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 function actionRequired(status: CaseStatus): string {
@@ -34,9 +36,9 @@ function actionRequired(status: CaseStatus): string {
 
 export default function CaseQueuePage() {
   const { showToast } = useToast();
-  const [cases, setCases] = useState<ComplaintCase[]>(
-    CASES.filter((c) => c.currentOwner === "Platform")
-  );
+  const { user } = useDemoSession();
+  const baseCases = useMemo(() => CASES.filter((c) => c.currentOwner === "Platform"), []);
+  const cases = useCasesData(baseCases).filter((c) => c.currentOwner === "Platform");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [noteText, setNoteText] = useState("");
   const [clarificationText, setClarificationText] = useState("");
@@ -54,6 +56,14 @@ export default function CaseQueuePage() {
       showToast("Catatan investigasi tidak boleh kosong.");
       return;
     }
+    addTimelineEvent(ticket, {
+      actor: user.name,
+      role: "Platform",
+      action: "Catatan investigasi ditambahkan",
+      note: noteText.trim(),
+      status: "info",
+      visibility: "internal",
+    });
     showToast(`Catatan investigasi untuk ${ticket} berhasil disimpan.`);
     setNoteText("");
   }
@@ -63,14 +73,27 @@ export default function CaseQueuePage() {
       showToast("Pesan klarifikasi tidak boleh kosong.");
       return;
     }
+    setWorkflowState(ticket, "WAITING_REPORTER_INFORMATION", "Menunggu Data dari Anda", {
+      actor: user.name,
+      role: "Platform",
+      action: "Permintaan klarifikasi dikirim ke pelapor",
+      note: clarificationText.trim(),
+      status: "warning",
+      visibility: "public",
+    });
     showToast(`Permintaan klarifikasi untuk ${ticket} telah dikirim ke pelapor.`);
     setClarificationText("");
-    setCases((prev) =>
-      prev.map((c) => (c.ticket === ticket ? { ...c, status: "Menunggu Klarifikasi" } : c))
-    );
   }
 
   function handleUploadEvidence(ticket: string) {
+    addTimelineEvent(ticket, {
+      actor: user.name,
+      role: "Platform",
+      action: "Bukti penanganan diunggah",
+      note: "Bukti penanganan diunggah oleh platform (demo).",
+      status: "info",
+      visibility: "public",
+    });
     showToast(`Bukti penanganan untuk ${ticket} berhasil diunggah (demo).`);
   }
 
@@ -79,22 +102,22 @@ export default function CaseQueuePage() {
       showToast("Usulan resolusi tidak boleh kosong.");
       return;
     }
+    proposeResolution(ticket, resolutionText.trim(), user.name, "Platform");
     showToast(`Usulan resolusi untuk ${ticket} telah diajukan kepada pelapor.`);
-    setCases((prev) =>
-      prev.map((c) =>
-        c.ticket === ticket
-          ? { ...c, status: "Resolusi Diajukan", resolutionProposal: resolutionText }
-          : c
-      )
-    );
     setResolutionText("");
   }
 
   function handleEscalate(ticket: string) {
+    setCurrentOwner(ticket, "Bappebti");
+    addTimelineEvent(ticket, {
+      actor: user.name,
+      role: "Platform",
+      action: "Kasus dieskalasi ke Bappebti",
+      note: "Kasus dieskalasi oleh platform ke Bappebti untuk supervisi lebih lanjut.",
+      status: "warning",
+      visibility: "internal",
+    });
     showToast("Kasus dieskalasi ke Bappebti");
-    setCases((prev) =>
-      prev.map((c) => (c.ticket === ticket ? { ...c, currentOwner: "Bappebti" } : c))
-    );
   }
 
   return (

@@ -8,18 +8,19 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/shared/toast-provider";
+import { useDemoSession } from "@/lib/demo-session";
+import { useCasesData, addTimelineEvent, setCurrentOwner } from "@/lib/mock-service/store";
 import { CASES, formatCurrency } from "@/lib/mock-data";
-import { ComplaintCase } from "@/lib/types";
 
 const initialCases = CASES.filter((c) => c.category === "Settlement / Kliring");
 
 export default function SettlementQueuePage() {
   const { showToast } = useToast();
-  const [cases] = useState<ComplaintCase[]>(initialCases);
+  const { user } = useDemoSession();
+  const cases = useCasesData(initialCases);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [requestOpen, setRequestOpen] = useState<string | null>(null);
   const [requestText, setRequestText] = useState("");
-  const [returned, setReturned] = useState<Record<string, boolean>>({});
 
   function toggleExpand(ticket: string) {
     setExpanded((prev) => (prev === ticket ? null : ticket));
@@ -60,7 +61,7 @@ export default function SettlementQueuePage() {
               {cases.map((c) => {
                 const isExpanded = expanded === c.ticket;
                 const isRequest = requestOpen === c.ticket;
-                const isReturned = !!returned[c.ticket];
+                const isReturned = c.currentOwner === "Platform";
                 return (
                   <>
                     <TableRow key={c.ticket}>
@@ -85,7 +86,17 @@ export default function SettlementQueuePage() {
                           <Button
                             variant="secondary"
                             size="sm"
-                            onClick={() => showToast("Referensi settlement dikonfirmasi")}
+                            onClick={() => {
+                              addTimelineEvent(c.ticket, {
+                                actor: user.name,
+                                role: "Kliring",
+                                action: "Referensi settlement dikonfirmasi",
+                                note: `Referensi settlement ${c.transactionRef ?? "-"} dikonfirmasi oleh Kliring.`,
+                                status: "success",
+                                visibility: "internal",
+                              });
+                              showToast("Referensi settlement dikonfirmasi");
+                            }}
                           >
                             Konfirmasi Referensi
                           </Button>
@@ -102,7 +113,17 @@ export default function SettlementQueuePage() {
                           <Button
                             variant="secondary"
                             size="sm"
-                            onClick={() => showToast(`Hasil settlement untuk ${c.ticket} berhasil diunggah (demo)`)}
+                            onClick={() => {
+                              addTimelineEvent(c.ticket, {
+                                actor: user.name,
+                                role: "Kliring",
+                                action: "Hasil settlement diunggah",
+                                note: "Hasil settlement diunggah oleh Kliring (demo).",
+                                status: "info",
+                                visibility: "public",
+                              });
+                              showToast(`Hasil settlement untuk ${c.ticket} berhasil diunggah (demo)`);
+                            }}
                           >
                             Unggah Hasil Settlement
                           </Button>
@@ -110,8 +131,16 @@ export default function SettlementQueuePage() {
                             variant="outline"
                             size="sm"
                             onClick={() => {
+                              setCurrentOwner(c.ticket, "Platform");
+                              addTimelineEvent(c.ticket, {
+                                actor: user.name,
+                                role: "Kliring",
+                                action: "Kasus dikembalikan ke Platform",
+                                note: "Kliring mengembalikan kasus ke platform untuk tindak lanjut.",
+                                status: "warning",
+                                visibility: "internal",
+                              });
                               showToast(`Kasus ${c.ticket} dikembalikan ke Platform`);
-                              setReturned((prev) => ({ ...prev, [c.ticket]: true }));
                             }}
                           >
                             Kembalikan ke Platform
@@ -119,7 +148,18 @@ export default function SettlementQueuePage() {
                           <Button
                             variant="destructive"
                             size="sm"
-                            onClick={() => showToast(`Kasus ${c.ticket} dieskalasi ke Bappebti`)}
+                            onClick={() => {
+                              setCurrentOwner(c.ticket, "Bappebti");
+                              addTimelineEvent(c.ticket, {
+                                actor: user.name,
+                                role: "Kliring",
+                                action: "Kasus dieskalasi ke Bappebti",
+                                note: "Kliring mengeskalasi kasus ke Bappebti untuk supervisi langsung.",
+                                status: "warning",
+                                visibility: "internal",
+                              });
+                              showToast(`Kasus ${c.ticket} dieskalasi ke Bappebti`);
+                            }}
                           >
                             Eskalasi ke Bappebti
                           </Button>
@@ -168,6 +208,14 @@ export default function SettlementQueuePage() {
                                     showToast("Permintaan data tidak boleh kosong.");
                                     return;
                                   }
+                                  addTimelineEvent(c.ticket, {
+                                    actor: user.name,
+                                    role: "Kliring",
+                                    action: "Permintaan data dikirim ke platform",
+                                    note: requestText.trim(),
+                                    status: "warning",
+                                    visibility: "internal",
+                                  });
                                   showToast(`Permintaan data terkirim ke ${c.platform}`);
                                   setRequestText("");
                                   setRequestOpen(null);

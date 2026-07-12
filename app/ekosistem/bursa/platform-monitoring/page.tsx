@@ -9,7 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/shared/toast-provider";
+import { addSupervisoryAction } from "@/lib/mock-service/supervisory-store";
 import { MEMBERS, ACTIVE_BURSA } from "@/lib/mock-data";
+
+function todayLabel(): string {
+  return new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
+}
 
 const monitoredMembers = MEMBERS.filter((m) => m.bursa === ACTIVE_BURSA);
 
@@ -75,7 +80,17 @@ export default function PlatformMonitoringPage() {
                           <Button
                             variant="secondary"
                             size="sm"
-                            onClick={() => showToast(`Pengingat supervisi terkirim ke ${m.name}`)}
+                            onClick={() => {
+                              addSupervisoryAction({
+                                date: todayLabel(),
+                                platform: m.name,
+                                action: "Kirim pengingat supervisi",
+                                ticket: "-",
+                                due: "-",
+                                status: "Berjalan",
+                              });
+                              showToast(`Pengingat supervisi terkirim ke ${m.name}`);
+                            }}
                           >
                             Kirim Pengingat Supervisi
                           </Button>
@@ -128,7 +143,16 @@ export default function PlatformMonitoringPage() {
                             <div className="flex gap-2">
                               <Button
                                 size="sm"
+                                disabled={!explainText.trim()}
                                 onClick={() => {
+                                  addSupervisoryAction({
+                                    date: todayLabel(),
+                                    platform: m.name,
+                                    action: `Minta penjelasan: ${explainText.trim()}`,
+                                    ticket: "-",
+                                    due: "-",
+                                    status: "Menunggu Respon",
+                                  });
                                   showToast(`Permintaan penjelasan terkirim ke ${m.name}`);
                                   setExplainText("");
                                   setExplainOpen(null);

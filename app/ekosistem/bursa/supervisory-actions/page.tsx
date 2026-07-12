@@ -10,17 +10,15 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/shared/toast-provider";
+import {
+  SupervisoryActionEntry,
+  SupervisoryActionStatus,
+  addSupervisoryAction,
+  useSupervisoryActions,
+} from "@/lib/mock-service/supervisory-store";
 
-type ActionStatus = "Selesai" | "Menunggu Respon" | "Berjalan";
-
-interface SupervisoryAction {
-  date: string;
-  platform: string;
-  action: string;
-  ticket: string;
-  due: string;
-  status: ActionStatus;
-}
+type ActionStatus = SupervisoryActionStatus;
+type SupervisoryAction = SupervisoryActionEntry;
 
 const initialActions: SupervisoryAction[] = [
   { date: "15 Jun 2026", platform: "PT Monex Investindo Futures", action: "Kirim pengingat SLA", ticket: "BPP-2026-000187", due: "17 Jun 2026", status: "Berjalan" },
@@ -42,7 +40,7 @@ const tickets = ["BPP-2026-000187", "BPP-2026-000193"];
 
 export default function SupervisoryActionsPage() {
   const { showToast } = useToast();
-  const [actions, setActions] = useState<SupervisoryAction[]>(initialActions);
+  const actions = useSupervisoryActions(initialActions);
   const [platform, setPlatform] = useState(platforms[0]);
   const [ticket, setTicket] = useState(tickets[0]);
   const [action, setAction] = useState("");
@@ -54,10 +52,7 @@ export default function SupervisoryActionsPage() {
       return;
     }
     const today = new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
-    setActions((prev) => [
-      { date: today, platform, action, ticket, due, status: "Berjalan" },
-      ...prev,
-    ]);
+    addSupervisoryAction({ date: today, platform, action, ticket, due, status: "Berjalan" });
     showToast("Catatan tindakan supervisi disimpan");
     setAction("");
     setDue("");
