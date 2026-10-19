@@ -114,7 +114,7 @@ export default function ProfilPage() {
           </Card>
 
           {/* Ubah password */}
-          <Card>
+          <Card id="ubah-password" className="scroll-mt-20">
             <CardHeader>
               <CardTitle>Ubah Password</CardTitle>
               <CardDescription>Gunakan password yang kuat dan unik untuk keamanan akun Anda.</CardDescription>

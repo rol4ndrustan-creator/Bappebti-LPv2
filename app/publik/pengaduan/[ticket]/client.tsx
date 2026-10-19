@@ -19,7 +19,8 @@ import { useToast } from "@/components/shared/toast-provider";
 import { getCaseByTicket } from "@/lib/mock-data";
 import { formatCurrencyIDR } from "@/lib/format";
 import { useCaseData, addClarificationReply, respondToResolution } from "@/lib/mock-service/store";
-import { Printer } from "lucide-react";
+import { Printer, Info, Activity, MessageSquare, Paperclip, FileCheck2, FileText } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function PengaduanDetailClient({ ticket }: { ticket: string }) {
   const base = getCaseByTicket(ticket);
@@ -49,6 +50,7 @@ export default function PengaduanDetailClient({ ticket }: { ticket: string }) {
   }
 
   const publicTimeline = c.timeline.filter((e) => e.visibility !== "internal");
+  const solusiActionRequired = !!c.resolution && !c.resolution.reporterDecision;
 
   return (
     <div>
@@ -90,12 +92,27 @@ export default function PengaduanDetailClient({ ticket }: { ticket: string }) {
         <div className="lg:col-span-2">
           <Tabs value={tab} onValueChange={setTab}>
             <TabsList>
-              <TabsTrigger value="ringkasan">Ringkasan</TabsTrigger>
-              <TabsTrigger value="perkembangan">Perkembangan</TabsTrigger>
-              <TabsTrigger value="pesan">Pesan dan Klarifikasi</TabsTrigger>
-              <TabsTrigger value="bukti">Bukti</TabsTrigger>
-              <TabsTrigger value="solusi">Solusi</TabsTrigger>
-              <TabsTrigger value="informasi">Informasi Pengaduan</TabsTrigger>
+              <TabsTrigger value="ringkasan">
+                <Info className="size-3.5" /> Ringkasan
+              </TabsTrigger>
+              <TabsTrigger value="perkembangan">
+                <Activity className="size-3.5" /> Perkembangan
+              </TabsTrigger>
+              <TabsTrigger value="pesan">
+                <MessageSquare className="size-3.5" /> Pesan dan Klarifikasi
+              </TabsTrigger>
+              <TabsTrigger value="bukti">
+                <Paperclip className="size-3.5" /> Bukti
+              </TabsTrigger>
+              <TabsTrigger value="solusi" className={cn(solusiActionRequired && "data-[state=inactive]:text-amber")}>
+                <FileCheck2 className="size-3.5" /> Solusi
+                {solusiActionRequired && (
+                  <span className="ml-0.5 inline-flex size-1.5 rounded-full bg-amber" aria-label="Tindakan diperlukan" />
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="informasi">
+                <FileText className="size-3.5" /> Informasi Pengaduan
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="ringkasan">

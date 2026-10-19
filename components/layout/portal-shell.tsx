@@ -1,14 +1,23 @@
 "use client";
 
-import { Suspense, useMemo } from "react";
+import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface SidebarItem {
   label: string;
   href: string;
   icon: React.ReactNode;
+  /**
+   * Nested sub-links rendered under a collapsible group instead of a direct
+   * link. When present, the item renders as an expand/collapse toggle (not
+   * a link itself) — `href` is only used to decide whether the group's
+   * section is currently active (pathname === href or a sub-path of it),
+   * so the group auto-expands and highlights while the user is in it.
+   */
+  children?: SidebarItem[];
 }
 
 // Only the single most-specific matching item should be highlighted — a
@@ -28,6 +37,10 @@ function computeActiveHref(
   if (!pathname) return null;
   let best: string | null = null;
   for (const item of sidebarItems) {
+    // Groups manage their own active/expanded state (see SidebarGroup) —
+    // they're excluded here so they don't compete with regular items for
+    // the single "best match" this function returns.
+    if (item.children && item.children.length > 0) continue;
     const [itemPath, itemQuery] = item.href.split("?");
     const pathMatches = pathname === itemPath || pathname.startsWith(itemPath + "/");
     if (!pathMatches) continue;
@@ -42,10 +55,60 @@ function computeActiveHref(
   return best;
 }
 
-function SidebarLinks({ sidebarItems, activeHref }: { sidebarItems: SidebarItem[]; activeHref: string | null }) {
+function SidebarGroup({ item, pathname }: { item: SidebarItem; pathname: string | null }) {
+  const sectionActive = !!pathname && (pathname === item.href || pathname.startsWith(item.href + "/"));
+  // Expanded by default whenever navigation is inside this section; a
+  // manual toggle (open/close click) overrides that default from then on.
+  const [manualOpen, setManualOpen] = useState<boolean | null>(null);
+  const open = manualOpen ?? sectionActive;
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setManualOpen(!open)}
+        aria-expanded={open}
+        className={cn(
+          "flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors",
+          sectionActive ? "bg-navy/10 text-navy" : "text-foreground hover:bg-muted-bg"
+        )}
+      >
+        {item.icon}
+        <span className="flex-1 text-left">{item.label}</span>
+        <ChevronDown className={cn("size-3.5 shrink-0 transition-transform", open && "rotate-180")} />
+      </button>
+      {open && (
+        <div className="ml-4 mt-0.5 mb-0.5 flex flex-col gap-0.5 border-l border-border pl-3">
+          {item.children!.map((child) => (
+            <Link
+              key={child.href}
+              href={child.href}
+              className="rounded-md px-2 py-1.5 text-[11.5px] font-medium text-foreground/80 transition-colors hover:bg-muted-bg hover:text-navy"
+            >
+              {child.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SidebarLinks({
+  sidebarItems,
+  activeHref,
+  pathname,
+}: {
+  sidebarItems: SidebarItem[];
+  activeHref: string | null;
+  pathname?: string | null;
+}) {
   return (
     <nav className="flex flex-col gap-0.5 p-2">
       {sidebarItems.map((item) => {
+        if (item.children && item.children.length > 0) {
+          return <SidebarGroup key={item.href} item={item} pathname={pathname ?? null} />;
+        }
         const active = item.href === activeHref;
         return (
           <Link
@@ -72,7 +135,7 @@ function SidebarLinksWithQuery({ sidebarItems, pathname }: { sidebarItems: Sideb
     () => computeActiveHref(sidebarItems, pathname, searchParams),
     [sidebarItems, pathname, searchParams]
   );
-  return <SidebarLinks sidebarItems={sidebarItems} activeHref={activeHref} />;
+  return <SidebarLinks sidebarItems={sidebarItems} activeHref={activeHref} pathname={pathname} />;
 }
 
 export function PortalShell({
@@ -81,6 +144,7 @@ export function PortalShell({
   sidebarItems,
   children,
   extraHeader,
+  asideFooter,
   portal,
 }: {
   title: string;
@@ -88,6 +152,8 @@ export function PortalShell({
   sidebarItems: SidebarItem[];
   children: React.ReactNode;
   extraHeader?: React.ReactNode;
+  /** Rendered at the bottom of the sidebar, below the nav links (e.g. a logout button). */
+  asideFooter?: React.ReactNode;
   /** Scopes the per-portal accent color (see [data-portal] rules in globals.css). Omit to use the default (Bappebti navy). */
   portal?: string;
 }) {
@@ -101,9 +167,12 @@ export function PortalShell({
           <p className="text-sm font-semibold text-navy">{title}</p>
           {subtitle && <p className="text-[11px] text-muted mt-0.5">{subtitle}</p>}
         </div>
-        <Suspense fallback={<SidebarLinks sidebarItems={sidebarItems} activeHref={fallbackActiveHref} />}>
-          <SidebarLinksWithQuery sidebarItems={sidebarItems} pathname={pathname} />
-        </Suspense>
+        <div className="flex-1 overflow-y-auto">
+          <Suspense fallback={<SidebarLinks sidebarItems={sidebarItems} activeHref={fallbackActiveHref} pathname={pathname} />}>
+            <SidebarLinksWithQuery sidebarItems={sidebarItems} pathname={pathname} />
+          </Suspense>
+        </div>
+        {asideFooter && <div className="border-t border-border p-2">{asideFooter}</div>}
       </aside>
       <div className="flex-1 min-w-0 flex flex-col">
         {extraHeader}

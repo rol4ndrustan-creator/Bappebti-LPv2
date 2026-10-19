@@ -1,5 +1,5 @@
 import { Badge, badgeVariants } from "@/components/ui/badge";
-import { CaseStatus, OwnerType, Responsibility, Severity, SlaStatus } from "@/lib/types";
+import { CaseStatus, ComplaintType, OwnerType, Responsibility, Severity, SlaStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import type { VariantProps } from "class-variance-authority";
 
@@ -23,10 +23,16 @@ export function StatusBadge({ status }: { status: CaseStatus }) {
     Diproses: "amber",
     "Menunggu Klarifikasi": "amber",
     "Resolusi Diajukan": "green",
+    "Resolusi Disetujui": "green",
     Selesai: "green",
     Ditolak: "red",
   };
   return <Badge variant={map[status]}>{status.toUpperCase()}</Badge>;
+}
+
+export function ComplaintTypeBadge({ type }: { type?: ComplaintType }) {
+  const resolved = type ?? "Pengaduan";
+  return <Badge variant={resolved === "Kritik dan Saran" ? "amber" : "navy"}>{resolved}</Badge>;
 }
 
 export function OwnerBadge({ owner }: { owner: OwnerType }) {

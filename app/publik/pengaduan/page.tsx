@@ -5,6 +5,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/shared/page-header";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -14,9 +15,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { StatusBadge, OwnerBadge } from "@/components/shared/badges";
+import { StatusBadge, ComplaintTypeBadge } from "@/components/shared/badges";
 import { CASES, CATEGORY_LIST } from "@/lib/mock-data";
-import { CaseStatus } from "@/lib/types";
+import { CaseStatus, ComplaintType } from "@/lib/types";
 
 const STATUS_LIST: CaseStatus[] = [
   "Baru",
@@ -24,16 +25,33 @@ const STATUS_LIST: CaseStatus[] = [
   "Diproses",
   "Menunggu Klarifikasi",
   "Resolusi Diajukan",
+  "Resolusi Disetujui",
   "Selesai",
   "Ditolak",
 ];
+
+const COMPLAINT_TYPE_LIST: ComplaintType[] = ["Pengaduan", "Kritik dan Saran"];
+
+const PLATFORM_LIST_IN_USE = Array.from(new Set(CASES.map((c) => c.platform))).sort();
+
+function parseDate(value: string): Date | null {
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
 
 export default function PengaduanListPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [category, setCategory] = useState("");
+  const [platform, setPlatform] = useState("");
+  const [complaintType, setComplaintType] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   const filtered = useMemo(() => {
+    const from = dateFrom ? parseDate(dateFrom) : null;
+    const to = dateTo ? parseDate(`${dateTo}T23:59:59`) : null;
+
     return CASES.filter((c) => {
       const matchesSearch =
         !search ||
@@ -41,14 +59,23 @@ export default function PengaduanListPage() {
         c.ticket.toLowerCase().includes(search.toLowerCase());
       const matchesStatus = !status || c.status === status;
       const matchesCategory = !category || c.category === category;
-      return matchesSearch && matchesStatus && matchesCategory;
+      const matchesPlatform = !platform || c.platform === platform;
+      const matchesType = !complaintType || (c.complaintType ?? "Pengaduan") === complaintType;
+      const created = parseDate(c.createdAt);
+      const matchesFrom = !from || (!!created && created >= from);
+      const matchesTo = !to || (!!created && created <= to);
+      return matchesSearch && matchesStatus && matchesCategory && matchesPlatform && matchesType && matchesFrom && matchesTo;
     });
-  }, [search, status, category]);
+  }, [search, status, category, platform, complaintType, dateFrom, dateTo]);
 
   function resetFilters() {
     setSearch("");
     setStatus("");
     setCategory("");
+    setPlatform("");
+    setComplaintType("");
+    setDateFrom("");
+    setDateTo("");
   }
 
   return (
@@ -58,37 +85,74 @@ export default function PengaduanListPage() {
         description="Daftar seluruh pengaduan yang telah Anda ajukan beserta status penanganannya."
       />
 
-      <div className="mb-3 flex flex-wrap items-end gap-2">
-        <div className="w-full max-w-xs">
-          <Input
-            placeholder="Cari judul atau nomor tiket..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+      <div className="mb-4 rounded-lg border border-border bg-card p-3">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="w-full max-w-xs">
+            <Label>Cari</Label>
+            <Input
+              placeholder="Judul atau nomor tiket..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="w-44">
+            <Label>Status</Label>
+            <Select value={status} onChange={(e) => setStatus(e.target.value)}>
+              <option value="">Semua status</option>
+              {STATUS_LIST.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="w-52">
+            <Label>Platform</Label>
+            <Select value={platform} onChange={(e) => setPlatform(e.target.value)}>
+              <option value="">Semua platform</option>
+              {PLATFORM_LIST_IN_USE.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="w-56">
+            <Label>Kategori</Label>
+            <Select value={category} onChange={(e) => setCategory(e.target.value)}>
+              <option value="">Semua kategori</option>
+              {CATEGORY_LIST.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="w-48">
+            <Label>Jenis Pengaduan</Label>
+            <Select value={complaintType} onChange={(e) => setComplaintType(e.target.value)}>
+              <option value="">Semua jenis</option>
+              {COMPLAINT_TYPE_LIST.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </Select>
+          </div>
         </div>
-        <div className="w-44">
-          <Select value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="">Semua status</option>
-            {STATUS_LIST.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </Select>
+        <div className="mt-3 flex flex-wrap items-end gap-3">
+          <div className="w-40">
+            <Label>Tanggal Submit Dari</Label>
+            <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+          </div>
+          <div className="w-40">
+            <Label>Tanggal Submit Hingga</Label>
+            <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+          </div>
+          <Button variant="secondary" size="sm" onClick={resetFilters}>
+            Reset Filter
+          </Button>
         </div>
-        <div className="w-56">
-          <Select value={category} onChange={(e) => setCategory(e.target.value)}>
-            <option value="">Semua kategori</option>
-            {CATEGORY_LIST.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </Select>
-        </div>
-        <Button variant="secondary" size="sm" onClick={resetFilters}>
-          Reset
-        </Button>
       </div>
 
       <Table>
@@ -98,8 +162,8 @@ export default function PengaduanListPage() {
             <TableHead>Judul</TableHead>
             <TableHead>Platform</TableHead>
             <TableHead>Kategori</TableHead>
+            <TableHead>Jenis Pengaduan</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Current Owner</TableHead>
             <TableHead>Update Terakhir</TableHead>
             <TableHead>Aksi</TableHead>
           </TableRow>
@@ -112,10 +176,10 @@ export default function PengaduanListPage() {
               <TableCell className="whitespace-nowrap">{c.platform}</TableCell>
               <TableCell className="whitespace-nowrap">{c.category}</TableCell>
               <TableCell>
-                <StatusBadge status={c.status} />
+                <ComplaintTypeBadge type={c.complaintType} />
               </TableCell>
               <TableCell>
-                <OwnerBadge owner={c.currentOwner} />
+                <StatusBadge status={c.status} />
               </TableCell>
               <TableCell className="whitespace-nowrap text-muted">{c.updatedAt}</TableCell>
               <TableCell>

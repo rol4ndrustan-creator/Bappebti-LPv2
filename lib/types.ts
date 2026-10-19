@@ -11,8 +11,12 @@ export type CaseStatus =
   | "Diproses"
   | "Menunggu Klarifikasi"
   | "Resolusi Diajukan"
+  | "Resolusi Disetujui"
   | "Selesai"
   | "Ditolak";
+
+/** Whether a ticket was filed as a formal complaint or a general critique/suggestion. */
+export type ComplaintType = "Pengaduan" | "Kritik dan Saran";
 
 export type OwnerType = "Pelapor" | "Platform" | "Bursa" | "Kliring" | "Bappebti";
 
@@ -189,6 +193,10 @@ export interface ResolutionRecord {
   reporterDisagreementReason?: string;
   bappebtiDecision?: "Disetujui" | "Dikembalikan untuk Revisi" | "Ditolak" | "Menunggu Review";
   verifiedImplementationDate?: string;
+  /** Display-formatted deadline (48 jam sejak diajukan) by which the reporter must respond before the resolution is auto-accepted. */
+  responseDeadline?: string;
+  /** Whether reporterDecision was given by the reporter themselves, or auto-applied after responseDeadline passed with no response. Omitted/undefined is treated as "Manual". */
+  decisionMethod?: "Manual" | "Otomatis";
 }
 
 export type InternalNoteClassification = "Operasional" | "Supervisi" | "Legal" | "Penegakan";
@@ -246,6 +254,8 @@ export interface ComplaintCase {
   reconciliationIssue?: string;
   resolutionProposal?: string;
   relatedCases?: string[];
+  /** Pengaduan (formal complaint) vs Kritik dan Saran (general critique/suggestion). Defaults to "Pengaduan" when omitted. */
+  complaintType?: ComplaintType;
 
   // --- richer regulator-grade model (all optional, additive) ---
   parentIncidentId?: string;

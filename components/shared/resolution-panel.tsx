@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "./empty-state";
 import { EvidenceList } from "./evidence-list";
-import { FileCheck2 } from "lucide-react";
+import { FileCheck2, AlertTriangle, Clock3 } from "lucide-react";
 
 const DECISION_OPTIONS: { value: ReporterResolutionDecision; label: string; requiresReason: boolean }[] = [
   { value: "Menerima Sepenuhnya", label: "Saya menerima solusi", requiresReason: false },
@@ -108,6 +108,19 @@ export function ResolutionPanel({
 
       {alreadyDecided ? (
         <div className="rounded-md border border-border bg-card p-3 text-xs">
+          {resolution?.decisionMethod === "Otomatis" && (
+            <div className="mb-2 flex items-start gap-2 rounded-md border border-navy/30 bg-navy/5 p-2.5">
+              <Clock3 className="size-4 shrink-0 text-navy mt-0.5" />
+              <div>
+                <p className="font-semibold text-navy">Disetujui &amp; Diselesaikan Secara Otomatis</p>
+                <p className="text-foreground/80 mt-0.5">
+                  Anda tidak memberikan tanggapan hingga batas waktu {resolution?.responseDeadline ?? "yang ditentukan"}{" "}
+                  (48 jam sejak solusi diajukan). Sesuai ketentuan, pengaduan ini dianggap <strong>disetujui</strong>{" "}
+                  dan kasus dinyatakan <strong>selesai secara otomatis</strong>.
+                </p>
+              </div>
+            </div>
+          )}
           <p className="text-muted">Keputusan Anda atas solusi ini:</p>
           <p className="font-medium text-foreground mt-0.5">{alreadyDecided}</p>
           {resolution?.reporterDisagreementReason && (
@@ -116,6 +129,16 @@ export function ResolutionPanel({
         </div>
       ) : onRespond ? (
         <div className="rounded-md border border-border p-3">
+          {resolution?.responseDeadline && (
+            <div className="mb-3 flex items-start gap-2 rounded-md border border-amber/40 bg-amber-bg/40 p-2.5">
+              <AlertTriangle className="size-4 shrink-0 text-amber mt-0.5" />
+              <p className="text-xs text-foreground">
+                <strong>Perhatian:</strong> jika Anda tidak memberikan tanggapan hingga{" "}
+                <strong>{resolution.responseDeadline}</strong> (48 jam sejak solusi diajukan), pengaduan ini akan{" "}
+                <strong>otomatis dianggap disetujui</strong> dan kasus akan ditutup.
+              </p>
+            </div>
+          )}
           <p className="text-xs font-semibold text-navy mb-2">Tanggapan Anda atas Solusi</p>
           <Select value={decision} onChange={(e) => setDecision(e.target.value as ReporterResolutionDecision)} className="mb-2">
             {DECISION_OPTIONS.map((o) => (
