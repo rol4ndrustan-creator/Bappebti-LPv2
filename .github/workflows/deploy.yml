@@ -6,6 +6,7 @@ on:
       - claude/peaceful-feynman-7oxt1n
       - claude/bappebti-complaint-platform-r86iya
       - claude/pengajuan-form-fields-nbb4bm
+      - claude/bappebti-review-redesign
   workflow_dispatch:
 
 permissions:
