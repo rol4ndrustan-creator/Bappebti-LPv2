@@ -4,16 +4,20 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy/30",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy/30",
   {
     variants: {
       variant: {
-        default: "bg-navy text-white hover:bg-navy-light",
-        secondary: "bg-white text-navy border border-border hover:bg-muted-bg",
+        default:
+          "bg-navy text-white bg-linear-to-b from-white/15 to-black/10 border border-black/10 shadow-sm shadow-black/25 hover:brightness-110 hover:shadow-md active:brightness-95 active:translate-y-px",
+        secondary:
+          "bg-white text-navy border border-border shadow-sm shadow-black/5 hover:bg-muted-bg hover:shadow active:translate-y-px",
         outline: "border border-border bg-transparent hover:bg-muted-bg text-foreground",
         ghost: "hover:bg-muted-bg text-foreground",
-        destructive: "bg-red text-white hover:bg-red/90",
-        success: "bg-green text-white hover:bg-green/90",
+        destructive:
+          "bg-red text-white bg-linear-to-b from-white/15 to-black/10 border border-black/10 shadow-sm shadow-black/25 hover:brightness-110 hover:shadow-md active:brightness-95 active:translate-y-px",
+        success:
+          "bg-green text-white bg-linear-to-b from-white/15 to-black/10 border border-black/10 shadow-sm shadow-black/25 hover:brightness-110 hover:shadow-md active:brightness-95 active:translate-y-px",
         link: "text-navy underline-offset-4 hover:underline",
       },
       size: {

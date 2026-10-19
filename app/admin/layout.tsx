@@ -15,7 +15,7 @@ const sidebarItems: SidebarItem[] = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <PortalShell title="Konsol Admin" subtitle="Manajemen Sistem" sidebarItems={sidebarItems}>
+    <PortalShell title="Konsol Admin" subtitle="Manajemen Sistem" sidebarItems={sidebarItems} portal="admin">
       {children}
     </PortalShell>
   );

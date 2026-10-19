@@ -4,9 +4,16 @@
   --background: #f4f5f7;
   --foreground: #1c2530;
 
-  --navy: #1c3557;
-  --navy-dark: #142540;
-  --navy-light: #2c4a76;
+  /* Default portal accent = Bappebti's dark navy. Every bg-navy/text-navy/
+     border-navy/navy-dark/navy-light utility in the app resolves through
+     this alias, so scoping [data-portal="x"] below to override --accent
+     repaints the whole portal without touching a single component file. */
+  --accent: #1c3557;
+  --accent-dark: #142540;
+  --accent-light: #2c4a76;
+  --navy: var(--accent);
+  --navy-dark: var(--accent-dark);
+  --navy-light: var(--accent-light);
 
   --amber: #d97706;
   --amber-bg: #fef3c7;
@@ -24,12 +31,59 @@
   --card: #ffffff;
 }
 
+/* Section 24 of the review brief: each portal gets its own identity color —
+   Publik light green, Bappebti dark navy (the default above), Platform
+   maroon red, Ekosistem gold/brown, Asosiasi rose gold. Admin stays on the
+   neutral default navy at the portal level; per-page accenting within Admin
+   is a smaller follow-up rather than a full second palette.
+
+   --navy/-dark/-light must be restated (not just --accent) in every rule
+   below: a custom property's var() reference resolves once, at the element
+   where it's declared, and that resolved value is what inherits down —
+   redeclaring --accent deeper in the tree does not make an already-
+   inherited --navy re-resolve against it. */
+[data-portal="publik"] {
+  --accent: #3f9142;
+  --accent-dark: #2d6b30;
+  --accent-light: #5cb75f;
+  --navy: var(--accent);
+  --navy-dark: var(--accent-dark);
+  --navy-light: var(--accent-light);
+}
+[data-portal="platform"] {
+  --accent: #7a1f2b;
+  --accent-dark: #5c1620;
+  --accent-light: #9c2e3c;
+  --navy: var(--accent);
+  --navy-dark: var(--accent-dark);
+  --navy-light: var(--accent-light);
+}
+[data-portal="ekosistem"] {
+  --accent: #8c6a1e;
+  --accent-dark: #6b5117;
+  --accent-light: #ab8a3a;
+  --navy: var(--accent);
+  --navy-dark: var(--accent-dark);
+  --navy-light: var(--accent-light);
+}
+[data-portal="asosiasi"] {
+  --accent: #9c5a64;
+  --accent-dark: #7c454e;
+  --accent-light: #b97b83;
+  --navy: var(--accent);
+  --navy-dark: var(--accent-dark);
+  --navy-light: var(--accent-light);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-navy: var(--navy);
   --color-navy-dark: var(--navy-dark);
   --color-navy-light: var(--navy-light);
+  --color-accent: var(--accent);
+  --color-accent-dark: var(--accent-dark);
+  --color-accent-light: var(--accent-light);
   --color-amber: var(--amber);
   --color-amber-bg: var(--amber-bg);
   --color-red: var(--red);

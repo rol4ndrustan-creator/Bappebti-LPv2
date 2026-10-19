@@ -81,18 +81,21 @@ export function PortalShell({
   sidebarItems,
   children,
   extraHeader,
+  portal,
 }: {
   title: string;
   subtitle?: string;
   sidebarItems: SidebarItem[];
   children: React.ReactNode;
   extraHeader?: React.ReactNode;
+  /** Scopes the per-portal accent color (see [data-portal] rules in globals.css). Omit to use the default (Bappebti navy). */
+  portal?: string;
 }) {
   const pathname = usePathname();
   const fallbackActiveHref = useMemo(() => computeActiveHref(sidebarItems, pathname, null), [sidebarItems, pathname]);
 
   return (
-    <div className="flex flex-1 min-h-0">
+    <div className="flex flex-1 min-h-0" data-portal={portal}>
       <aside className="hidden md:flex w-56 shrink-0 flex-col border-r border-border bg-card">
         <div className="px-4 py-3 border-b border-border">
           <p className="text-sm font-semibold text-navy">{title}</p>

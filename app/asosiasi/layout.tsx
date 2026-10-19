@@ -12,7 +12,7 @@ const sidebarItems: SidebarItem[] = [
 
 export default function AsosiasiLayout({ children }: { children: React.ReactNode }) {
   return (
-    <PortalShell title="Asosiasi" subtitle="Asosiasi Pialang Berjangka Indonesia" sidebarItems={sidebarItems}>
+    <PortalShell title="Asosiasi" subtitle="Asosiasi Pialang Berjangka Indonesia" sidebarItems={sidebarItems} portal="asosiasi">
       {children}
     </PortalShell>
   );

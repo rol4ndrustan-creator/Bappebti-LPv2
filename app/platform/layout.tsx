@@ -13,7 +13,7 @@ const sidebarItems: SidebarItem[] = [
 
 export default function PlatformLayout({ children }: { children: React.ReactNode }) {
   return (
-    <PortalShell title="Portal Platform" subtitle="PT Bursa Digital Nusantara" sidebarItems={sidebarItems}>
+    <PortalShell title="Portal Platform" subtitle="PT Bursa Digital Nusantara" sidebarItems={sidebarItems} portal="platform">
       {children}
     </PortalShell>
   );

@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { usePathname, useRouter } from "next/navigation";
+import { Compass } from "lucide-react";
 import { DemoRoleSwitcher } from "@/components/shared/demo-role-switcher";
 import { ResetDemoDataButton } from "@/components/shared/reset-demo-data-button";
 
@@ -17,12 +17,14 @@ const PORTALS = [
 
 export function TopNav() {
   const pathname = usePathname();
+  const router = useRouter();
+  const activePortal = PORTALS.find((p) => pathname?.startsWith(p.href))?.href ?? "";
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-navy text-white">
       <div className="flex h-14 items-center gap-4 px-4">
         <Link href="/publik" className="flex items-center gap-2 shrink-0">
-          <span className="flex h-8 w-8 items-center justify-center rounded-md border-2 border-white/70 bg-navy-dark text-base font-bold">
+          <span className="flex h-8 w-8 items-center justify-center rounded-md border border-white/40 bg-navy-dark bg-linear-to-b from-white/20 to-transparent shadow-sm shadow-black/40 text-base font-bold">
             B
           </span>
           <span className="leading-tight hidden sm:block">
@@ -32,23 +34,31 @@ export function TopNav() {
             </span>
           </span>
         </Link>
-        <nav className="flex items-center gap-0.5 overflow-x-auto scrollbar-thin">
-          {PORTALS.map((p) => {
-            const active = pathname?.startsWith(p.href);
-            return (
-              <Link
-                key={p.href}
-                href={p.href}
-                className={cn(
-                  "rounded-md px-2 py-1.5 text-xs font-medium whitespace-nowrap transition-colors",
-                  active ? "bg-white text-navy" : "text-white/80 hover:bg-white/10 hover:text-white"
-                )}
-              >
-                {p.label.toUpperCase()}
-              </Link>
-            );
-          })}
-        </nav>
+
+        <div className="flex items-center gap-1.5 rounded-md bg-white/10 pl-2 pr-1 py-1">
+          <Compass className="size-3.5 text-white/70 shrink-0" />
+          <label className="hidden sm:inline text-[10px] font-medium uppercase tracking-wide text-white/70 shrink-0">
+            Demo Navigation
+          </label>
+          <select
+            aria-label="Pindah ke portal demo lain"
+            value={activePortal}
+            onChange={(e) => {
+              if (e.target.value) router.push(e.target.value);
+            }}
+            className="bg-transparent text-xs font-medium text-white outline-none max-w-[140px] truncate [&>option]:text-foreground"
+          >
+            <option value="" disabled>
+              Pilih portal
+            </option>
+            {PORTALS.map((p) => (
+              <option key={p.href} value={p.href}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <div className="ml-auto shrink-0 flex items-center gap-2">
           <ResetDemoDataButton />
           <DemoRoleSwitcher />

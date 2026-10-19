@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { usePublikAuth } from "@/lib/publik-auth";
+import { HeroBannerPattern } from "@/components/shared/hero-banner";
 import {
   ShieldCheck,
   History,
@@ -48,13 +49,13 @@ export default function PublikLandingPage() {
       <header className="bg-navy-dark">
         <div className="max-w-[1200px] mx-auto px-4 md:px-6 h-12 flex items-center justify-between">
           <div className="flex items-center gap-2 text-white">
-            <div className="flex size-6 items-center justify-center rounded bg-white text-navy text-xs font-bold">
+            <div className="flex size-6 items-center justify-center rounded bg-white text-navy text-xs font-bold shadow-sm shadow-black/20">
               B
             </div>
             <span className="text-xs font-semibold tracking-wide">BAPPEBTI</span>
           </div>
           <div className="flex items-center gap-4 text-xs">
-            <Link href="/publik/login" className="text-white/80 hover:text-white">
+            <Link href="/publik/masuk" className="text-white/80 hover:text-white">
               Masuk
             </Link>
             <Link
@@ -68,8 +69,9 @@ export default function PublikLandingPage() {
       </header>
 
       {/* Hero */}
-      <section className="bg-navy">
-        <div className="max-w-[1200px] mx-auto px-4 md:px-6 py-14 md:py-20 flex flex-col items-start gap-4">
+      <section className="relative overflow-hidden bg-navy">
+        <HeroBannerPattern />
+        <div className="relative z-10 max-w-[1200px] mx-auto px-4 md:px-6 py-14 md:py-20 flex flex-col items-start gap-4">
           <span className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-white/80">
             Layanan Pengaduan Online Bappebti
           </span>
@@ -84,7 +86,7 @@ export default function PublikLandingPage() {
           <div className="flex flex-wrap gap-3 mt-2">
             <Link href={buatPengaduanHref}>
               <Button size="lg" className="bg-white text-navy hover:bg-white/90">
-                Periksa dan Buat Pengaduan
+                Buat Pengaduan Baru
               </Button>
             </Link>
             <Link href={cekStatusHref}>
@@ -106,7 +108,7 @@ export default function PublikLandingPage() {
                 key={h.title}
                 className="rounded-lg border border-border bg-card p-4 shadow-sm flex items-start gap-3"
               >
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-navy/10 text-navy">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-navy/10 text-navy bg-linear-to-b from-white/40 to-transparent shadow-sm shadow-black/5">
                   <Icon className="size-4.5" />
                 </div>
                 <div>
@@ -214,7 +216,7 @@ function InfoRow({
   const toneMap = { green: "text-green bg-green-bg", amber: "text-amber bg-amber-bg", red: "text-red bg-red-bg", navy: "text-navy bg-navy/10" };
   return (
     <div className="flex items-start gap-3 rounded-lg border border-border bg-background p-3.5">
-      <div className={`flex size-8 shrink-0 items-center justify-center rounded-md ${toneMap[tone]}`}>
+      <div className={`flex size-8 shrink-0 items-center justify-center rounded-md bg-linear-to-b from-white/40 to-transparent shadow-sm shadow-black/5 ${toneMap[tone]}`}>
         <Icon className="size-4" />
       </div>
       <div>

@@ -15,7 +15,7 @@ const LINKS = [
   { label: "Profil", href: "/publik/profil", icon: UserCircle },
 ];
 
-const NO_NAV_PATHS = ["/publik", "/publik/login", "/publik/register"];
+const NO_NAV_PATHS = ["/publik", "/publik/login", "/publik/masuk", "/publik/register"];
 
 export default function PublikLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -39,7 +39,7 @@ export default function PublikLayout({ children }: { children: React.ReactNode }
   if (requiresAuth && (!ready || !isAuthenticated)) return null;
 
   return (
-    <div className="flex flex-1 min-h-0 flex-col">
+    <div className="flex flex-1 min-h-0 flex-col" data-portal="publik">
       {requiresAuth && (
         <div className="border-b border-border bg-card px-4 py-2 flex items-center gap-1 overflow-x-auto scrollbar-thin">
           {LINKS.map((l) => {

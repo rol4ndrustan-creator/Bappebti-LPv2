@@ -11,6 +11,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PROVINCE_LIST } from "@/lib/mock-data";
 import { getRegenciesForProvince } from "@/lib/indonesia-regions";
 import { usePublikAuth } from "@/lib/publik-auth";
+import { cn } from "@/lib/utils";
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -26,8 +29,11 @@ export default function RegisterPage() {
     password: "",
     konfirmasiPassword: "",
   });
+  const [formError, setFormError] = useState("");
 
   const kotaOptions = getRegenciesForProvince(form.provinsi);
+  const ktpInvalid = form.nomorIdentitas.length > 0 && form.nomorIdentitas.length < 16;
+  const emailInvalid = form.email.length > 0 && !EMAIL_PATTERN.test(form.email);
 
   function update(field: string, value: string) {
     setForm((prev) => ({
@@ -41,6 +47,15 @@ export default function RegisterPage() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setFormError("");
+    if (form.nomorIdentitas.length !== 16) {
+      setFormError("Nomor identitas (KTP) harus tepat 16 digit.");
+      return;
+    }
+    if (!EMAIL_PATTERN.test(form.email)) {
+      setFormError("Format email tidak valid.");
+      return;
+    }
     register({
       nama: form.nama,
       nomorIdentitas: form.nomorIdentitas,
@@ -58,7 +73,7 @@ export default function RegisterPage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-2xl">
         <div className="flex flex-col items-center mb-6 gap-2">
-          <div className="flex size-10 items-center justify-center rounded-md bg-navy text-white text-base font-bold">
+          <div className="flex size-10 items-center justify-center rounded-md bg-navy text-white text-base font-bold bg-linear-to-b from-white/20 to-transparent shadow-sm shadow-black/20">
             B
           </div>
           <div className="text-center">
@@ -74,6 +89,11 @@ export default function RegisterPage() {
               Lengkapi data berikut untuk membuat akun dan mengajukan pengaduan.
             </p>
             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+              {formError && (
+                <p className="rounded-md border border-red/30 bg-red-bg px-3 py-2 text-xs text-red">
+                  {formError}
+                </p>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <Label htmlFor="nama">Nama lengkap</Label>
@@ -90,10 +110,19 @@ export default function RegisterPage() {
                   <Input
                     id="nomorIdentitas"
                     placeholder="16 digit NIK"
+                    inputMode="numeric"
+                    maxLength={16}
                     value={form.nomorIdentitas}
-                    onChange={(e) => update("nomorIdentitas", e.target.value)}
+                    onChange={(e) => update("nomorIdentitas", e.target.value.replace(/\D/g, "").slice(0, 16))}
+                    aria-invalid={ktpInvalid}
+                    className={cn(ktpInvalid && "border-red text-red focus-visible:ring-red/30")}
                     required
                   />
+                  {ktpInvalid && (
+                    <p className="text-[11px] text-red mt-1">
+                      NIK harus tepat 16 digit ({form.nomorIdentitas.length}/16).
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="email">Email aktif</Label>
@@ -103,8 +132,11 @@ export default function RegisterPage() {
                     placeholder="nama@email.com"
                     value={form.email}
                     onChange={(e) => update("email", e.target.value)}
+                    aria-invalid={emailInvalid}
+                    className={cn(emailInvalid && "border-red text-red focus-visible:ring-red/30")}
                     required
                   />
+                  {emailInvalid && <p className="text-[11px] text-red mt-1">Format email tidak valid.</p>}
                 </div>
                 <div>
                   <Label htmlFor="hp">Nomor HP / WhatsApp</Label>
@@ -192,7 +224,7 @@ export default function RegisterPage() {
 
         <p className="text-center text-xs text-muted mt-4">
           Sudah memiliki akun?{" "}
-          <Link href="/publik/login" className="text-navy font-medium hover:underline">
+          <Link href="/publik/masuk" className="text-navy font-medium hover:underline">
             Masuk di sini
           </Link>
         </p>
