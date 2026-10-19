@@ -1,4 +1,5 @@
 import { PortalShell, SidebarItem } from "@/components/layout/portal-shell";
+import { RequireInternalAuth } from "@/components/shared/require-internal-auth";
 import { LayoutDashboard, ListChecks, Clock, MessageCircle, FileBarChart } from "lucide-react";
 
 const iconCls = "size-4 shrink-0";
@@ -13,8 +14,10 @@ const sidebarItems: SidebarItem[] = [
 
 export default function PlatformLayout({ children }: { children: React.ReactNode }) {
   return (
-    <PortalShell title="Portal Platform" subtitle="PT Bursa Digital Nusantara" sidebarItems={sidebarItems} portal="platform">
-      {children}
-    </PortalShell>
+    <RequireInternalAuth>
+      <PortalShell title="Portal Platform" subtitle="PT Bursa Digital Nusantara" sidebarItems={sidebarItems} portal="platform">
+        {children}
+      </PortalShell>
+    </RequireInternalAuth>
   );
 }

@@ -5,6 +5,7 @@ import { TopNav } from "@/components/layout/top-nav";
 import { ToastProvider } from "@/components/shared/toast-provider";
 import { DemoSessionProvider } from "@/lib/demo-session";
 import { PublikAuthProvider } from "@/lib/publik-auth";
+import { InternalAuthProvider } from "@/lib/internal-auth";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,12 +34,14 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <DemoSessionProvider>
-          <PublikAuthProvider>
-            <ToastProvider>
-              <TopNav />
-              <div className="flex flex-1 min-h-0">{children}</div>
-            </ToastProvider>
-          </PublikAuthProvider>
+          <InternalAuthProvider>
+            <PublikAuthProvider>
+              <ToastProvider>
+                <TopNav />
+                <div className="flex flex-1 min-h-0">{children}</div>
+              </ToastProvider>
+            </PublikAuthProvider>
+          </InternalAuthProvider>
         </DemoSessionProvider>
       </body>
     </html>

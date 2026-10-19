@@ -1,4 +1,5 @@
 import { PortalShell, SidebarItem } from "@/components/layout/portal-shell";
+import { RequireInternalAuth } from "@/components/shared/require-internal-auth";
 import {
   LayoutDashboard,
   ListChecks,
@@ -23,8 +24,10 @@ const sidebarItems: SidebarItem[] = [
 
 export default function BappebtiLayout({ children }: { children: React.ReactNode }) {
   return (
-    <PortalShell title="Portal Bappebti" subtitle="Regulator Workbench" sidebarItems={sidebarItems} portal="bappebti">
-      {children}
-    </PortalShell>
+    <RequireInternalAuth>
+      <PortalShell title="Portal Bappebti" subtitle="Regulator Workbench" sidebarItems={sidebarItems} portal="bappebti">
+        {children}
+      </PortalShell>
+    </RequireInternalAuth>
   );
 }

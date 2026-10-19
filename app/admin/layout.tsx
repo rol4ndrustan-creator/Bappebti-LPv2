@@ -1,4 +1,5 @@
 import { PortalShell, SidebarItem } from "@/components/layout/portal-shell";
+import { RequireInternalAuth } from "@/components/shared/require-internal-auth";
 import { LayoutDashboard, UserCog, KeyRound, Database, Route, Settings2, History } from "lucide-react";
 
 const iconCls = "size-4 shrink-0";
@@ -15,8 +16,10 @@ const sidebarItems: SidebarItem[] = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <PortalShell title="Konsol Admin" subtitle="Manajemen Sistem" sidebarItems={sidebarItems} portal="admin">
-      {children}
-    </PortalShell>
+    <RequireInternalAuth>
+      <PortalShell title="Konsol Admin" subtitle="Manajemen Sistem" sidebarItems={sidebarItems} portal="admin">
+        {children}
+      </PortalShell>
+    </RequireInternalAuth>
   );
 }

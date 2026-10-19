@@ -1,4 +1,5 @@
 import { PortalShell, SidebarItem } from "@/components/layout/portal-shell";
+import { RequireInternalAuth } from "@/components/shared/require-internal-auth";
 import { LayoutDashboard, Users, TrendingUp, BookOpen } from "lucide-react";
 
 const iconCls = "size-4 shrink-0";
@@ -12,8 +13,10 @@ const sidebarItems: SidebarItem[] = [
 
 export default function AsosiasiLayout({ children }: { children: React.ReactNode }) {
   return (
-    <PortalShell title="Asosiasi" subtitle="Asosiasi Pialang Berjangka Indonesia" sidebarItems={sidebarItems} portal="asosiasi">
-      {children}
-    </PortalShell>
+    <RequireInternalAuth>
+      <PortalShell title="Asosiasi" subtitle="Asosiasi Pialang Berjangka Indonesia" sidebarItems={sidebarItems} portal="asosiasi">
+        {children}
+      </PortalShell>
+    </RequireInternalAuth>
   );
 }

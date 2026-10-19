@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Compass } from "lucide-react";
 import { DemoRoleSwitcher } from "@/components/shared/demo-role-switcher";
 import { ResetDemoDataButton } from "@/components/shared/reset-demo-data-button";
+import { InternalAuthIndicator } from "@/components/shared/internal-auth-indicator";
 
 const PORTALS = [
   { label: "Publik", href: "/publik" },
@@ -60,6 +61,7 @@ export function TopNav() {
         </div>
 
         <div className="ml-auto shrink-0 flex items-center gap-2">
+          <InternalAuthIndicator />
           <ResetDemoDataButton />
           <DemoRoleSwitcher />
         </div>

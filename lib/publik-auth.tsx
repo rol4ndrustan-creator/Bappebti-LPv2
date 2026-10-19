@@ -10,6 +10,19 @@ import * as React from "react";
 const ACCOUNT_KEY = "bappebti-publik-account";
 const SESSION_KEY = "bappebti-publik-authed";
 
+// A fixed, pre-seeded demo account so the login form has a typeable
+// credential during demonstrations, without auto-logging the visitor in.
+const SEED_ACCOUNT: PublikAccount = {
+  nama: "Andra Wicaksono",
+  nomorIdentitas: "3201012345670001",
+  email: "andra.wicaksono@email.com",
+  hp: "081234567890",
+  provinsi: "DKI Jakarta",
+  kota: "Jakarta Selatan",
+  platformUserId: "andra.w",
+  password: "demo123",
+};
+
 export interface PublikAccount {
   nama: string;
   nomorIdentitas: string;
@@ -50,8 +63,19 @@ export function PublikAuthProvider({ children }: { children: React.ReactNode }) 
   React.useEffect(() => {
     // Reconcile with localStorage after mount to avoid a hydration mismatch
     // against the statically-exported HTML.
+    let stored = readAccount();
+    if (!stored) {
+      // First visit: seed the fixed demo account so /publik/masuk has a
+      // typeable credential, without signing the visitor in.
+      stored = SEED_ACCOUNT;
+      try {
+        window.localStorage.setItem(ACCOUNT_KEY, JSON.stringify(SEED_ACCOUNT));
+      } catch {
+        // ignore persistence failures in the prototype
+      }
+    }
     // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time sync with localStorage on mount
-    setAccount(readAccount());
+    setAccount(stored);
     try {
       setIsAuthenticated(window.localStorage.getItem(SESSION_KEY) === "1");
     } catch {
