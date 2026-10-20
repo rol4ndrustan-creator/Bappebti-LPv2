@@ -1,12 +1,17 @@
 import {
   AdminUser,
+  ApprovalRequest,
   AuditLogEntry,
   ClarificationRequest,
   ComplaintCase,
+  ComplaintCategoryConfig,
+  EcosystemEntity,
   FeedbackItem,
   IncidentRecord,
   Member,
   NotificationItem,
+  RoleDefinition,
+  SlaConfigEntry,
 } from "./types";
 
 // Pialang berjangka yang berizin dan diawasi Bappebti (Section "Platform terkait" pada
@@ -93,6 +98,24 @@ export const CATEGORY_LIST = [
   "Dugaan penipuan / fraud",
   "Dugaan pelanggaran",
   "Lainnya",
+];
+
+// Editable seed for Konfigurasi > Kategori Pengaduan (Bab III item 10).
+// CATEGORY_LIST above stays as the plain string list consumed throughout
+// the rest of the prototype (filters, the complaint form); this is the
+// same set modeled as manageable records for the config CRUD screen.
+export const CATEGORY_CONFIG: ComplaintCategoryConfig[] = CATEGORY_LIST.map((name, i) => ({
+  id: `CAT-${String(i + 1).padStart(2, "0")}`,
+  name,
+  active: true,
+  createdAt: "01 Jan 2026",
+}));
+
+// SLA Management history (Bab III item 10) — a single global response-time
+// SLA in hours, with every change recorded so the history is auditable.
+export const SLA_HISTORY: SlaConfigEntry[] = [
+  { id: "SLA-001", hours: 72, effectiveFrom: "01 Jan 2026", changedBy: "Bambang Setiawan", note: "SLA awal sistem." },
+  { id: "SLA-002", hours: 48, effectiveFrom: "15 Mar 2026", changedBy: "Bambang Setiawan", note: "Dipercepat untuk meningkatkan kepuasan pelapor." },
 ];
 
 export const PROVINCE_LIST = [
@@ -896,6 +919,47 @@ export const CASES: ComplaintCase[] = [
       consentStatus: "Diberikan",
     },
   },
+  {
+    ticket: "BPP-2026-000199",
+    title: "Pengaduan transfer gagal tanpa ID pengguna platform",
+    platform: "PT Pintu Kemana Saja",
+    bursaEntity: "Bursa Aset Kripto Indonesia",
+    kliringEntity: "Kliring Aset Digital Nusantara",
+    category: "Dana / Withdrawal",
+    subcategory: "Penarikan dana tertunda",
+    severity: "Sedang",
+    status: "Baru",
+    currentOwner: "Pelapor",
+    responsibility: "WAITING PUBLIC",
+    slaStatus: "Aman",
+    slaDeadline: "17 Jun 2026, 12:00",
+    createdAt: "15 Jun 2026, 16:20",
+    updatedAt: "15 Jun 2026, 16:20",
+    amount: 3200000,
+    chronology:
+      "Pelapor melaporkan penarikan dana yang belum diterima, namun tidak menyertakan ID pengguna platform saat mengajukan pengaduan sehingga akun pelapor pada platform belum dapat diverifikasi.",
+    expectedResolution: "Pelapor diminta melengkapi ID pengguna platform agar pengaduan dapat diteruskan untuk ditindaklanjuti.",
+    evidences: ["Bukti transfer.pdf"],
+    reporterName: "Dian Permatasari",
+    reporterCity: "Makassar, Sulawesi Selatan",
+    timeline: [
+      { datetime: "15 Jun 2026, 16:20", actor: "Sistem", role: "Sistem", action: "Pengaduan diterima", note: "Tiket BPP-2026-000199 dibuat otomatis tanpa ID pengguna platform.", status: "info" },
+      { datetime: "15 Jun 2026, 16:21", actor: "Sistem Verifikasi", role: "Bappebti", action: "Menunggu kelengkapan data", note: "Pengaduan menunggu ID pengguna platform dari pelapor sebelum dapat diteruskan.", status: "warning" },
+    ],
+    clarifications: [],
+    workflowState: "WAITING_REPORTER_INFORMATION",
+    publicStatus: "Menunggu Data dari Anda",
+    reporter: {
+      reporterType: "Perorangan",
+      verifiedEmail: "dian.permatasari@email.com",
+      verifiedPhone: "+62 821-5567-3302",
+      province: "Sulawesi Selatan",
+      city: "Makassar",
+      vulnerableConsumer: false,
+      preferredChannel: "Email",
+      consentStatus: "Diberikan",
+    },
+  },
 ];
 
 export const INCIDENTS: IncidentRecord[] = [
@@ -1042,6 +1106,10 @@ export const FEEDBACK_LIST: FeedbackItem[] = [
     pic: "Belum ditugaskan",
     status: "Belum Ditugaskan",
     createdAt: "13 Jun 2026, 10:00",
+    reporterName: "Galih Saputro",
+    reporterEmail: "galih.saputro@email.com",
+    reporterPhone: "+62 822-1190-4471",
+    read: false,
   },
   {
     id: "FB-2026-0013",
@@ -1052,6 +1120,12 @@ export const FEEDBACK_LIST: FeedbackItem[] = [
     pic: "Tim Produk Bappebti",
     status: "Ditinjau",
     createdAt: "14 Jun 2026, 08:20",
+    reporterName: "Andra Wicaksono",
+    reporterEmail: "andra.wicaksono@email.com",
+    reporterPhone: "+62 812-3456-7890",
+    read: true,
+    needsFollowUp: true,
+    followUpStatus: "Proses",
   },
   {
     id: "FB-2026-0014",
@@ -1062,6 +1136,13 @@ export const FEEDBACK_LIST: FeedbackItem[] = [
     pic: "Tim Edukasi Bappebti",
     status: "Selesai",
     createdAt: "11 Jun 2026, 16:45",
+    reporterName: "Andra Wicaksono",
+    reporterEmail: "andra.wicaksono@email.com",
+    reporterPhone: "+62 812-3456-7890",
+    read: true,
+    needsFollowUp: true,
+    followUpStatus: "Selesai",
+    followUpNote: "Daftar platform berizin ditambahkan ke halaman Cek Kelayakan pada 14 Jun 2026.",
   },
   {
     id: "FB-2026-0015",
@@ -1072,6 +1153,42 @@ export const FEEDBACK_LIST: FeedbackItem[] = [
     pic: "Tim Pengawasan Bappebti",
     status: "Dikonversi",
     createdAt: "10 Jun 2026, 09:30",
+    reporterName: "Melisa Hartono",
+    reporterEmail: "melisa.hartono@email.com",
+    reporterPhone: "+62 813-9988-2211",
+    read: true,
+    flagged: true,
+    flagReason: "Pelapor sama sebelumnya melaporkan dugaan fraud bernilai tinggi (BPP-2026-000185) — pola keluhan berulang terhadap platform yang sama.",
+  },
+  {
+    id: "FB-2026-0016",
+    type: "Kritik",
+    topic: "Waktu tunggu live chat",
+    message: "Live chat dukungan Bappebti sering tidak dijawab lebih dari 1 jam pada jam kerja.",
+    source: "Situs Publik",
+    pic: "Belum ditugaskan",
+    status: "Belum Ditugaskan",
+    createdAt: "15 Jun 2026, 11:15",
+    reporterName: "Galih Saputro",
+    reporterEmail: "galih.saputro@email.com",
+    reporterPhone: "+62 822-1190-4471",
+    read: false,
+    needsFollowUp: true,
+    followUpStatus: "Proses",
+  },
+  {
+    id: "FB-2026-0017",
+    type: "Masukan",
+    topic: "Bahasa formulir",
+    message: "Mohon formulir pengaduan juga tersedia dalam Bahasa Inggris untuk pelapor warga negara asing.",
+    source: "Situs Publik",
+    pic: "Belum ditugaskan",
+    status: "Belum Ditugaskan",
+    createdAt: "15 Jun 2026, 13:40",
+    reporterName: "Fajar Nugroho",
+    reporterEmail: "fajar.nugroho@email.com",
+    reporterPhone: "+62 857-3321-0098",
+    read: false,
   },
 ];
 
@@ -1086,6 +1203,186 @@ export const ADMIN_USERS: AdminUser[] = [
   { name: "Galih Saputro", email: "galih.saputro@email.com", role: "Public User", organization: "-", status: "Menunggu Persetujuan", lastLogin: "-" },
   { name: "Operator Baru", email: "operator.baru@bappebti.go.id", role: "Bappebti Regulator", organization: "Bappebti", status: "Menunggu Persetujuan", lastLogin: "-" },
   { name: "Akun Nonaktif Lama", email: "lama.akun@bappebti.go.id", role: "Admin", organization: "Bappebti", status: "Nonaktif", lastLogin: "02 Mei 2026, 10:00" },
+];
+
+// Internal Bappebti/Admin staff role templates (Bab III item 8 — "Setup Role
+// Access"). Each role is just a set of menu/submenu keys from
+// lib/menu-tree.ts; builtIn roles mirror the existing Role union in
+// lib/permissions.ts and cannot be deleted from the role builder.
+export const ROLE_DEFINITIONS: RoleDefinition[] = [
+  {
+    id: "role-intake",
+    name: "Petugas Intake Bappebti",
+    description: "Verifikasi awal dan triase pengaduan yang baru masuk.",
+    menuKeys: ["dashboard-eksekutif", "pengaduan", "pengaduan.semua", "pengaduan.tanpa-platform", "kritik", "kritik.daftar", "kritik.belum-dibaca"],
+    createdAt: "01 Jun 2026",
+    builtIn: true,
+  },
+  {
+    id: "role-case-officer",
+    name: "Petugas Kasus Bappebti",
+    description: "Menangani penyelesaian kasus pengaduan harian.",
+    menuKeys: [
+      "dashboard-eksekutif", "pengaduan", "pengaduan.semua", "pengaduan.bappebti", "pengaduan.tanpa-platform",
+      "pengaduan.menunggu-konfirmasi", "pengaduan.selesai-otomatis", "risiko", "kinerja",
+      "kritik", "kritik.daftar", "kritik.belum-dibaca", "kritik.tindak-lanjut", "laporan",
+    ],
+    createdAt: "01 Jun 2026",
+    builtIn: true,
+  },
+  {
+    id: "role-supervisor",
+    name: "Supervisor Bappebti",
+    description: "Supervisi penanganan kasus, kinerja anggota, dan eskalasi.",
+    menuKeys: [
+      "dashboard-eksekutif", "dashboard-admin", "pengaduan", "pengaduan.semua", "pengaduan.bappebti",
+      "pengaduan.tanpa-platform", "pengaduan.menunggu-konfirmasi", "pengaduan.selesai-otomatis",
+      "risiko", "kinerja", "kritik", "kritik.daftar", "kritik.belum-dibaca", "kritik.tindak-lanjut",
+      "laporan", "audit-logs",
+    ],
+    createdAt: "01 Jun 2026",
+    builtIn: true,
+  },
+  {
+    id: "role-enforcement",
+    name: "Unit Penegakan Bappebti",
+    description: "Investigasi lanjutan atas kasus dugaan pelanggaran/fraud.",
+    menuKeys: ["dashboard-eksekutif", "pengaduan", "pengaduan.semua", "pengaduan.bappebti", "risiko", "audit-logs"],
+    createdAt: "01 Jun 2026",
+    builtIn: true,
+  },
+  {
+    id: "role-executive",
+    name: "Eksekutif Bappebti",
+    description: "Ringkasan eksekutif lintas kasus, kinerja, dan laporan agregat.",
+    menuKeys: ["dashboard-eksekutif", "dashboard-admin", "pengaduan", "pengaduan.semua", "risiko", "kinerja", "laporan", "audit-logs"],
+    createdAt: "01 Jun 2026",
+    builtIn: true,
+  },
+  {
+    id: "role-admin",
+    name: "Administrator Sistem",
+    description: "Akses penuh ke seluruh menu administrasi dan konfigurasi sistem.",
+    menuKeys: [
+      "dashboard-eksekutif", "dashboard-admin", "pengaduan", "pengaduan.semua", "pengaduan.bappebti",
+      "pengaduan.tanpa-platform", "pengaduan.menunggu-konfirmasi", "pengaduan.selesai-otomatis",
+      "risiko", "kinerja", "kritik", "kritik.daftar", "kritik.belum-dibaca", "kritik.tindak-lanjut",
+      "laporan", "user-management", "user-management.users", "user-management.roles", "user-management.approval",
+      "ekosistem", "ekosistem.kategori", "ekosistem.daftar", "ekosistem.approval", "routing",
+      "konfigurasi", "konfigurasi.kategori", "konfigurasi.sla", "audit-logs",
+    ],
+    createdAt: "01 Jun 2026",
+    builtIn: true,
+  },
+  {
+    id: "role-auditor",
+    name: "Auditor (Baca Saja)",
+    description: "Akses baca untuk kebutuhan audit dan kepatuhan.",
+    menuKeys: ["dashboard-eksekutif", "dashboard-admin", "pengaduan", "pengaduan.semua", "laporan", "audit-logs"],
+    createdAt: "01 Jun 2026",
+    builtIn: true,
+  },
+];
+
+export const APPROVAL_REQUESTS: ApprovalRequest[] = [
+  {
+    id: "APR-2026-0041",
+    requestType: "Pendaftaran Akun Baru",
+    targetUserName: "Galih Saputro",
+    targetUserEmail: "galih.saputro@email.com",
+    requestedBy: "Galih Saputro (self-registration)",
+    requestedAt: "15 Jun 2026, 10:00",
+    description: "Pendaftaran akun pelapor publik baru.",
+    status: "Menunggu",
+  },
+  {
+    id: "APR-2026-0042",
+    requestType: "Pendaftaran Akun Baru",
+    targetUserName: "Operator Baru",
+    targetUserEmail: "operator.baru@bappebti.go.id",
+    requestedBy: "Dewi Anjani",
+    requestedAt: "14 Jun 2026, 15:30",
+    description: "Pendaftaran akun staf Bappebti baru untuk role Petugas Kasus Bappebti.",
+    status: "Menunggu",
+  },
+  {
+    id: "APR-2026-0043",
+    requestType: "Reset Password",
+    targetUserName: "Dewi Anjani",
+    targetUserEmail: "dewi.anjani@bappebti.go.id",
+    requestedBy: "Dewi Anjani",
+    requestedAt: "15 Jun 2026, 08:05",
+    description: "Permintaan reset password akun — perangkat baru.",
+    status: "Menunggu",
+  },
+  {
+    id: "APR-2026-0044",
+    requestType: "Perubahan Email",
+    targetUserName: "Rangga Saputra",
+    targetUserEmail: "rangga.saputra@bappebti.go.id",
+    requestedBy: "Rangga Saputra",
+    requestedAt: "15 Jun 2026, 09:12",
+    description: "Email lama rangga.saputra@bappebti.go.id -> email baru r.saputra@bappebti.go.id",
+    status: "Menunggu",
+  },
+  {
+    id: "APR-2026-0045",
+    requestType: "Perubahan Role",
+    targetUserName: "Tim Operasional Platform",
+    targetUserEmail: "ops@bursadigitalnusantara.co.id",
+    requestedBy: "Rina Kusuma",
+    requestedAt: "13 Jun 2026, 14:20",
+    description: "Perubahan role dari Platform / Pialang menjadi Platform Supervisor.",
+    status: "Disetujui",
+    decidedBy: "Dewi Anjani",
+    decidedAt: "13 Jun 2026, 16:00",
+  },
+  {
+    id: "APR-2026-0046",
+    requestType: "Penonaktifan Akun",
+    targetUserName: "Akun Nonaktif Lama",
+    targetUserEmail: "lama.akun@bappebti.go.id",
+    requestedBy: "Dewi Anjani",
+    requestedAt: "02 Mei 2026, 09:00",
+    description: "Penonaktifan akun karena staf sudah tidak bertugas di Bappebti.",
+    status: "Disetujui",
+    decidedBy: "Bambang Setiawan",
+    decidedAt: "02 Mei 2026, 10:00",
+  },
+  {
+    id: "APR-2026-0047",
+    requestType: "Perubahan Email",
+    targetUserName: "Sekretariat Asosiasi",
+    targetUserEmail: "sekretariat@asosiasipbk.or.id",
+    requestedBy: "Sekretariat Asosiasi",
+    requestedAt: "10 Jun 2026, 11:00",
+    description: "Email lama sekretariat@asosiasipbk.or.id -> email baru info@asosiasipbk.or.id",
+    status: "Ditolak",
+    decidedBy: "Bambang Setiawan",
+    decidedAt: "10 Jun 2026, 15:40",
+    reason: "Domain email baru belum terverifikasi kepemilikannya oleh asosiasi.",
+  },
+];
+
+// Manajemen Ekosistem (Bab III item 9) — registry of platforms/pialang,
+// bursa, kliring, and asosiasi entities with a registration/approval
+// workflow, extending the entities already used across the prototype
+// (MEMBERS, BURSA_LIST, KLIRING_LIST) with a category and status.
+export const ECOSYSTEM_ENTITIES: EcosystemEntity[] = [
+  { id: "ECO-001", name: "PT Bursa Digital Nusantara", category: "Platform/Pialang", license: "PBK-001/BAPPEBTI/2024", bursa: "Bursa Komoditi Nusantara", kliring: "Kliring Berjangka Indonesia", status: "Disetujui", registeredAt: "10 Jan 2024", decidedBy: "Dewi Anjani", decidedAt: "15 Jan 2024" },
+  { id: "ECO-002", name: "PT Indodax Nasional Indonesia", category: "Platform/Pialang", license: "PBK-002/BAPPEBTI/2024", bursa: "Bursa Aset Kripto Indonesia", kliring: "Kliring Aset Digital Nusantara", status: "Disetujui", registeredAt: "12 Jan 2024", decidedBy: "Dewi Anjani", decidedAt: "16 Jan 2024" },
+  { id: "ECO-003", name: "PT Crypto Indonesia Berkat", category: "Platform/Pialang", license: "PBK-003/BAPPEBTI/2024", bursa: "Bursa Aset Kripto Indonesia", kliring: "Kliring Aset Digital Nusantara", status: "Disetujui", registeredAt: "14 Jan 2024", decidedBy: "Bambang Setiawan", decidedAt: "18 Jan 2024" },
+  { id: "ECO-004", name: "PT Pintu Kemana Saja", category: "Platform/Pialang", license: "PBK-004/BAPPEBTI/2024", bursa: "Bursa Aset Kripto Indonesia", kliring: "Kliring Aset Digital Nusantara", status: "Disetujui", registeredAt: "16 Jan 2024", decidedBy: "Bambang Setiawan", decidedAt: "20 Jan 2024" },
+  { id: "ECO-005", name: "PT Monex Investindo Futures", category: "Platform/Pialang", license: "PBK-005/BAPPEBTI/2024", bursa: "Bursa Berjangka Jakarta", kliring: "Kliring Berjangka Indonesia", status: "Disetujui", registeredAt: "18 Jan 2024", decidedBy: "Dewi Anjani", decidedAt: "22 Jan 2024" },
+  { id: "ECO-006", name: "PT Rifan Financindo Berjangka", category: "Platform/Pialang", license: "PBK-006/BAPPEBTI/2024", bursa: "Bursa Berjangka Jakarta", kliring: "Kliring Berjangka Indonesia", status: "Disetujui", registeredAt: "20 Jan 2024", decidedBy: "Dewi Anjani", decidedAt: "24 Jan 2024" },
+  { id: "ECO-007", name: "Bursa Komoditi Nusantara", category: "Bursa", license: "BK-001/BAPPEBTI/2020", status: "Disetujui", registeredAt: "05 Feb 2020", decidedBy: "Bambang Setiawan", decidedAt: "10 Feb 2020" },
+  { id: "ECO-008", name: "Bursa Aset Kripto Indonesia", category: "Bursa", license: "BK-002/BAPPEBTI/2021", status: "Disetujui", registeredAt: "11 Mar 2021", decidedBy: "Bambang Setiawan", decidedAt: "15 Mar 2021" },
+  { id: "ECO-009", name: "Bursa Berjangka Jakarta", category: "Bursa", license: "BK-003/BAPPEBTI/2019", status: "Disetujui", registeredAt: "02 Jan 2019", decidedBy: "Ratna Maharani", decidedAt: "08 Jan 2019" },
+  { id: "ECO-010", name: "Kliring Berjangka Indonesia", category: "Kliring", license: "KK-001/BAPPEBTI/2019", status: "Disetujui", registeredAt: "02 Jan 2019", decidedBy: "Ratna Maharani", decidedAt: "08 Jan 2019" },
+  { id: "ECO-011", name: "Kliring Aset Digital Nusantara", category: "Kliring", license: "KK-002/BAPPEBTI/2021", status: "Disetujui", registeredAt: "11 Mar 2021", decidedBy: "Bambang Setiawan", decidedAt: "15 Mar 2021" },
+  { id: "ECO-012", name: "Asosiasi Pialang Berjangka Indonesia", category: "Asosiasi", license: "AS-001/BAPPEBTI/2018", status: "Disetujui", registeredAt: "10 Jun 2018", decidedBy: "Ratna Maharani", decidedAt: "15 Jun 2018" },
+  { id: "ECO-013", name: "PT Nusantara Komoditi Berjangka", category: "Platform/Pialang", license: "PBK-013/BAPPEBTI/2026", bursa: "Bursa Berjangka Jakarta", kliring: "Kliring Berjangka Indonesia", status: "Menunggu Persetujuan", registeredAt: "14 Jun 2026" },
+  { id: "ECO-014", name: "Asosiasi Trader Aset Digital Indonesia", category: "Asosiasi", license: "AS-014/BAPPEBTI/2026", status: "Menunggu Persetujuan", registeredAt: "15 Jun 2026" },
 ];
 
 export const AUDIT_LOGS: AuditLogEntry[] = [

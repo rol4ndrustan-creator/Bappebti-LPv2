@@ -315,6 +315,16 @@ export interface FeedbackItem {
   pic: string;
   status: "Belum Ditugaskan" | "Ditinjau" | "Selesai" | "Dikonversi";
   createdAt: string;
+  /** Identity of whoever submitted the feedback, so staff can see what else this person has raised. */
+  reporterName: string;
+  reporterEmail?: string;
+  reporterPhone?: string;
+  read?: boolean;
+  flagged?: boolean;
+  flagReason?: string;
+  needsFollowUp?: boolean;
+  followUpStatus?: "Proses" | "Selesai";
+  followUpNote?: string;
 }
 
 export interface AdminUser {
@@ -324,6 +334,75 @@ export interface AdminUser {
   organization: string;
   status: "Aktif" | "Menunggu Persetujuan" | "Nonaktif";
   lastLogin: string;
+}
+
+// ---------------------------------------------------------------------------
+// Bab III — unified administration (role builder, approvals, ecosystem
+// registration, and app configuration).
+// ---------------------------------------------------------------------------
+
+export type ApprovalRequestType =
+  | "Pendaftaran Akun Baru"
+  | "Perubahan Email"
+  | "Reset Password"
+  | "Perubahan Role"
+  | "Penonaktifan Akun";
+
+export interface ApprovalRequest {
+  id: string;
+  requestType: ApprovalRequestType;
+  targetUserName: string;
+  targetUserEmail: string;
+  requestedBy: string;
+  requestedAt: string;
+  /** What specifically is changing, e.g. "Email lama -> email baru". */
+  description: string;
+  status: "Menunggu" | "Disetujui" | "Ditolak";
+  decidedBy?: string;
+  decidedAt?: string;
+  reason?: string;
+}
+
+export interface RoleDefinition {
+  id: string;
+  name: string;
+  description?: string;
+  /** Keys referencing MenuTreeItem.key in lib/menu-tree.ts — at least one required. */
+  menuKeys: string[];
+  createdAt: string;
+  /** Built-in seed roles (used across the rest of the prototype) are not deletable. */
+  builtIn?: boolean;
+}
+
+export type EcosystemCategory = "Platform/Pialang" | "Bursa" | "Kliring" | "Asosiasi";
+
+export interface EcosystemEntity {
+  id: string;
+  name: string;
+  category: EcosystemCategory;
+  license?: string;
+  bursa?: string;
+  kliring?: string;
+  status: "Menunggu Persetujuan" | "Disetujui" | "Ditolak";
+  registeredAt: string;
+  decidedBy?: string;
+  decidedAt?: string;
+  rejectionReason?: string;
+}
+
+export interface ComplaintCategoryConfig {
+  id: string;
+  name: string;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface SlaConfigEntry {
+  id: string;
+  hours: number;
+  effectiveFrom: string;
+  changedBy: string;
+  note?: string;
 }
 
 export interface AuditLogEntry {

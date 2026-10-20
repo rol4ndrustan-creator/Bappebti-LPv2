@@ -1,115 +1,121 @@
-import Link from "next/link";
+"use client";
+
 import { PageHeader } from "@/components/shared/page-header";
 import { KpiCard } from "@/components/shared/kpi-card";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { ADMIN_USERS, MEMBERS, AUDIT_LOGS, ROUTING_MAP, PLATFORM_LIST } from "@/lib/mock-data";
-import { Users, UserCheck, Building2, Route, Settings2, History } from "lucide-react";
+import { CASES } from "@/lib/mock-data";
+import { useCasesData } from "@/lib/mock-service/store";
+import { deriveWorkflowState, WORKFLOW_STATES } from "@/lib/workflow-config";
+import { ComplaintCase } from "@/lib/types";
+import { FileText, CheckCircle2, AlertTriangle, Clock } from "lucide-react";
+
+interface PlatformBreakdown {
+  platform: string;
+  total: number;
+  selesai: number;
+  lewatSla: number;
+  dalamSla: number;
+}
+
+function isClosed(c: ComplaintCase): boolean {
+  return !WORKFLOW_STATES[deriveWorkflowState(c)].isOpen;
+}
+
+function buildBreakdown(cases: ComplaintCase[]): PlatformBreakdown[] {
+  const map = new Map<string, PlatformBreakdown>();
+  for (const c of cases) {
+    const key = c.platformUserId ? c.platform : "Tanpa ID Platform";
+    const row = map.get(key) ?? { platform: key, total: 0, selesai: 0, lewatSla: 0, dalamSla: 0 };
+    row.total += 1;
+    if (isClosed(c)) {
+      row.selesai += 1;
+    } else if (c.slaStatus === "Lewat SLA") {
+      row.lewatSla += 1;
+    } else {
+      row.dalamSla += 1;
+    }
+    map.set(key, row);
+  }
+  return Array.from(map.values()).sort((a, b) => b.total - a.total);
+}
+
+function StackedBar({ row, max }: { row: PlatformBreakdown; max: number }) {
+  const pct = (n: number) => (max === 0 ? 0 : Math.max((n / max) * 100, n > 0 ? 2 : 0));
+  return (
+    <div className="flex h-3 w-full overflow-hidden rounded-full bg-muted-bg">
+      {row.selesai > 0 && (
+        <div
+          className="h-full bg-green first:rounded-l-full"
+          style={{ width: `${pct(row.selesai)}%` }}
+          title={`Selesai: ${row.selesai}`}
+        />
+      )}
+      {row.dalamSla > 0 && (
+        <div
+          className="h-full bg-amber"
+          style={{ width: `${pct(row.dalamSla)}%` }}
+          title={`Belum Selesai & Dalam SLA: ${row.dalamSla}`}
+        />
+      )}
+      {row.lewatSla > 0 && (
+        <div
+          className="h-full bg-red last:rounded-r-full"
+          style={{ width: `${pct(row.lewatSla)}%` }}
+          title={`Belum Selesai & Lewat SLA: ${row.lewatSla}`}
+        />
+      )}
+    </div>
+  );
+}
 
 export default function AdminDashboardPage() {
-  const activeUsers = ADMIN_USERS.filter((u) => u.status === "Aktif").length;
-  const pendingApprovals = ADMIN_USERS.filter((u) => u.status === "Menunggu Persetujuan").length;
-  const registeredMembers = MEMBERS.length;
-  const missingRouting = PLATFORM_LIST.filter(
-    (p) => p !== "Tidak tahu / belum terdaftar" && !ROUTING_MAP[p]
-  ).length;
-  const slaRulesConfigured = 8;
-  const auditLogsToday = AUDIT_LOGS.filter((a) => a.timestamp.startsWith("15 Jun 2026")).length;
+  const cases = useCasesData(CASES);
+  const total = cases.length;
+  const selesai = cases.filter(isClosed).length;
+  const lewatSla = cases.filter((c) => !isClosed(c) && c.slaStatus === "Lewat SLA").length;
+  const dalamSla = total - selesai - lewatSla;
 
-  const recentAuditLogs = AUDIT_LOGS.slice(0, 5);
-  const pendingUsers = ADMIN_USERS.filter((u) => u.status === "Menunggu Persetujuan");
+  const breakdown = buildBreakdown(cases);
+  const maxTotal = Math.max(...breakdown.map((r) => r.total), 1);
 
   return (
     <div>
       <PageHeader
         title="Dashboard Admin"
-        description="Ringkasan operasional sistem: pengguna, anggota terdaftar, konfigurasi routing, SLA, dan aktivitas audit."
+        description="Jumlah pengaduan dibandingkan dengan platform (termasuk pengaduan tanpa ID platform), beserta status penyelesaian dan kepatuhan SLA."
       />
 
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 mb-4">
-        <KpiCard label="Active Users" value={activeUsers} icon={Users} tone="navy" />
-        <KpiCard label="Pending User Approvals" value={pendingApprovals} icon={UserCheck} tone="amber" />
-        <KpiCard label="Registered Members" value={registeredMembers} icon={Building2} tone="default" />
-        <KpiCard label="Missing Routing Mappings" value={missingRouting} icon={Route} tone={missingRouting > 0 ? "amber" : "green"} />
-        <KpiCard label="SLA Rules Configured" value={slaRulesConfigured} icon={Settings2} tone="default" />
-        <KpiCard label="Audit Logs Today" value={auditLogsToday} icon={History} tone="navy" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        <KpiCard label="Jumlah Pengaduan" value={total} icon={FileText} tone="navy" />
+        <KpiCard label="Pengaduan Selesai" value={selesai} icon={CheckCircle2} tone="green" />
+        <KpiCard label="Belum Selesai & Lewat SLA" value={lewatSla} icon={AlertTriangle} tone="red" />
+        <KpiCard label="Belum Selesai & Dalam SLA" value={dalamSla} icon={Clock} tone="amber" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Aktivitas Terbaru</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Timestamp</TableHead>
-                  <TableHead>Actor</TableHead>
-                  <TableHead>Action</TableHead>
-                  <TableHead>Object</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentAuditLogs.map((log, i) => (
-                  <TableRow key={i}>
-                    <TableCell className="whitespace-nowrap">{log.timestamp}</TableCell>
-                    <TableCell>{log.actor}</TableCell>
-                    <TableCell>{log.action}</TableCell>
-                    <TableCell className="text-navy font-medium">{log.object}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-          <div className="px-4 py-2 border-t border-border text-xs">
-            <Link href="/admin/audit-logs" className="text-navy hover:underline">
-              Lihat semua audit logs &rarr;
-            </Link>
+      <div className="rounded-lg border border-border bg-card">
+        <div className="px-4 py-3 border-b border-border flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold text-navy">Pengaduan per Platform</h2>
+          <div className="flex items-center gap-3 text-[11px] text-muted">
+            <span className="inline-flex items-center gap-1"><span className="size-2 rounded-full bg-green inline-block" /> Selesai</span>
+            <span className="inline-flex items-center gap-1"><span className="size-2 rounded-full bg-amber inline-block" /> Dalam SLA</span>
+            <span className="inline-flex items-center gap-1"><span className="size-2 rounded-full bg-red inline-block" /> Lewat SLA</span>
           </div>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Pengguna Menunggu Persetujuan</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pendingUsers.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted py-4">
-                      Tidak ada pengguna menunggu persetujuan.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  pendingUsers.map((u) => (
-                    <TableRow key={u.email}>
-                      <TableCell className="font-medium">{u.name}</TableCell>
-                      <TableCell>{u.email}</TableCell>
-                      <TableCell>{u.role}</TableCell>
-                      <TableCell><Badge variant="amber">{u.status.toUpperCase()}</Badge></TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-          <div className="px-4 py-2 border-t border-border text-xs">
-            <Link href="/admin/users" className="text-navy hover:underline">
-              Kelola User Management &rarr;
-            </Link>
-          </div>
-        </Card>
+        </div>
+        <div className="divide-y divide-border">
+          {breakdown.map((row) => (
+            <div key={row.platform} className="px-4 py-3">
+              <div className="flex items-center justify-between gap-3 mb-1.5">
+                <span className="text-xs font-medium text-foreground truncate">{row.platform}</span>
+                <span className="text-[11px] text-muted shrink-0">
+                  {row.total} pengaduan &middot; {row.selesai} selesai &middot; {row.dalamSla} dalam SLA &middot; {row.lewatSla} lewat SLA
+                </span>
+              </div>
+              <StackedBar row={row} max={maxTotal} />
+            </div>
+          ))}
+          {breakdown.length === 0 && (
+            <p className="px-4 py-6 text-center text-xs text-muted">Belum ada data pengaduan.</p>
+          )}
+        </div>
       </div>
     </div>
   );

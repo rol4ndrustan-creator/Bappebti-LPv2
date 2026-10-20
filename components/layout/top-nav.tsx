@@ -13,13 +13,15 @@ const PORTALS = [
   { label: "Platform", href: "/platform" },
   { label: "Ekosistem", href: "/ekosistem" },
   { label: "Asosiasi", href: "/asosiasi" },
-  { label: "Admin", href: "/admin" },
 ];
 
 export function TopNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const activePortal = PORTALS.find((p) => pathname?.startsWith(p.href))?.href ?? "";
+  // /admin/* is part of the unified Bappebti portal (Bab III), so it
+  // highlights "Bappebti" in the switcher rather than having no match.
+  const effectivePathname = pathname?.startsWith("/admin") ? "/bappebti" : pathname;
+  const activePortal = PORTALS.find((p) => effectivePathname?.startsWith(p.href))?.href ?? "";
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-navy text-white">

@@ -141,7 +141,7 @@ export const DEMO_USERS: DemoUser[] = [
   { id: "dewi", name: "Dewi Anjani", role: "BAPPEBTI_CASE_OFFICER", institution: "Bappebti", portalHref: "/bappebti" },
   { id: "bambang", name: "Bambang Setiawan", role: "BAPPEBTI_SUPERVISOR", institution: "Bappebti", portalHref: "/bappebti" },
   { id: "ratna", name: "Ratna Maharani", role: "BAPPEBTI_EXECUTIVE", institution: "Bappebti", portalHref: "/bappebti" },
-  { id: "admin", name: "System Administrator", role: "SYSTEM_ADMIN", institution: "Bappebti", portalHref: "/admin" },
+  { id: "admin", name: "System Administrator", role: "SYSTEM_ADMIN", institution: "Bappebti", portalHref: "/bappebti" },
 ];
 
 export const DEFAULT_DEMO_USER_ID = DEMO_USERS[0].id;
