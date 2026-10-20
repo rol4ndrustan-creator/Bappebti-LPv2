@@ -1,25 +1,20 @@
 "use client";
 
-// Manajemen Ekosistem registrations (Bab III item 9). Same localStorage +
-// event-bus pattern — ECOSYSTEM_ENTITIES in lib/mock-data.ts stays
-// read-only seed data; new registrations and approval decisions are
-// layered on top.
+// Manajemen Ekosistem registrations. Same localStorage + event-bus
+// pattern — ECOSYSTEM_ENTITIES in lib/mock-data.ts stays read-only seed
+// data. New entities (drafts, submitted registrations) are added here;
+// edits (including approval decisions) are layered on top as patches.
+// The actual approval queue lives in ecosystem-change-store.ts, which
+// calls the functions below once a decision is made.
 
 import * as React from "react";
 import { EcosystemEntity } from "../types";
 import { subscribe, emitChange, getVersion } from "./event-bus";
 
 const ADDED_KEY = "bappebti-demo-added-ecosystem";
-const DECISIONS_KEY = "bappebti-demo-ecosystem-decisions";
+const EDITS_KEY = "bappebti-demo-ecosystem-edits";
 
-interface Decision {
-  status: "Disetujui" | "Ditolak";
-  decidedBy: string;
-  decidedAt: string;
-  rejectionReason?: string;
-}
-
-type DecisionMap = Record<string, Decision>;
+type EditMap = Record<string, Partial<EcosystemEntity>>;
 
 function readJSON<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
@@ -44,26 +39,22 @@ export function addEcosystemEntity(entity: EcosystemEntity) {
   writeJSON(ADDED_KEY, [...readJSON<EcosystemEntity[]>(ADDED_KEY, []), entity]);
 }
 
-export function decideEcosystemEntity(id: string, status: "Disetujui" | "Ditolak", decidedBy: string, rejectionReason?: string) {
-  const decisions = readJSON<DecisionMap>(DECISIONS_KEY, {});
-  decisions[id] = {
-    status,
-    decidedBy,
-    decidedAt: new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" }),
-    rejectionReason,
-  };
-  writeJSON(DECISIONS_KEY, decisions);
+export function updateEcosystemEntity(id: string, patch: Partial<EcosystemEntity>) {
+  const edits = readJSON<EditMap>(EDITS_KEY, {});
+  edits[id] = { ...edits[id], ...patch };
+  writeJSON(EDITS_KEY, edits);
+}
+
+export function setEcosystemEntityPendingEdit(id: string, pending: boolean) {
+  updateEcosystemEntity(id, { hasPendingEdit: pending });
 }
 
 export function useEcosystemEntities(seed: EcosystemEntity[]): EcosystemEntity[] {
   const version = React.useSyncExternalStore(subscribe, getVersion, getVersion);
   return React.useMemo(() => {
     const added = readJSON<EcosystemEntity[]>(ADDED_KEY, []);
-    const decisions = readJSON<DecisionMap>(DECISIONS_KEY, {});
-    return [...seed, ...added].map((e) => {
-      const d = decisions[e.id];
-      return d ? { ...e, status: d.status, decidedBy: d.decidedBy, decidedAt: d.decidedAt, rejectionReason: d.rejectionReason ?? e.rejectionReason } : e;
-    });
+    const edits = readJSON<EditMap>(EDITS_KEY, {});
+    return [...seed, ...added].map((e) => (edits[e.id] ? { ...e, ...edits[e.id] } : e));
   // eslint-disable-next-line react-hooks/exhaustive-deps -- version isn't read in the body, it only forces recomputation when the store changes
   }, [seed, version]);
 }

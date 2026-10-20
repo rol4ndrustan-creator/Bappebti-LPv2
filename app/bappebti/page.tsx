@@ -5,6 +5,8 @@ import { SeverityBadge, SlaBadge, RiskBadge } from "@/components/shared/badges";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { CASES, MEMBERS } from "@/lib/mock-data";
+import { deriveWorkflowState, WORKFLOW_STATES } from "@/lib/workflow-config";
+import { ComplaintCase } from "@/lib/types";
 import {
   AlertCircle,
   Building2,
@@ -15,8 +17,12 @@ import {
   ArrowRight,
 } from "lucide-react";
 
+function isOpenCase(c: ComplaintCase): boolean {
+  return WORKFLOW_STATES[deriveWorkflowState(c)].isOpen;
+}
+
 export default function DashboardEksekutifPage() {
-  const open = CASES.filter((c) => c.status !== "Selesai");
+  const open = CASES.filter(isOpenCase);
   const bappebtiOwned = CASES.filter((c) => c.responsibility === "BAPPEBTI OWNED");
   const memberAssigned = CASES.filter((c) => c.responsibility === "MEMBER ASSIGNED");
   const waitingPublic = CASES.filter((c) => c.responsibility === "WAITING PUBLIC");
@@ -31,6 +37,14 @@ export default function DashboardEksekutifPage() {
   }
   const categoryEntries = Object.entries(categoryCounts).sort((a, b) => b[1] - a[1]);
   const maxCategory = Math.max(...categoryEntries.map(([, v]) => v));
+
+  // Per-platform breakdown of still-active/in-process complaints
+  const platformCounts: Record<string, number> = {};
+  for (const c of open) {
+    platformCounts[c.platform] = (platformCounts[c.platform] || 0) + 1;
+  }
+  const platformEntries = Object.entries(platformCounts).sort((a, b) => b[1] - a[1]);
+  const maxPlatform = Math.max(...platformEntries.map(([, v]) => v), 1);
 
   // SLA compliance
   const safeCount = CASES.filter((c) => c.slaStatus === "Aman").length;
@@ -142,6 +156,34 @@ export default function DashboardEksekutifPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Per-platform bar chart */}
+      <Card className="mb-4">
+        <CardHeader>
+          <CardTitle>Pengaduan Aktif per Platform</CardTitle>
+          <CardDescription>Jumlah pengaduan yang masih aktif/dalam proses, dikelompokkan per platform.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-end gap-4 overflow-x-auto pb-2" style={{ minHeight: 180 }}>
+            {platformEntries.map(([platform, count]) => (
+              <div key={platform} className="flex flex-col items-center gap-1.5 shrink-0 w-20">
+                <span className="text-xs font-semibold text-navy">{count}</span>
+                <div
+                  className="w-10 rounded-t-md bg-navy"
+                  style={{ height: `${Math.max((count / maxPlatform) * 130, 6)}px` }}
+                  title={`${platform}: ${count} pengaduan aktif`}
+                />
+                <span className="text-[10px] text-muted text-center leading-tight" title={platform}>
+                  {platform.replace(/^PT\.?\s*/i, "")}
+                </span>
+              </div>
+            ))}
+            {platformEntries.length === 0 && (
+              <p className="text-xs text-muted">Tidak ada pengaduan aktif saat ini.</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Responsibility split + risk alerts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">

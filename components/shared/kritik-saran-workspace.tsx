@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { useToast } from "@/components/shared/toast-provider";
-import { FEEDBACK_LIST } from "@/lib/mock-data";
+import { FEEDBACK_LIST, ADMIN_USERS, ROLE_DEFINITIONS } from "@/lib/mock-data";
 import { FeedbackItem } from "@/lib/types";
 import {
   useFeedbackList,
@@ -23,18 +23,14 @@ import {
   setFeedbackPic,
   setFeedbackStatus,
 } from "@/lib/mock-service/feedback-store";
+import { useAdminUsers } from "@/lib/mock-service/admin-user-store";
+import { useRoles } from "@/lib/mock-service/role-store";
 import { Eye, Flag, Users, Mail, Phone } from "lucide-react";
 import type { VariantProps } from "class-variance-authority";
 
 type BadgeVariant = VariantProps<typeof badgeVariants>["variant"];
 
-const PIC_OPTIONS = [
-  "Belum ditugaskan",
-  "Tim Produk Bappebti",
-  "Tim Edukasi Bappebti",
-  "Tim Pengawasan Bappebti",
-  "Tim Operasional Bappebti",
-];
+const UNASSIGNED_PIC = "Belum ditugaskan";
 
 const STATUS_OPTIONS: FeedbackItem["status"][] = ["Belum Ditugaskan", "Ditinjau", "Selesai", "Dikonversi"];
 
@@ -68,14 +64,29 @@ const MODE_HEADER: Record<KritikSaranMode, { title: string; description: string 
 export function KritikSaranWorkspace({ mode }: { mode: KritikSaranMode }) {
   const { showToast } = useToast();
   const allItems = useFeedbackList(FEEDBACK_LIST);
+  const adminUsers = useAdminUsers(ADMIN_USERS);
+  const roles = useRoles(ROLE_DEFINITIONS);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [keyword, setKeyword] = React.useState("");
   const [reporterQuery, setReporterQuery] = React.useState("");
   const [flagFilter, setFlagFilter] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState("");
-  const [picSelection, setPicSelection] = React.useState<string>(PIC_OPTIONS[0]);
   const [showOtherFromReporter, setShowOtherFromReporter] = React.useState(false);
   const [flagReasonDraft, setFlagReasonDraft] = React.useState("");
+
+  // Only staff whose role has access to the Kritik & Saran > Perlu Tindak
+  // Lanjut submenu can be assigned as PIC — derived live from Setup Role
+  // Access, not a hardcoded team list.
+  const picOptions = React.useMemo(() => {
+    const eligibleRoleNames = new Set(
+      roles.filter((r) => r.menuKeys.includes("kritik.tindak-lanjut")).map((r) => r.name)
+    );
+    const names = adminUsers
+      .filter((u) => u.status === "Aktif" && eligibleRoleNames.has(u.role))
+      .map((u) => u.name);
+    return [UNASSIGNED_PIC, ...names];
+  }, [adminUsers, roles]);
+  const [picSelection, setPicSelection] = React.useState<string>(UNASSIGNED_PIC);
 
   const modeFiltered = React.useMemo(() => {
     if (mode === "unread") return allItems.filter((f) => !f.read);
@@ -110,7 +121,7 @@ export function KritikSaranWorkspace({ mode }: { mode: KritikSaranMode }) {
 
   function handleSelect(item: FeedbackItem) {
     setSelectedId(item.id);
-    setPicSelection(item.pic !== "Belum ditugaskan" ? item.pic : PIC_OPTIONS[0]);
+    setPicSelection(item.pic !== UNASSIGNED_PIC ? item.pic : UNASSIGNED_PIC);
     setShowOtherFromReporter(false);
     setFlagReasonDraft(item.flagReason ?? "");
     if (!item.read) {
@@ -344,35 +355,6 @@ export function KritikSaranWorkspace({ mode }: { mode: KritikSaranMode }) {
               )}
             </div>
 
-            {mode === "follow-up" ? (
-              <div className="rounded-md border border-border p-3">
-                <p className="text-xs font-semibold text-navy mb-2">Tindak Lanjut</p>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs text-muted">Status saat ini:</span>
-                  <Badge variant={selected.followUpStatus === "Selesai" ? "green" : "amber"}>
-                    {selected.followUpStatus ?? "Proses"}
-                  </Badge>
-                </div>
-                {selected.followUpStatus !== "Selesai" && (
-                  <Button size="sm" onClick={handleMarkFollowUpDone}>
-                    Tandai Sudah Selesai Tindak Lanjut
-                  </Button>
-                )}
-              </div>
-            ) : (
-              <div className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-muted-bg/50 px-3 py-2">
-                <span className="text-xs text-muted">Assign PIC ke:</span>
-                <Select className="w-56" value={picSelection} onChange={(e) => setPicSelection(e.target.value)}>
-                  {PIC_OPTIONS.map((p) => (
-                    <option key={p} value={p}>{p}</option>
-                  ))}
-                </Select>
-                <Button size="sm" onClick={handleAssignPic}>
-                  Konfirmasi
-                </Button>
-              </div>
-            )}
-
             <div className="rounded-md border border-border p-3">
               <p className="text-xs font-semibold text-navy mb-2">Tandai Flag</p>
               <div className="flex flex-wrap items-start gap-2">
@@ -407,6 +389,37 @@ export function KritikSaranWorkspace({ mode }: { mode: KritikSaranMode }) {
                 </Button>
               </div>
             </div>
+
+            {selected.needsFollowUp && (
+              <div className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-muted-bg/50 px-3 py-2">
+                <span className="text-xs text-muted">Assign PIC ke:</span>
+                <Select className="w-56" value={picSelection} onChange={(e) => setPicSelection(e.target.value)}>
+                  {picOptions.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </Select>
+                <Button size="sm" onClick={handleAssignPic}>
+                  Konfirmasi
+                </Button>
+              </div>
+            )}
+
+            {mode === "follow-up" && (
+              <div className="rounded-md border border-border p-3">
+                <p className="text-xs font-semibold text-navy mb-2">Tindak Lanjut</p>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs text-muted">Status saat ini:</span>
+                  <Badge variant={selected.followUpStatus === "Selesai" ? "green" : "amber"}>
+                    {selected.followUpStatus ?? "Proses"}
+                  </Badge>
+                </div>
+                {selected.followUpStatus !== "Selesai" && (
+                  <Button size="sm" onClick={handleMarkFollowUpDone}>
+                    Tandai Sudah Selesai Tindak Lanjut
+                  </Button>
+                )}
+              </div>
+            )}
 
             {mode !== "follow-up" && (
               <div className="flex flex-wrap gap-2">

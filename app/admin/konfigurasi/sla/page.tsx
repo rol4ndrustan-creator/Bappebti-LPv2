@@ -9,74 +9,76 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { SLA_HISTORY } from "@/lib/mock-data";
-import { useSlaHistory, addSlaEntry } from "@/lib/mock-service/sla-store";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { SLA_HISTORY, CONFIG_CHANGE_REQUESTS } from "@/lib/mock-data";
+import { useSlaHistory } from "@/lib/mock-service/sla-store";
+import { requestConfigChange, useConfigChangeRequests } from "@/lib/mock-service/config-approval-store";
 import { useToast } from "@/components/shared/toast-provider";
-import { Clock3 } from "lucide-react";
+import { Clock3, Pencil } from "lucide-react";
 
 export default function SlaManagementPage() {
   const history = useSlaHistory(SLA_HISTORY);
   const current = history[0];
   const { showToast } = useToast();
+  const allRequests = useConfigChangeRequests(CONFIG_CHANGE_REQUESTS);
+  const pendingSla = allRequests.find((r) => r.configType === "Manajemen SLA" && r.status === "Menunggu");
 
+  const [open, setOpen] = React.useState(false);
   const [hours, setHours] = React.useState("");
   const [note, setNote] = React.useState("");
 
   function handleSubmit() {
     const value = Number(hours);
     if (!Number.isFinite(value) || value <= 0) return;
-    addSlaEntry({
-      id: `SLA-${Date.now().toString(36).toUpperCase()}`,
-      hours: value,
-      effectiveFrom: new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" }),
-      changedBy: "Anda (Petugas Admin)",
-      note: note.trim() || undefined,
+    requestConfigChange({
+      configType: "Manajemen SLA",
+      action: "Ubah",
+      itemLabel: "SLA Respons Pengaduan",
+      beforeValue: `${current?.hours ?? "-"} jam`,
+      afterValue: `${value} jam`,
+      payload: JSON.stringify({ hours: value, note: note.trim() || undefined }),
+      requestedBy: "Anda (Petugas Admin)",
     });
-    showToast(`SLA baru (${value} jam) berhasil disimpan.`);
+    showToast(`Permohonan perubahan SLA menjadi ${value} jam telah diajukan untuk persetujuan.`);
     setHours("");
     setNote("");
+    setOpen(false);
   }
 
   return (
     <div>
       <PageHeader
         title="Manajemen SLA"
-        description="SLA respons pengaduan berlaku secara global dalam hitungan jam. Setiap perubahan dicatat pada riwayat di bawah."
+        description="SLA respons pengaduan berlaku secara global dalam hitungan jam. Setiap perubahan memerlukan persetujuan pada Approval Configuration dan dicatat pada riwayat di bawah."
+        actions={
+          <Button size="sm" onClick={() => setOpen(true)}>
+            <Pencil className="size-3.5" /> Ubah SLA
+          </Button>
+        }
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="py-5 flex flex-col items-center justify-center text-center">
-            <Clock3 className="size-6 text-navy mb-2" />
-            <p className="text-[11px] uppercase tracking-wide text-muted font-medium">SLA Saat Ini</p>
-            <p className="text-3xl font-semibold text-navy mt-1">{current?.hours ?? "-"} Jam</p>
-            {current && (
-              <p className="text-[11px] text-muted mt-1">
-                Berlaku sejak {current.effectiveFrom} &middot; oleh {current.changedBy}
-              </p>
-            )}
-          </CardContent>
-        </Card>
+      {pendingSla && (
+        <div className="mb-4 rounded-lg border border-amber/40 bg-amber-bg/40 p-3 flex items-start gap-2">
+          <Clock3 className="size-4 text-amber shrink-0 mt-0.5" />
+          <p className="text-xs text-foreground">
+            Perubahan SLA menjadi <strong>{pendingSla.afterValue}</strong> sedang menunggu persetujuan — diajukan
+            oleh {pendingSla.requestedBy}.
+          </p>
+        </div>
+      )}
 
-        <Card className="lg:col-span-2">
-          <CardContent className="py-4">
-            <p className="text-xs font-semibold text-navy mb-2">Ubah SLA</p>
-            <div className="flex flex-wrap items-end gap-2">
-              <div className="w-40">
-                <Label htmlFor="sla-hours">SLA Baru (Jam)</Label>
-                <Input id="sla-hours" type="number" min={1} value={hours} onChange={(e) => setHours(e.target.value)} placeholder="Contoh: 48" />
-              </div>
-              <div className="flex-1 min-w-[220px]">
-                <Label htmlFor="sla-note">Catatan Perubahan (opsional)</Label>
-                <Textarea id="sla-note" value={note} onChange={(e) => setNote(e.target.value)} className="min-h-[38px] text-xs" />
-              </div>
-              <Button size="sm" disabled={!hours.trim()} onClick={handleSubmit}>
-                Simpan SLA
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <Card>
+        <CardContent className="py-5 flex flex-col items-center justify-center text-center">
+          <Clock3 className="size-6 text-navy mb-2" />
+          <p className="text-[11px] uppercase tracking-wide text-muted font-medium">SLA Saat Ini</p>
+          <p className="text-3xl font-semibold text-navy mt-1">{current?.hours ?? "-"} Jam</p>
+          {current && (
+            <p className="text-[11px] text-muted mt-1">
+              Berlaku sejak {current.effectiveFrom} &middot; oleh {current.changedBy}
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       <h2 className="text-sm font-semibold text-navy mt-6 mb-2">Riwayat Perubahan SLA</h2>
       <Table>
@@ -101,6 +103,29 @@ export default function SlaManagementPage() {
           ))}
         </TableBody>
       </Table>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ubah SLA</DialogTitle>
+            <DialogDescription>SLA baru akan berlaku setelah disetujui pada Approval Configuration.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2.5">
+            <div>
+              <Label htmlFor="sla-hours">SLA Baru (Jam)</Label>
+              <Input id="sla-hours" type="number" min={1} value={hours} onChange={(e) => setHours(e.target.value)} placeholder="Contoh: 48" />
+            </div>
+            <div>
+              <Label htmlFor="sla-note">Catatan Perubahan (opsional)</Label>
+              <Textarea id="sla-note" value={note} onChange={(e) => setNote(e.target.value)} className="min-h-[60px] text-xs" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button size="sm" variant="secondary" onClick={() => setOpen(false)}>Batal</Button>
+            <Button size="sm" disabled={!hours.trim()} onClick={handleSubmit}>Ajukan Perubahan</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

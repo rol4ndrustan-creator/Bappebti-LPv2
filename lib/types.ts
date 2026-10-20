@@ -374,20 +374,133 @@ export interface RoleDefinition {
   builtIn?: boolean;
 }
 
+/** @deprecated kept only for the pre-wizard seed shape; entities now carry a free-text `category` referencing EcosystemCategoryConfig plus a fixed `ecosystemType`. */
 export type EcosystemCategory = "Platform/Pialang" | "Bursa" | "Kliring" | "Asosiasi";
+
+// Ecosystem Type is fixed (only these two values ever exist); Ecosystem
+// Category is a manageable list configured in Konfigurasi > Category
+// Ecosystem, each category attached to one of these two types.
+export type EcosystemType = "Ecosystem Aktif" | "Ecosystem Pengawas";
+
+export interface EcosystemCategoryConfig {
+  id: string;
+  type: EcosystemType;
+  /** Short label, e.g. "Bursa" — shown throughout the UI as the category name. */
+  shortDescription: string;
+  longDescription: string;
+  active: boolean;
+  createdAt: string;
+}
+
+export type EcosystemAccessRole = "Admin Ecosystem" | "Petugas Pengaduan" | "Penyetuju" | "Pemantau";
+
+export interface EcosystemExecutive {
+  id: string;
+  name: string;
+  position: string;
+  responsibilityArea: string;
+  officialEmail: string;
+  phone?: string;
+  startDate: string;
+  endDate?: string;
+  appointmentDocument?: string;
+}
+
+export interface EcosystemPic {
+  id: string;
+  name: string;
+  position: string;
+  unit: string;
+  email: string;
+  phone: string;
+  accessRole: EcosystemAccessRole;
+  isPrimary: boolean;
+  appointmentLetter?: string;
+}
+
+export type EcosystemRegistrationStatus = "Draft" | "Menunggu Verifikasi" | "Perlu Perbaikan" | "Disetujui" | "Ditolak";
 
 export interface EcosystemEntity {
   id: string;
   name: string;
-  category: EcosystemCategory;
+  /** References an EcosystemCategoryConfig.shortDescription. */
+  category: string;
+  ecosystemType: EcosystemType;
+  description?: string;
+  shortName?: string;
+  logo?: string;
   license?: string;
+  npwp?: string;
+  aktaPendirian?: string;
+  aktaPerubahan?: string;
+  pengesahanAhu?: string;
+  izinUsaha?: string;
+  address?: string;
+  province?: string;
+  city?: string;
+  postalCode?: string;
+  officePhone?: string;
+  officialEmail?: string;
+  website?: string;
   bursa?: string;
   kliring?: string;
-  status: "Menunggu Persetujuan" | "Disetujui" | "Ditolak";
+  executives?: EcosystemExecutive[];
+  pics?: EcosystemPic[];
+  nibDocument?: string;
+  npwpDocument?: string;
+  aktaPendirianDocument?: string;
+  aktaPerubahanDocument?: string;
+  izinUsahaDocument?: string;
+  strukturOrganisasiDocument?: string;
+  supportingDocuments?: { name: string; file: string }[];
+  submitterName?: string;
+  submitterPosition?: string;
+  status: EcosystemRegistrationStatus;
+  hasPendingEdit?: boolean;
+  /** Operational on/off switch, independent of the registration status lifecycle. */
+  disabled?: boolean;
+  establishedAt?: string;
   registeredAt: string;
   decidedBy?: string;
   decidedAt?: string;
   rejectionReason?: string;
+}
+
+export type EcosystemChangeType = "Pendaftaran Baru" | "Perubahan Data";
+
+export interface EcosystemChangeRequest {
+  id: string;
+  entityId: string;
+  changeType: EcosystemChangeType;
+  entityName: string;
+  before?: Partial<EcosystemEntity>;
+  after: EcosystemEntity;
+  requestedBy: string;
+  requestedAt: string;
+  status: "Menunggu" | "Disetujui" | "Ditolak";
+  decidedBy?: string;
+  decidedAt?: string;
+  reason?: string;
+}
+
+export type ConfigType = "Kategori Pengaduan" | "Manajemen SLA" | "Kategori Ekosistem";
+export type ConfigChangeAction = "Tambah" | "Nonaktifkan" | "Aktifkan" | "Ubah";
+
+export interface ConfigChangeRequest {
+  id: string;
+  configType: ConfigType;
+  action: ConfigChangeAction;
+  itemLabel: string;
+  beforeValue?: string;
+  afterValue: string;
+  /** JSON-encoded payload needed to apply the change once approved. */
+  payload: string;
+  requestedBy: string;
+  requestedAt: string;
+  status: "Menunggu" | "Disetujui" | "Ditolak";
+  decidedBy?: string;
+  decidedAt?: string;
+  reason?: string;
 }
 
 export interface ComplaintCategoryConfig {

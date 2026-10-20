@@ -29,7 +29,7 @@ export const MENU_TREE: MenuTreeItem[] = [
     iconName: "ListChecks",
     children: [
       { key: "pengaduan.semua", label: "Semua Pengaduan", href: "/bappebti/antrean", iconName: "" },
-      { key: "pengaduan.bappebti", label: "Penanganan Bappebti", href: "/bappebti/antrean?tab=bappebti", iconName: "" },
+      { key: "pengaduan.bappebti", label: "Penanganan Bappebti", href: "/bappebti/pengaduan/penanganan-bappebti", iconName: "" },
       { key: "pengaduan.tanpa-platform", label: "Tanpa ID Platform", href: "/bappebti/pengaduan/tanpa-platform", iconName: "" },
       { key: "pengaduan.menunggu-konfirmasi", label: "Menunggu Konfirmasi Pelapor", href: "/bappebti/pengaduan/menunggu-konfirmasi", iconName: "" },
       { key: "pengaduan.selesai-otomatis", label: "Ditutup Otomatis", href: "/bappebti/pengaduan/selesai-otomatis", iconName: "" },
@@ -68,7 +68,7 @@ export const MENU_TREE: MenuTreeItem[] = [
     children: [
       { key: "ekosistem.kategori", label: "Kategori Ekosistem", href: "/admin/ekosistem/kategori", iconName: "" },
       { key: "ekosistem.daftar", label: "Daftar Ekosistem", href: "/admin/ekosistem/daftar", iconName: "" },
-      { key: "ekosistem.approval", label: "Persetujuan Pendaftaran", href: "/admin/ekosistem/approval", iconName: "" },
+      { key: "ekosistem.approval", label: "Approval Ekosistem", href: "/admin/ekosistem/approval", iconName: "" },
     ],
   },
   { key: "routing", label: "Routing Mapping", href: "/admin/routing", iconName: "Route" },
@@ -80,6 +80,8 @@ export const MENU_TREE: MenuTreeItem[] = [
     children: [
       { key: "konfigurasi.kategori", label: "Kategori Pengaduan", href: "/admin/konfigurasi/kategori-pengaduan", iconName: "" },
       { key: "konfigurasi.sla", label: "Manajemen SLA", href: "/admin/konfigurasi/sla", iconName: "" },
+      { key: "konfigurasi.category-ecosystem", label: "Category Ecosystem", href: "/admin/konfigurasi/category-ecosystem", iconName: "" },
+      { key: "konfigurasi.approval", label: "Approval Configuration", href: "/admin/konfigurasi/approval", iconName: "" },
     ],
   },
   { key: "audit-logs", label: "Audit Logs", href: "/admin/audit-logs", iconName: "History" },
