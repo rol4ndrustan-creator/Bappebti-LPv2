@@ -390,6 +390,10 @@ export interface EcosystemCategoryConfig {
   longDescription: string;
   active: boolean;
   createdAt: string;
+  /** "Tanggal tayang" — when this category is/was shown as selectable; free-pick date, independent of createdAt. */
+  displayDate: string;
+  userMaker: string;
+  userApproval?: string;
 }
 
 export type EcosystemAccessRole = "Admin Ecosystem" | "Petugas Pengaduan" | "Penyetuju" | "Pemantau";
@@ -466,15 +470,55 @@ export interface EcosystemEntity {
   rejectionReason?: string;
 }
 
-export type EcosystemChangeType = "Pendaftaran Baru" | "Perubahan Data";
+export type EcosystemChangeType =
+  | "Pendaftaran Baru"
+  | "Perubahan Data"
+  | "Tambah Kategori"
+  | "Nonaktifkan Kategori"
+  | "Aktifkan Kategori";
+
+/** Whether an Approval Ekosistem request concerns a registered entity or a category-config change. */
+export type EcosystemChangeTarget = "Entitas Ekosistem" | "Kategori Ekosistem";
 
 export interface EcosystemChangeRequest {
   id: string;
+  /** Defaults to "Entitas Ekosistem" for pre-existing requests that predate this field. */
+  targetType: EcosystemChangeTarget;
+  /** EcosystemEntity.id when targetType is "Entitas Ekosistem", EcosystemCategoryConfig.id otherwise. */
   entityId: string;
   changeType: EcosystemChangeType;
   entityName: string;
-  before?: Partial<EcosystemEntity>;
-  after: EcosystemEntity;
+  before?: Partial<EcosystemEntity> | Partial<EcosystemCategoryConfig>;
+  after: EcosystemEntity | EcosystemCategoryConfig;
+  requestedBy: string;
+  requestedAt: string;
+  status: "Menunggu" | "Disetujui" | "Ditolak";
+  decidedBy?: string;
+  decidedAt?: string;
+  reason?: string;
+}
+
+// Routing Mapping — maps each registered Platform/Pialang entity to the
+// registered institution that handles it for every other active
+// "Ecosystem Aktif" category (Bursa, Kliring, Custody, ...). Column set is
+// derived at render time from EcosystemCategoryConfig, so this stays a
+// plain dictionary rather than fixed bursa/kliring fields.
+export interface RoutingMapping {
+  platformId: string;
+  platformName: string;
+  /** Keyed by EcosystemCategoryConfig.shortDescription, value is the mapped EcosystemEntity.id (or "" if unset). */
+  mappings: Record<string, string>;
+  updatedAt?: string;
+  updatedBy?: string;
+}
+
+export interface RoutingChangeRequest {
+  id: string;
+  platformId: string;
+  platformName: string;
+  /** Category shortDescription -> mapped EcosystemEntity.id (empty string if unset); same shape as RoutingMapping.mappings. */
+  before: Record<string, string>;
+  after: Record<string, string>;
   requestedBy: string;
   requestedAt: string;
   status: "Menunggu" | "Disetujui" | "Ditolak";

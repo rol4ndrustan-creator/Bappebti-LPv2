@@ -71,7 +71,16 @@ export const MENU_TREE: MenuTreeItem[] = [
       { key: "ekosistem.approval", label: "Approval Ekosistem", href: "/admin/ekosistem/approval", iconName: "" },
     ],
   },
-  { key: "routing", label: "Routing Mapping", href: "/admin/routing", iconName: "Route" },
+  {
+    key: "routing",
+    label: "Routing Mapping",
+    href: "/admin/routing/setup",
+    iconName: "Route",
+    children: [
+      { key: "routing.setup", label: "Setup Routing Mapping", href: "/admin/routing/setup", iconName: "" },
+      { key: "routing.approval", label: "Approval Routing", href: "/admin/routing/approval", iconName: "" },
+    ],
+  },
   {
     key: "konfigurasi",
     label: "Konfigurasi",

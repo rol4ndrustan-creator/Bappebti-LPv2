@@ -93,6 +93,7 @@ export default function DaftarEkosistemPage() {
     if (editingEntity) {
       const after: EcosystemEntity = { ...editingEntity, ...values, status: editingEntity.status };
       requestEcosystemChange({
+        targetType: "Entitas Ekosistem",
         entityId: editingEntity.id,
         changeType: "Perubahan Data",
         entityName: editingEntity.name,
@@ -114,6 +115,7 @@ export default function DaftarEkosistemPage() {
       } as EcosystemEntity;
       addEcosystemEntity(entity);
       requestEcosystemChange({
+        targetType: "Entitas Ekosistem",
         entityId: id,
         changeType: "Pendaftaran Baru",
         entityName: entity.name,

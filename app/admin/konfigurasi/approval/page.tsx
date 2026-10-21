@@ -14,7 +14,7 @@ import { CONFIG_CHANGE_REQUESTS } from "@/lib/mock-data";
 import { useConfigChangeRequests, decideConfigChange } from "@/lib/mock-service/config-approval-store";
 import { ConfigChangeRequest, ConfigType } from "@/lib/types";
 import { useToast } from "@/components/shared/toast-provider";
-import { CheckCircle2, XCircle, ClipboardCheck } from "lucide-react";
+import { CheckCircle2, XCircle, ClipboardCheck, Eye } from "lucide-react";
 import type { VariantProps } from "class-variance-authority";
 
 type BadgeVariant = VariantProps<typeof badgeVariants>["variant"];
@@ -35,10 +35,12 @@ function statusVariant(status: ConfigChangeRequest["status"]): BadgeVariant {
 function RequestTable({
   requests,
   showActions,
+  onView,
   onDecide,
 }: {
   requests: ConfigChangeRequest[];
   showActions: boolean;
+  onView: (request: ConfigChangeRequest) => void;
   onDecide: (request: ConfigChangeRequest, approve: boolean) => void;
 }) {
   return (
@@ -54,7 +56,7 @@ function RequestTable({
           <TableHead>Diajukan Oleh</TableHead>
           <TableHead>Tanggal</TableHead>
           <TableHead>Status</TableHead>
-          {showActions && <TableHead>Keputusan</TableHead>}
+          <TableHead>Aksi Approval</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -77,23 +79,28 @@ function RequestTable({
                 </div>
               )}
             </TableCell>
-            {showActions && (
-              <TableCell>
-                <div className="flex items-center gap-1.5">
-                  <Button size="sm" variant="success" onClick={() => onDecide(r, true)}>
-                    <CheckCircle2 className="size-3.5" /> Setujui
-                  </Button>
-                  <Button size="sm" variant="destructive" onClick={() => onDecide(r, false)}>
-                    <XCircle className="size-3.5" /> Tolak
-                  </Button>
-                </div>
-              </TableCell>
-            )}
+            <TableCell>
+              <div className="flex items-center gap-1.5">
+                <Button size="sm" variant="outline" onClick={() => onView(r)}>
+                  <Eye className="size-3.5" /> Detail
+                </Button>
+                {showActions && (
+                  <>
+                    <Button size="sm" variant="success" onClick={() => onDecide(r, true)}>
+                      <CheckCircle2 className="size-3.5" /> Setujui
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={() => onDecide(r, false)}>
+                      <XCircle className="size-3.5" /> Tolak
+                    </Button>
+                  </>
+                )}
+              </div>
+            </TableCell>
           </TableRow>
         ))}
         {requests.length === 0 && (
           <TableRow>
-            <TableCell colSpan={showActions ? 10 : 9} className="text-center text-muted py-6">
+            <TableCell colSpan={10} className="text-center text-muted py-6">
               Tidak ada permohonan yang sesuai.
             </TableCell>
           </TableRow>
@@ -101,6 +108,15 @@ function RequestTable({
       </TableBody>
     </Table>
   );
+}
+
+function payloadEntries(payload: string): [string, string][] {
+  try {
+    const data = JSON.parse(payload) as Record<string, unknown>;
+    return Object.entries(data).map(([k, v]) => [k, v === undefined || v === null || v === "" ? "-" : String(v)]);
+  } catch {
+    return [];
+  }
 }
 
 export default function ApprovalConfigurationPage() {
@@ -111,6 +127,7 @@ export default function ApprovalConfigurationPage() {
   const pending = requests.filter((r) => r.status === "Menunggu");
   const filteredAll = requests.filter((r) => !typeFilter || r.configType === typeFilter);
 
+  const [viewing, setViewing] = React.useState<ConfigChangeRequest | null>(null);
   const [decisionTarget, setDecisionTarget] = React.useState<{ request: ConfigChangeRequest; approve: boolean } | null>(null);
   const [reason, setReason] = React.useState("");
 
@@ -143,7 +160,7 @@ export default function ApprovalConfigurationPage() {
         </TabsList>
 
         <TabsContent value="perlu-tindakan">
-          <RequestTable requests={pending} showActions onDecide={openDecision} />
+          <RequestTable requests={pending} showActions onView={setViewing} onDecide={openDecision} />
         </TabsContent>
 
         <TabsContent value="semua">
@@ -159,9 +176,51 @@ export default function ApprovalConfigurationPage() {
             </div>
             <Button variant="secondary" size="sm" onClick={() => setTypeFilter("")}>Reset Filter</Button>
           </div>
-          <RequestTable requests={filteredAll} showActions={false} onDecide={openDecision} />
+          <RequestTable requests={filteredAll} showActions={false} onView={setViewing} onDecide={openDecision} />
         </TabsContent>
       </Tabs>
+
+      <Dialog open={!!viewing} onOpenChange={(v) => !v && setViewing(null)}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Detail Pengajuan — {viewing?.id}</DialogTitle>
+            <DialogDescription>{viewing?.configType} &middot; {viewing?.action}</DialogDescription>
+          </DialogHeader>
+          {viewing && (
+            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-xs">
+              <div><dt className="text-muted">Item</dt><dd className="font-medium">{viewing.itemLabel}</dd></div>
+              <div><dt className="text-muted">Diajukan Oleh</dt><dd className="font-medium">{viewing.requestedBy}</dd></div>
+              <div><dt className="text-muted">Sebelum</dt><dd className="font-medium">{viewing.beforeValue || "-"}</dd></div>
+              <div><dt className="text-muted">Sesudah</dt><dd className="font-medium">{viewing.afterValue}</dd></div>
+              <div><dt className="text-muted">Tanggal Pengajuan</dt><dd className="font-medium">{viewing.requestedAt}</dd></div>
+              <div><dt className="text-muted">Status</dt><dd><Badge variant={statusVariant(viewing.status)}>{viewing.status.toUpperCase()}</Badge></dd></div>
+              {viewing.status !== "Menunggu" && (
+                <>
+                  <div><dt className="text-muted">Diputuskan Oleh</dt><dd className="font-medium">{viewing.decidedBy}</dd></div>
+                  <div><dt className="text-muted">Tanggal Keputusan</dt><dd className="font-medium">{viewing.decidedAt}</dd></div>
+                  {viewing.reason && (
+                    <div className="sm:col-span-2"><dt className="text-muted">Alasan</dt><dd className="font-medium">{viewing.reason}</dd></div>
+                  )}
+                </>
+              )}
+              <div className="sm:col-span-2">
+                <dt className="text-muted mb-1">Detail Payload</dt>
+                <dd className="rounded-md border border-border bg-muted-bg p-2 space-y-0.5">
+                  {payloadEntries(viewing.payload).map(([k, v]) => (
+                    <div key={k} className="flex justify-between gap-3">
+                      <span className="text-muted">{k}</span>
+                      <span className="font-medium text-right">{v}</span>
+                    </div>
+                  ))}
+                </dd>
+              </div>
+            </dl>
+          )}
+          <DialogFooter>
+            <Button size="sm" variant="secondary" onClick={() => setViewing(null)}>Tutup</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!decisionTarget} onOpenChange={(v) => !v && setDecisionTarget(null)}>
         <DialogContent>

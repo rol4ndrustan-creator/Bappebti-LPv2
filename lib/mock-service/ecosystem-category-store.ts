@@ -39,8 +39,12 @@ export function addEcosystemCategory(category: EcosystemCategoryConfig) {
 }
 
 export function setEcosystemCategoryActive(id: string, active: boolean) {
+  updateEcosystemCategory(id, { active });
+}
+
+export function updateEcosystemCategory(id: string, patch: Partial<EcosystemCategoryConfig>) {
   const edits = readJSON<EditMap>(EDITS_KEY, {});
-  edits[id] = { ...edits[id], active };
+  edits[id] = { ...edits[id], ...patch };
   writeJSON(EDITS_KEY, edits);
 }
 

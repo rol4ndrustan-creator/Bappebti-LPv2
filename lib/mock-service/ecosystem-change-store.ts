@@ -9,9 +9,10 @@
 // the entity's live data.
 
 import * as React from "react";
-import { EcosystemChangeRequest } from "../types";
+import { EcosystemCategoryConfig, EcosystemChangeRequest, EcosystemEntity } from "../types";
 import { subscribe, emitChange, getVersion } from "./event-bus";
 import { updateEcosystemEntity, setEcosystemEntityPendingEdit } from "./ecosystem-store";
+import { addEcosystemCategory, updateEcosystemCategory } from "./ecosystem-category-store";
 import { nowDateTimeID } from "../format";
 
 const ADDED_KEY = "bappebti-demo-added-ecosystem-changes";
@@ -62,11 +63,21 @@ export function requestEcosystemChange(input: Omit<EcosystemChangeRequest, "id" 
 export function decideEcosystemChange(req: EcosystemChangeRequest, status: "Disetujui" | "Ditolak", decidedBy: string, reason?: string) {
   const decidedAt = new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
 
-  if (status === "Disetujui") {
+  if (req.targetType === "Kategori Ekosistem") {
+    if (status === "Disetujui") {
+      if (req.changeType === "Tambah Kategori") {
+        addEcosystemCategory(req.after as EcosystemCategoryConfig);
+      } else if (req.changeType === "Nonaktifkan Kategori" || req.changeType === "Aktifkan Kategori") {
+        updateEcosystemCategory(req.entityId, { active: req.changeType === "Aktifkan Kategori" });
+      }
+    }
+    // Rejecting a category request is a no-op: nothing was applied yet for
+    // "Tambah Kategori", and a disable/enable request simply never takes effect.
+  } else if (status === "Disetujui") {
     if (req.changeType === "Pendaftaran Baru") {
       updateEcosystemEntity(req.entityId, { status: "Disetujui", decidedBy, decidedAt });
     } else {
-      updateEcosystemEntity(req.entityId, { ...req.after, status: "Disetujui", hasPendingEdit: false, decidedBy, decidedAt });
+      updateEcosystemEntity(req.entityId, { ...(req.after as EcosystemEntity), status: "Disetujui", hasPendingEdit: false, decidedBy, decidedAt });
     }
   } else {
     if (req.changeType === "Pendaftaran Baru") {

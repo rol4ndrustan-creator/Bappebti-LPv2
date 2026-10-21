@@ -83,6 +83,9 @@ function applyConfigChange(req: ConfigChangeRequest, decidedBy: string) {
         longDescription: String(data.longDescription ?? ""),
         active: true,
         createdAt: today,
+        displayDate: today,
+        userMaker: req.requestedBy,
+        userApproval: decidedBy,
       });
     } else if (req.action === "Nonaktifkan" || req.action === "Aktifkan") {
       setEcosystemCategoryActive(String(data.id), req.action === "Aktifkan");

@@ -12,14 +12,21 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { ECOSYSTEM_CHANGE_REQUESTS } from "@/lib/mock-data";
 import { useEcosystemChangeRequests, decideEcosystemChange } from "@/lib/mock-service/ecosystem-change-store";
-import { EcosystemChangeRequest, EcosystemChangeType, EcosystemEntity } from "@/lib/types";
+import { EcosystemCategoryConfig, EcosystemChangeRequest, EcosystemChangeTarget, EcosystemChangeType, EcosystemEntity } from "@/lib/types";
 import { useToast } from "@/components/shared/toast-provider";
 import { CheckCircle2, XCircle, ClipboardCheck, Eye } from "lucide-react";
 import type { VariantProps } from "class-variance-authority";
 
 type BadgeVariant = VariantProps<typeof badgeVariants>["variant"];
 
-const CHANGE_TYPES: EcosystemChangeType[] = ["Pendaftaran Baru", "Perubahan Data"];
+const CHANGE_TYPES: EcosystemChangeType[] = [
+  "Pendaftaran Baru",
+  "Perubahan Data",
+  "Tambah Kategori",
+  "Nonaktifkan Kategori",
+  "Aktifkan Kategori",
+];
+const TARGET_TYPES: EcosystemChangeTarget[] = ["Entitas Ekosistem", "Kategori Ekosistem"];
 
 const FIELD_LABELS: Partial<Record<keyof EcosystemEntity, string>> = {
   name: "Nama Entitas",
@@ -40,6 +47,14 @@ const FIELD_LABELS: Partial<Record<keyof EcosystemEntity, string>> = {
   kliring: "Kliring",
 };
 
+const CATEGORY_FIELD_LABELS: Partial<Record<keyof EcosystemCategoryConfig, string>> = {
+  type: "Ecosystem Type",
+  shortDescription: "Category Ekosistem",
+  longDescription: "Deskripsi Ekosistem",
+  active: "Status Aktif",
+  displayDate: "Tanggal Tayang",
+};
+
 function statusVariant(status: EcosystemChangeRequest["status"]): BadgeVariant {
   switch (status) {
     case "Menunggu":
@@ -58,8 +73,50 @@ function formatValue(v: unknown): string {
 }
 
 function ChangeDetail({ request }: { request: EcosystemChangeRequest }) {
+  if (request.targetType === "Kategori Ekosistem") {
+    if (request.changeType === "Tambah Kategori") {
+      const a = request.after as EcosystemCategoryConfig;
+      return (
+        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-xs">
+          <div><dt className="text-muted">Ecosystem Type</dt><dd className="font-medium">{a.type}</dd></div>
+          <div><dt className="text-muted">Category Ekosistem</dt><dd className="font-medium">{a.shortDescription}</dd></div>
+          <div><dt className="text-muted">Tanggal Tayang</dt><dd className="font-medium">{a.displayDate}</dd></div>
+          <div className="sm:col-span-2"><dt className="text-muted">Deskripsi Ekosistem</dt><dd className="font-medium">{a.longDescription || "-"}</dd></div>
+        </dl>
+      );
+    }
+    const keys = Object.keys(request.before ?? {}) as (keyof EcosystemCategoryConfig)[];
+    const before = request.before as Partial<EcosystemCategoryConfig> | undefined;
+    const after = request.after as EcosystemCategoryConfig;
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Field</TableHead>
+            <TableHead>Sebelum</TableHead>
+            <TableHead>Sesudah</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {keys.map((key) => (
+            <TableRow key={String(key)}>
+              <TableCell className="font-medium whitespace-nowrap">{CATEGORY_FIELD_LABELS[key] ?? String(key)}</TableCell>
+              <TableCell className="text-muted">{formatValue(before?.[key])}</TableCell>
+              <TableCell className="font-medium text-navy">{formatValue(after[key])}</TableCell>
+            </TableRow>
+          ))}
+          {keys.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={3} className="text-center text-muted py-4">Tidak ada field yang tercatat berubah.</TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    );
+  }
+
   if (request.changeType === "Pendaftaran Baru") {
-    const a = request.after;
+    const a = request.after as EcosystemEntity;
     return (
       <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-xs">
         <div><dt className="text-muted">Nama Entitas</dt><dd className="font-medium">{a.name}</dd></div>
@@ -74,6 +131,8 @@ function ChangeDetail({ request }: { request: EcosystemChangeRequest }) {
   }
 
   const keys = Object.keys(request.before ?? {}) as (keyof EcosystemEntity)[];
+  const before = request.before as Partial<EcosystemEntity> | undefined;
+  const after = request.after as EcosystemEntity;
   return (
     <Table>
       <TableHeader>
@@ -87,8 +146,8 @@ function ChangeDetail({ request }: { request: EcosystemChangeRequest }) {
         {keys.map((key) => (
           <TableRow key={String(key)}>
             <TableCell className="font-medium whitespace-nowrap">{FIELD_LABELS[key] ?? String(key)}</TableCell>
-            <TableCell className="text-muted">{formatValue(request.before?.[key])}</TableCell>
-            <TableCell className="font-medium text-navy">{formatValue(request.after[key])}</TableCell>
+            <TableCell className="text-muted">{formatValue(before?.[key])}</TableCell>
+            <TableCell className="font-medium text-navy">{formatValue(after[key])}</TableCell>
           </TableRow>
         ))}
         {keys.length === 0 && (
@@ -117,8 +176,9 @@ function RequestTable({
       <TableHeader>
         <TableRow>
           <TableHead>ID</TableHead>
+          <TableHead>Objek</TableHead>
           <TableHead>Jenis Perubahan</TableHead>
-          <TableHead>Nama Entitas</TableHead>
+          <TableHead>Nama</TableHead>
           <TableHead>Diajukan Oleh</TableHead>
           <TableHead>Tanggal</TableHead>
           <TableHead>Status</TableHead>
@@ -129,6 +189,9 @@ function RequestTable({
         {requests.map((r) => (
           <TableRow key={r.id}>
             <TableCell className="font-medium text-navy whitespace-nowrap">{r.id}</TableCell>
+            <TableCell className="whitespace-nowrap">
+              <Badge variant={r.targetType === "Kategori Ekosistem" ? "navy" : "outline"}>{r.targetType}</Badge>
+            </TableCell>
             <TableCell className="whitespace-nowrap">{r.changeType}</TableCell>
             <TableCell>{r.entityName}</TableCell>
             <TableCell className="text-muted whitespace-nowrap">{r.requestedBy}</TableCell>
@@ -163,7 +226,7 @@ function RequestTable({
         ))}
         {requests.length === 0 && (
           <TableRow>
-            <TableCell colSpan={7} className="text-center text-muted py-6">
+            <TableCell colSpan={8} className="text-center text-muted py-6">
               Tidak ada permohonan yang sesuai.
             </TableCell>
           </TableRow>
@@ -178,8 +241,9 @@ export default function ApprovalEkosistemPage() {
   const { showToast } = useToast();
 
   const [typeFilter, setTypeFilter] = React.useState("");
+  const [targetFilter, setTargetFilter] = React.useState("");
   const pending = requests.filter((r) => r.status === "Menunggu");
-  const filteredAll = requests.filter((r) => !typeFilter || r.changeType === typeFilter);
+  const filteredAll = requests.filter((r) => (!typeFilter || r.changeType === typeFilter) && (!targetFilter || r.targetType === targetFilter));
 
   const [viewing, setViewing] = React.useState<EcosystemChangeRequest | null>(null);
   const [decisionTarget, setDecisionTarget] = React.useState<{ request: EcosystemChangeRequest; approve: boolean } | null>(null);
@@ -219,6 +283,15 @@ export default function ApprovalEkosistemPage() {
 
         <TabsContent value="semua">
           <div className="mb-3 flex flex-wrap items-end gap-2">
+            <div className="w-48">
+              <Label>Objek</Label>
+              <Select value={targetFilter} onChange={(e) => setTargetFilter(e.target.value)}>
+                <option value="">Semua objek</option>
+                {TARGET_TYPES.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </Select>
+            </div>
             <div className="w-56">
               <Label>Jenis Perubahan</Label>
               <Select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
@@ -228,7 +301,7 @@ export default function ApprovalEkosistemPage() {
                 ))}
               </Select>
             </div>
-            <Button variant="secondary" size="sm" onClick={() => setTypeFilter("")}>Reset Filter</Button>
+            <Button variant="secondary" size="sm" onClick={() => { setTypeFilter(""); setTargetFilter(""); }}>Reset Filter</Button>
           </div>
           <RequestTable requests={filteredAll} showActions={false} onView={setViewing} onDecide={openDecision} />
         </TabsContent>

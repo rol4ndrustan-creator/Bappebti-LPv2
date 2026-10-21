@@ -14,6 +14,8 @@ import {
   Member,
   NotificationItem,
   RoleDefinition,
+  RoutingChangeRequest,
+  RoutingMapping,
   SlaConfigEntry,
 } from "./types";
 
@@ -1273,7 +1275,8 @@ export const ROLE_DEFINITIONS: RoleDefinition[] = [
       "pengaduan.tanpa-platform", "pengaduan.menunggu-konfirmasi", "pengaduan.selesai-otomatis",
       "risiko", "kinerja", "kritik", "kritik.daftar", "kritik.belum-dibaca", "kritik.tindak-lanjut",
       "laporan", "user-management", "user-management.users", "user-management.roles", "user-management.approval",
-      "ekosistem", "ekosistem.kategori", "ekosistem.daftar", "ekosistem.approval", "routing",
+      "ekosistem", "ekosistem.kategori", "ekosistem.daftar", "ekosistem.approval",
+      "routing", "routing.setup", "routing.approval",
       "konfigurasi", "konfigurasi.kategori", "konfigurasi.sla", "konfigurasi.category-ecosystem", "konfigurasi.approval", "audit-logs",
     ],
     createdAt: "01 Jun 2026",
@@ -1373,10 +1376,12 @@ export const APPROVAL_REQUESTS: ApprovalRequest[] = [
 // fixed (Aktif / Pengawas only); Ecosystem Category is a manageable list
 // attached to one of those two types.
 export const ECOSYSTEM_CATEGORY_CONFIG: EcosystemCategoryConfig[] = [
-  { id: "ECAT-01", type: "Ecosystem Aktif", shortDescription: "Platform/Pialang", longDescription: "Pialang berjangka dan platform aset digital yang berizin dan diawasi Bappebti, menjadi pihak pertama yang menangani pengaduan konsumen.", active: true, createdAt: "01 Jan 2024" },
-  { id: "ECAT-02", type: "Ecosystem Aktif", shortDescription: "Bursa", longDescription: "Penyelenggara bursa komoditi/aset digital yang mengawasi platform anggotanya dan menjadi eskalasi penanganan pengaduan.", active: true, createdAt: "01 Jan 2024" },
-  { id: "ECAT-03", type: "Ecosystem Aktif", shortDescription: "Kliring", longDescription: "Lembaga kliring yang menjamin dan merekonsiliasi penyelesaian transaksi antar anggota bursa.", active: true, createdAt: "01 Jan 2024" },
-  { id: "ECAT-04", type: "Ecosystem Pengawas", shortDescription: "Asosiasi", longDescription: "Asosiasi industri yang mewakili kepentingan kolektif pelaku usaha dan mendukung edukasi publik — tidak terlibat langsung dalam proses bisnis transaksi.", active: true, createdAt: "01 Jan 2024" },
+  { id: "ECAT-01", type: "Ecosystem Aktif", shortDescription: "Platform/Pialang", longDescription: "Pialang berjangka dan platform aset digital yang berizin dan diawasi Bappebti, menjadi pihak pertama yang menangani pengaduan konsumen.", active: true, createdAt: "01 Jan 2024", displayDate: "01 Jan 2024", userMaker: "Rahma", userApproval: "Andi" },
+  { id: "ECAT-02", type: "Ecosystem Aktif", shortDescription: "Bursa", longDescription: "Bursa Khusus Komoditi", active: true, createdAt: "01 Jan 2024", displayDate: "01 Jan 2024", userMaker: "Rahma", userApproval: "Andi" },
+  { id: "ECAT-03", type: "Ecosystem Aktif", shortDescription: "Kliring", longDescription: "Perusahaan penyedia jasa kliring bagi pialang berjangka", active: true, createdAt: "01 Jan 2024", displayDate: "01 Jan 2024", userMaker: "Rahma", userApproval: "Andi" },
+  { id: "ECAT-04", type: "Ecosystem Aktif", shortDescription: "Custody", longDescription: "Perusahaan penyedia custody Khusus Komoditi", active: true, createdAt: "12 Jan 2024", displayDate: "12 Jan 2024", userMaker: "Rahma", userApproval: "Andi" },
+  { id: "ECAT-05", type: "Ecosystem Pengawas", shortDescription: "Asosiasi", longDescription: "Asosiasi Pengusaha Pialang Berjangka", active: true, createdAt: "15 Jan 2024", displayDate: "15 Jan 2024", userMaker: "Ratih", userApproval: "Yogi" },
+  { id: "ECAT-06", type: "Ecosystem Pengawas", shortDescription: "Asosiasi Lama", longDescription: "Asosiasi Pengusaha Pialang Berjangka (versi lama, sudah dinonaktifkan)", active: false, createdAt: "01 Nov 2023", displayDate: "01 Nov 2023", userMaker: "Rahma", userApproval: "Yogi" },
 ];
 
 // Manajemen Ekosistem — registry of platforms/pialang, bursa, kliring, and
@@ -1395,6 +1400,7 @@ export const ECOSYSTEM_ENTITIES: EcosystemEntity[] = [
   { id: "ECO-010", name: "Kliring Berjangka Indonesia", category: "Kliring", ecosystemType: "Ecosystem Aktif", license: "KK-001/BAPPEBTI/2019", status: "Disetujui", establishedAt: "21 Aug 1999", registeredAt: "02 Jan 2019", decidedBy: "Ratna Maharani", decidedAt: "08 Jan 2019" },
   { id: "ECO-011", name: "Kliring Aset Digital Nusantara", category: "Kliring", ecosystemType: "Ecosystem Aktif", license: "KK-002/BAPPEBTI/2021", status: "Disetujui", establishedAt: "05 May 2018", registeredAt: "11 Mar 2021", decidedBy: "Bambang Setiawan", decidedAt: "15 Mar 2021" },
   { id: "ECO-012", name: "Asosiasi Pialang Berjangka Indonesia", category: "Asosiasi", ecosystemType: "Ecosystem Pengawas", license: "AS-001/BAPPEBTI/2018", status: "Disetujui", establishedAt: "17 Jun 1999", registeredAt: "10 Jun 2018", decidedBy: "Ratna Maharani", decidedAt: "15 Jun 2018" },
+  { id: "ECO-015", name: "PT Kustodian Aset Komoditi Indonesia", category: "Custody", ecosystemType: "Ecosystem Aktif", license: "CUS-001/BAPPEBTI/2022", status: "Disetujui", establishedAt: "14 Feb 2015", registeredAt: "20 Apr 2022", decidedBy: "Bambang Setiawan", decidedAt: "25 Apr 2022" },
   {
     id: "ECO-013",
     name: "PT Nusantara Komoditi Berjangka",
@@ -1455,6 +1461,7 @@ export const ECOSYSTEM_ENTITIES: EcosystemEntity[] = [
 export const ECOSYSTEM_CHANGE_REQUESTS: EcosystemChangeRequest[] = [
   {
     id: "ECR-2026-001",
+    targetType: "Entitas Ekosistem",
     entityId: "ECO-013",
     changeType: "Pendaftaran Baru",
     entityName: "PT Nusantara Komoditi Berjangka",
@@ -1465,6 +1472,7 @@ export const ECOSYSTEM_CHANGE_REQUESTS: EcosystemChangeRequest[] = [
   },
   {
     id: "ECR-2026-002",
+    targetType: "Entitas Ekosistem",
     entityId: "ECO-014",
     changeType: "Pendaftaran Baru",
     entityName: "Asosiasi Trader Aset Digital Indonesia",
@@ -1475,6 +1483,7 @@ export const ECOSYSTEM_CHANGE_REQUESTS: EcosystemChangeRequest[] = [
   },
   {
     id: "ECR-2026-003",
+    targetType: "Entitas Ekosistem",
     entityId: "ECO-005",
     changeType: "Perubahan Data",
     entityName: "PT Monex Investindo Futures",
@@ -1486,6 +1495,7 @@ export const ECOSYSTEM_CHANGE_REQUESTS: EcosystemChangeRequest[] = [
   },
   {
     id: "ECR-2026-004",
+    targetType: "Entitas Ekosistem",
     entityId: "ECO-012",
     changeType: "Perubahan Data",
     entityName: "Asosiasi Pialang Berjangka Indonesia",
@@ -1497,6 +1507,38 @@ export const ECOSYSTEM_CHANGE_REQUESTS: EcosystemChangeRequest[] = [
     decidedBy: "Bambang Setiawan",
     decidedAt: "10 Jun 2026, 15:40",
     reason: "Domain email baru belum terverifikasi kepemilikannya oleh asosiasi.",
+  },
+  {
+    id: "ECR-2026-005",
+    targetType: "Kategori Ekosistem",
+    entityId: "ECAT-PENDING-01",
+    changeType: "Tambah Kategori",
+    entityName: "Penjamin Emisi Komoditi",
+    after: {
+      id: "ECAT-PENDING-01",
+      type: "Ecosystem Aktif",
+      shortDescription: "Penjamin Emisi Komoditi",
+      longDescription: "Lembaga yang menjamin penerbitan kontrak komoditi baru di bursa.",
+      active: true,
+      createdAt: "18 Jun 2026",
+      displayDate: "18 Jun 2026",
+      userMaker: "Rahma",
+    },
+    requestedBy: "Rahma",
+    requestedAt: "18 Jun 2026, 11:20",
+    status: "Menunggu",
+  },
+  {
+    id: "ECR-2026-006",
+    targetType: "Kategori Ekosistem",
+    entityId: "ECAT-06",
+    changeType: "Aktifkan Kategori",
+    entityName: "Asosiasi Lama",
+    before: ECOSYSTEM_CATEGORY_CONFIG.find((c) => c.id === "ECAT-06"),
+    after: { ...ECOSYSTEM_CATEGORY_CONFIG.find((c) => c.id === "ECAT-06")!, active: true },
+    requestedBy: "Rahma",
+    requestedAt: "19 Jun 2026, 08:45",
+    status: "Menunggu",
   },
 ];
 
@@ -1525,6 +1567,54 @@ export const CONFIG_CHANGE_REQUESTS: ConfigChangeRequest[] = [
     requestedBy: "Bambang Setiawan",
     requestedAt: "15 Jun 2026, 11:30",
     status: "Menunggu",
+  },
+];
+
+// Routing Mapping — for every registered Platform/Pialang entity, which
+// registered institution handles each other active "Ecosystem Aktif"
+// category (Bursa, Kliring, Custody, ...). Seeded from the same
+// relationships as the legacy ROUTING_MAP above, now keyed by entity id so
+// it can reference any category registered in ECOSYSTEM_CATEGORY_CONFIG.
+function entityIdByName(name: string): string {
+  return ECOSYSTEM_ENTITIES.find((e) => e.name === name)?.id ?? "";
+}
+
+export const ROUTING_MAPPINGS: RoutingMapping[] = ECOSYSTEM_ENTITIES.filter(
+  (e) => e.category === "Platform/Pialang" && e.status === "Disetujui"
+).map((platform) => ({
+  platformId: platform.id,
+  platformName: platform.name,
+  mappings: {
+    Bursa: entityIdByName(platform.bursa ?? ""),
+    Kliring: entityIdByName(platform.kliring ?? ""),
+    Custody: "",
+  },
+  updatedAt: platform.bursa ? "10 Jun 2026" : undefined,
+  updatedBy: platform.bursa ? "Bambang Setiawan" : undefined,
+}));
+
+export const ROUTING_CHANGE_REQUESTS: RoutingChangeRequest[] = [
+  {
+    id: "RTR-2026-001",
+    platformId: "ECO-001",
+    platformName: "PT Bursa Digital Nusantara",
+    before: { Bursa: "ECO-007", Kliring: "ECO-010", Custody: "" },
+    after: { Bursa: "ECO-007", Kliring: "ECO-010", Custody: "ECO-015" },
+    requestedBy: "Rahma",
+    requestedAt: "18 Jun 2026, 10:00",
+    status: "Menunggu",
+  },
+  {
+    id: "RTR-2026-002",
+    platformId: "ECO-005",
+    platformName: "PT Monex Investindo Futures",
+    before: { Bursa: "ECO-009", Kliring: "ECO-010", Custody: "" },
+    after: { Bursa: "ECO-009", Kliring: "ECO-011", Custody: "" },
+    requestedBy: "Rahma",
+    requestedAt: "10 Jun 2026, 09:15",
+    status: "Disetujui",
+    decidedBy: "Andi",
+    decidedAt: "10 Jun 2026, 14:00",
   },
 ];
 
