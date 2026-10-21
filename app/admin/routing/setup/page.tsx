@@ -31,10 +31,12 @@ export default function RoutingMappingSetupPage() {
   const changeRequests = useRoutingChangeRequests(ROUTING_CHANGE_REQUESTS);
   const { showToast } = useToast();
 
-  // Dynamic destination columns: every active "Ecosystem Aktif" category
-  // other than Platform/Pialang itself (the row entity type).
+  // Dynamic destination columns: every active category other than
+  // Platform/Pialang itself (the row entity type) — both "Ecosystem Aktif"
+  // categories (Bursa, Kliring, Custody, ...) and "Ecosystem Pengawas" ones
+  // (Asosiasi, ...) are valid routing destinations.
   const destinationCategories = React.useMemo(
-    () => categories.filter((c) => c.active && c.type === "Ecosystem Aktif" && c.shortDescription !== "Platform/Pialang"),
+    () => categories.filter((c) => c.active && c.shortDescription !== "Platform/Pialang"),
     [categories]
   );
 
@@ -103,7 +105,7 @@ export default function RoutingMappingSetupPage() {
     <div>
       <PageHeader
         title="Setup Routing Mapping"
-        description="Pemetaan setiap platform/pialang terhadap institusi (Bursa, Kliring, dan kategori ekosistem aktif lainnya) yang menanganinya. Kolom mengikuti kategori ekosistem yang sedang aktif."
+        description="Pemetaan setiap platform/pialang terhadap institusi (Bursa, Kliring, Asosiasi, dan kategori ekosistem lainnya) yang menanganinya. Kolom mengikuti seluruh kategori ekosistem yang sedang aktif."
       />
 
       <Table>
