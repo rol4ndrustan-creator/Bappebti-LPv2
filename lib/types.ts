@@ -422,6 +422,23 @@ export interface EcosystemPic {
   appointmentLetter?: string;
 }
 
+/** Platform Management's extra governance step — Direksi and Komisaris share this shape. */
+export interface PlatformBoardMember {
+  id: string;
+  name: string;
+  birthDate: string;
+  idNumber: string;
+  /** "Keterangan Lulus Fit and Proper Test". */
+  fitProperNote?: string;
+}
+
+export interface PlatformMembershipLetter {
+  id: string;
+  /** Which bursa this membership letter is for; optional since a platform may only belong to one. */
+  bursaName?: string;
+  file: string;
+}
+
 export type EcosystemRegistrationStatus = "Draft" | "Menunggu Verifikasi" | "Perlu Perbaikan" | "Disetujui" | "Ditolak";
 
 export interface EcosystemEntity {
@@ -450,6 +467,13 @@ export interface EcosystemEntity {
   kliring?: string;
   executives?: EcosystemExecutive[];
   pics?: EcosystemPic[];
+  // Platform Management governance fields — only populated for entities
+  // registered through Platform Management's extended (7-step) wizard.
+  administratorEmail?: string;
+  administratorName?: string;
+  direksi?: PlatformBoardMember[];
+  komisaris?: PlatformBoardMember[];
+  suratAnggotaBursa?: PlatformMembershipLetter[];
   nibDocument?: string;
   npwpDocument?: string;
   aktaPendirianDocument?: string;

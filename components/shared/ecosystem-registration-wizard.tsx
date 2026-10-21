@@ -16,6 +16,8 @@ import {
   EcosystemExecutive,
   EcosystemPic,
   EcosystemType,
+  PlatformBoardMember,
+  PlatformMembershipLetter,
 } from "@/lib/types";
 import { Upload, Plus, Trash2, X, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -77,9 +79,9 @@ export interface EcosystemWizardValues extends Partial<EcosystemEntity> {
   declarationTerms?: boolean;
 }
 
-function emptyValues(): EcosystemWizardValues {
+function emptyValues(platformMode?: boolean): EcosystemWizardValues {
   return {
-    category: "",
+    category: platformMode ? "Platform/Pialang" : "",
     ecosystemType: "Ecosystem Aktif",
     description: "",
     name: "",
@@ -87,6 +89,9 @@ function emptyValues(): EcosystemWizardValues {
     executives: [],
     pics: [],
     supportingDocuments: [],
+    direksi: [],
+    komisaris: [],
+    suratAnggotaBursa: [],
   };
 }
 
@@ -96,6 +101,7 @@ export function EcosystemRegistrationWizard({
   categories,
   initialValues,
   isEdit,
+  platformMode,
   onSaveDraft,
   onSubmit,
 }: {
@@ -104,6 +110,8 @@ export function EcosystemRegistrationWizard({
   categories: EcosystemCategoryConfig[];
   initialValues?: EcosystemEntity;
   isEdit?: boolean;
+  /** Platform Management's "Tambah Platform" flow: locks step 1 to Ecosystem Aktif / Platform/Pialang and appends a 7th governance step. */
+  platformMode?: boolean;
   onSaveDraft: (values: EcosystemWizardValues) => void;
   onSubmit: (values: EcosystemWizardValues) => void;
 }) {
@@ -112,11 +120,21 @@ export function EcosystemRegistrationWizard({
   // initializer — no effect needed to "reset" state on open.
   const [step, setStep] = React.useState(0);
   const [values, setValues] = React.useState<EcosystemWizardValues>(
-    initialValues ? { ...initialValues, executives: initialValues.executives ?? [], pics: initialValues.pics ?? [] } : emptyValues()
+    initialValues
+      ? {
+          ...initialValues,
+          executives: initialValues.executives ?? [],
+          pics: initialValues.pics ?? [],
+          direksi: initialValues.direksi ?? [],
+          komisaris: initialValues.komisaris ?? [],
+          suratAnggotaBursa: initialValues.suratAnggotaBursa ?? [],
+        }
+      : emptyValues(platformMode)
   );
 
   if (!open) return null;
 
+  const steps = platformMode ? [...STEPS, "Administrator & Tata Kelola"] : STEPS;
   const activeCategories = categories.filter((c) => c.active);
   const categoriesForType = activeCategories.filter((c) => c.type === values.ecosystemType);
 
@@ -150,9 +168,29 @@ export function EcosystemRegistrationWizard({
     set("pics", values.pics.filter((p) => p.id !== id));
   }
 
+  function addBoardMember(key: "direksi" | "komisaris") {
+    set(key, [...(values[key] ?? []), { id: uid(key === "direksi" ? "DIR" : "KOM"), name: "", birthDate: "", idNumber: "" }]);
+  }
+  function updateBoardMember(key: "direksi" | "komisaris", id: string, patch: Partial<PlatformBoardMember>) {
+    set(key, (values[key] ?? []).map((m) => (m.id === id ? { ...m, ...patch } : m)));
+  }
+  function removeBoardMember(key: "direksi" | "komisaris", id: string) {
+    set(key, (values[key] ?? []).filter((m) => m.id !== id));
+  }
+
+  function addMembershipLetter() {
+    set("suratAnggotaBursa", [...(values.suratAnggotaBursa ?? []), { id: uid("SAB"), file: "" }]);
+  }
+  function updateMembershipLetter(id: string, patch: Partial<PlatformMembershipLetter>) {
+    set("suratAnggotaBursa", (values.suratAnggotaBursa ?? []).map((s) => (s.id === id ? { ...s, ...patch } : s)));
+  }
+  function removeMembershipLetter(id: string) {
+    set("suratAnggotaBursa", (values.suratAnggotaBursa ?? []).filter((s) => s.id !== id));
+  }
+
   // Minimal required-field checks per step so "Lanjut" stays guarded without being exhaustive.
   const stepValid = [
-    !!values.category && !!values.description?.trim(),
+    platformMode ? !!values.description?.trim() : !!values.category && !!values.description?.trim(),
     !!values.name?.trim() && !!values.address?.trim() && !!values.province && !!values.city?.trim() && !!values.postalCode?.trim() && !!values.officePhone?.trim() && !!values.officialEmail?.trim(),
     values.executives.length > 0 && values.executives.every((e) => e.name.trim() && e.position.trim()),
     values.pics.length > 0 && values.pics.some((p) => p.isPrimary) && values.pics.every((p) => p.name.trim() && p.email.trim()),
@@ -162,10 +200,20 @@ export function EcosystemRegistrationWizard({
       !!values.declarationTruth &&
       !!values.declarationAuthority &&
       !!values.declarationTerms,
+    ...(platformMode
+      ? [
+          !!values.administratorEmail?.trim() &&
+            !!values.administratorName?.trim() &&
+            (values.direksi ?? []).length > 0 &&
+            (values.direksi ?? []).every((d) => d.name.trim() && d.birthDate && d.idNumber.trim()) &&
+            (values.komisaris ?? []).length > 0 &&
+            (values.komisaris ?? []).every((d) => d.name.trim() && d.birthDate && d.idNumber.trim()),
+        ]
+      : []),
   ];
 
   function next() {
-    if (step < STEPS.length - 1) setStep(step + 1);
+    if (step < steps.length - 1) setStep(step + 1);
   }
   function back() {
     if (step > 0) setStep(step - 1);
@@ -177,9 +225,11 @@ export function EcosystemRegistrationWizard({
         <div className="flex items-center justify-between border-b border-border px-5 py-3">
           <div>
             <h2 className="text-sm font-semibold text-navy">
-              {isEdit ? "Ajukan Perubahan Data Ekosistem" : "Daftarkan Ekosistem Baru"}
+              {isEdit
+                ? platformMode ? "Ajukan Perubahan Data Platform" : "Ajukan Perubahan Data Ekosistem"
+                : platformMode ? "Daftarkan Platform Baru" : "Daftarkan Ekosistem Baru"}
             </h2>
-            <p className="text-[11px] text-muted">Langkah {step + 1} dari {STEPS.length}: {STEPS[step]}</p>
+            <p className="text-[11px] text-muted">Langkah {step + 1} dari {steps.length}: {steps[step]}</p>
           </div>
           <button onClick={onClose} className="rounded p-1 text-muted hover:bg-muted-bg hover:text-foreground">
             <X className="size-4" />
@@ -188,7 +238,7 @@ export function EcosystemRegistrationWizard({
 
         {/* Step indicator */}
         <div className="flex items-center gap-1 px-5 py-3 overflow-x-auto border-b border-border">
-          {STEPS.map((s, i) => (
+          {steps.map((s, i) => (
             <button
               key={s}
               type="button"
@@ -209,29 +259,38 @@ export function EcosystemRegistrationWizard({
         <div className="px-5 py-4 max-h-[55vh] overflow-y-auto space-y-3">
           {step === 0 && (
             <div className="space-y-3">
-              <div>
-                <Label htmlFor="eco-type">Ecosystem Type *</Label>
-                <Select
-                  id="eco-type"
-                  value={values.ecosystemType}
-                  onChange={(e) => {
-                    set("ecosystemType", e.target.value as EcosystemType);
-                    set("category", "");
-                  }}
-                >
-                  <option value="Ecosystem Aktif">Ecosystem Aktif</option>
-                  <option value="Ecosystem Pengawas">Ecosystem Pengawas</option>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="eco-category">Ecosystem Category *</Label>
-                <Select id="eco-category" value={values.category} onChange={(e) => set("category", e.target.value)}>
-                  <option value="">Pilih kategori...</option>
-                  {categoriesForType.map((c) => (
-                    <option key={c.id} value={c.shortDescription}>{c.shortDescription}</option>
-                  ))}
-                </Select>
-              </div>
+              {platformMode ? (
+                <div className="rounded-md border border-border bg-muted-bg/40 p-3 text-xs space-y-0.5">
+                  <p><span className="text-muted">Ecosystem Type:</span> <span className="font-medium text-navy">Ecosystem Aktif</span></p>
+                  <p><span className="text-muted">Ecosystem Category:</span> <span className="font-medium text-navy">Platform/Pialang</span></p>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <Label htmlFor="eco-type">Ecosystem Type *</Label>
+                    <Select
+                      id="eco-type"
+                      value={values.ecosystemType}
+                      onChange={(e) => {
+                        set("ecosystemType", e.target.value as EcosystemType);
+                        set("category", "");
+                      }}
+                    >
+                      <option value="Ecosystem Aktif">Ecosystem Aktif</option>
+                      <option value="Ecosystem Pengawas">Ecosystem Pengawas</option>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="eco-category">Ecosystem Category *</Label>
+                    <Select id="eco-category" value={values.category} onChange={(e) => set("category", e.target.value)}>
+                      <option value="">Pilih kategori...</option>
+                      {categoriesForType.map((c) => (
+                        <option key={c.id} value={c.shortDescription}>{c.shortDescription}</option>
+                      ))}
+                    </Select>
+                  </div>
+                </>
+              )}
               <div>
                 <Label htmlFor="eco-desc">Deskripsi Ecosystem *</Label>
                 <Textarea id="eco-desc" value={values.description} onChange={(e) => set("description", e.target.value)} className="min-h-[70px] text-xs" placeholder="Penjelasan singkat peran lembaga dalam ekosistem" />
@@ -499,6 +558,98 @@ export function EcosystemRegistrationWizard({
               </div>
             </div>
           )}
+
+          {platformMode && step === 6 && (
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs font-semibold text-navy mb-2">Data Administrator</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="plat-admin-email">Email Administrator Utama *</Label>
+                    <Input id="plat-admin-email" type="email" value={values.administratorEmail ?? ""} onChange={(e) => set("administratorEmail", e.target.value)} />
+                  </div>
+                  <div>
+                    <Label htmlFor="plat-admin-name">Nama Administrator Utama *</Label>
+                    <Input id="plat-admin-name" value={values.administratorName ?? ""} onChange={(e) => set("administratorName", e.target.value)} />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-navy">Data Direksi</p>
+                  <Button type="button" size="sm" variant="secondary" onClick={() => addBoardMember("direksi")}>
+                    <Plus className="size-3.5" /> Tambah Direksi
+                  </Button>
+                </div>
+                {(values.direksi ?? []).map((d, i) => (
+                  <div key={d.id} className="rounded-md border border-border p-3 space-y-2 mt-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold text-navy">Direksi #{i + 1}</p>
+                      <button onClick={() => removeBoardMember("direksi", d.id)} className="text-muted hover:text-red" title="Hapus">
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <Input placeholder="Nama Lengkap *" value={d.name} onChange={(e) => updateBoardMember("direksi", d.id, { name: e.target.value })} />
+                      <Input placeholder="Tanggal Lahir *" type="date" value={d.birthDate} onChange={(e) => updateBoardMember("direksi", d.id, { birthDate: e.target.value })} />
+                      <Input placeholder="Nomor ID (KTP) *" value={d.idNumber} onChange={(e) => updateBoardMember("direksi", d.id, { idNumber: e.target.value })} />
+                      <Input placeholder="Keterangan Lulus Fit and Proper Test" value={d.fitProperNote ?? ""} onChange={(e) => updateBoardMember("direksi", d.id, { fitProperNote: e.target.value })} />
+                    </div>
+                  </div>
+                ))}
+                {(values.direksi ?? []).length === 0 && <p className="text-xs text-muted text-center py-3">Belum ada direksi ditambahkan.</p>}
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-navy">Data Komisaris</p>
+                  <Button type="button" size="sm" variant="secondary" onClick={() => addBoardMember("komisaris")}>
+                    <Plus className="size-3.5" /> Tambah Komisaris
+                  </Button>
+                </div>
+                {(values.komisaris ?? []).map((d, i) => (
+                  <div key={d.id} className="rounded-md border border-border p-3 space-y-2 mt-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold text-navy">Komisaris #{i + 1}</p>
+                      <button onClick={() => removeBoardMember("komisaris", d.id)} className="text-muted hover:text-red" title="Hapus">
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <Input placeholder="Nama Lengkap *" value={d.name} onChange={(e) => updateBoardMember("komisaris", d.id, { name: e.target.value })} />
+                      <Input placeholder="Tanggal Lahir *" type="date" value={d.birthDate} onChange={(e) => updateBoardMember("komisaris", d.id, { birthDate: e.target.value })} />
+                      <Input placeholder="Nomor ID (KTP) *" value={d.idNumber} onChange={(e) => updateBoardMember("komisaris", d.id, { idNumber: e.target.value })} />
+                      <Input placeholder="Keterangan Lulus Fit and Proper Test" value={d.fitProperNote ?? ""} onChange={(e) => updateBoardMember("komisaris", d.id, { fitProperNote: e.target.value })} />
+                    </div>
+                  </div>
+                ))}
+                {(values.komisaris ?? []).length === 0 && <p className="text-xs text-muted text-center py-3">Belum ada komisaris ditambahkan.</p>}
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-navy">Surat Anggota Bursa</p>
+                  <Button type="button" size="sm" variant="secondary" onClick={addMembershipLetter}>
+                    <Plus className="size-3.5" /> Tambah Surat
+                  </Button>
+                </div>
+                {(values.suratAnggotaBursa ?? []).map((s, i) => (
+                  <div key={s.id} className="rounded-md border border-border p-3 space-y-2 mt-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold text-navy">Surat #{i + 1}</p>
+                      <button onClick={() => removeMembershipLetter(s.id)} className="text-muted hover:text-red" title="Hapus">
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    </div>
+                    <Input placeholder="Nama Bursa (opsional)" value={s.bursaName ?? ""} onChange={(e) => updateMembershipLetter(s.id, { bursaName: e.target.value })} className="mb-2" />
+                    <FileField label="Dokumen Surat Anggota Bursa" value={s.file} onChange={(v) => updateMembershipLetter(s.id, { file: v })} />
+                  </div>
+                ))}
+                {(values.suratAnggotaBursa ?? []).length === 0 && <p className="text-xs text-muted text-center py-3">Belum ada surat ditambahkan.</p>}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center justify-between border-t border-border px-5 py-3">
@@ -511,7 +662,7 @@ export function EcosystemRegistrationWizard({
                 Kembali
               </Button>
             )}
-            {step < STEPS.length - 1 ? (
+            {step < steps.length - 1 ? (
               <Button type="button" size="sm" disabled={!stepValid[step]} onClick={next}>
                 Lanjut
               </Button>

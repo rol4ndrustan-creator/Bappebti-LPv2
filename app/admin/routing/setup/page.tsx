@@ -8,16 +8,26 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { ECOSYSTEM_CATEGORY_CONFIG, ECOSYSTEM_ENTITIES, ROUTING_CHANGE_REQUESTS, ROUTING_MAPPINGS } from "@/lib/mock-data";
+import { ECOSYSTEM_CATEGORY_CONFIG, ECOSYSTEM_ENTITIES, ROUTING_CHANGE_REQUESTS } from "@/lib/mock-data";
 import { useEcosystemCategoryConfig } from "@/lib/mock-service/ecosystem-category-store";
+import { useEcosystemEntities } from "@/lib/mock-service/ecosystem-store";
 import { useRoutingMappings } from "@/lib/mock-service/routing-store";
 import { requestRoutingChange, useRoutingChangeRequests } from "@/lib/mock-service/routing-change-store";
+import { RoutingMapping } from "@/lib/types";
 import { useToast } from "@/components/shared/toast-provider";
 import { RefreshCw, Clock3 } from "lucide-react";
 
+function entityIdByName(entities: ReturnType<typeof useEcosystemEntities>, name: string): string {
+  return entities.find((e) => e.name === name)?.id ?? "";
+}
+
 export default function RoutingMappingSetupPage() {
   const categories = useEcosystemCategoryConfig(ECOSYSTEM_CATEGORY_CONFIG);
-  const rows = useRoutingMappings(ROUTING_MAPPINGS);
+  // Always read platforms and their category-bound destination options from
+  // the live entity store (not the static seed array), so a freshly
+  // registered/approved entity or a newly activated category shows up here
+  // immediately instead of only after a full data reset.
+  const entities = useEcosystemEntities(ECOSYSTEM_ENTITIES);
   const changeRequests = useRoutingChangeRequests(ROUTING_CHANGE_REQUESTS);
   const { showToast } = useToast();
 
@@ -28,7 +38,33 @@ export default function RoutingMappingSetupPage() {
     [categories]
   );
 
-  const entitiesById = React.useMemo(() => new Map(ECOSYSTEM_ENTITIES.map((e) => [e.id, e])), []);
+  // Base rows: every approved, non-disabled platform, seeded with its
+  // already-known Bursa/Kliring relationship; routing-store edits are
+  // merged on top by useRoutingMappings below.
+  const baseRows = React.useMemo<RoutingMapping[]>(
+    () =>
+      entities
+        .filter((e) => e.category === "Platform/Pialang" && e.status === "Disetujui" && !e.disabled)
+        .map((platform) => {
+          const mappings: Record<string, string> = {};
+          for (const cat of destinationCategories) {
+            if (cat.shortDescription === "Bursa") mappings.Bursa = entityIdByName(entities, platform.bursa ?? "");
+            else if (cat.shortDescription === "Kliring") mappings.Kliring = entityIdByName(entities, platform.kliring ?? "");
+            else mappings[cat.shortDescription] = "";
+          }
+          return {
+            platformId: platform.id,
+            platformName: platform.name,
+            mappings,
+            updatedAt: platform.bursa ? "10 Jun 2026" : undefined,
+            updatedBy: platform.bursa ? "Bambang Setiawan" : undefined,
+          };
+        }),
+    [entities, destinationCategories]
+  );
+  const rows = useRoutingMappings(baseRows);
+
+  const entitiesById = React.useMemo(() => new Map(entities.map((e) => [e.id, e])), [entities]);
   function entityName(id: string): string {
     if (!id) return "-";
     return entitiesById.get(id)?.name ?? "-";
@@ -136,7 +172,7 @@ export default function RoutingMappingSetupPage() {
           <div className="space-y-3">
             {editing &&
               destinationCategories.map((cat) => {
-                const options = ECOSYSTEM_ENTITIES.filter(
+                const options = entities.filter(
                   (e) => e.category === cat.shortDescription && e.status === "Disetujui" && !e.disabled
                 );
                 return (

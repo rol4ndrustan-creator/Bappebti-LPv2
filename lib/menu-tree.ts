@@ -72,6 +72,16 @@ export const MENU_TREE: MenuTreeItem[] = [
     ],
   },
   {
+    key: "platform-management",
+    label: "Platform Management",
+    href: "/admin/platform/daftar",
+    iconName: "Server",
+    children: [
+      { key: "platform-management.daftar", label: "Daftar Platform", href: "/admin/platform/daftar", iconName: "" },
+      { key: "platform-management.approval", label: "Approval Data Platform", href: "/admin/platform/approval", iconName: "" },
+    ],
+  },
+  {
     key: "routing",
     label: "Routing Mapping",
     href: "/admin/routing/setup",

@@ -1276,6 +1276,7 @@ export const ROLE_DEFINITIONS: RoleDefinition[] = [
       "risiko", "kinerja", "kritik", "kritik.daftar", "kritik.belum-dibaca", "kritik.tindak-lanjut",
       "laporan", "user-management", "user-management.users", "user-management.roles", "user-management.approval",
       "ekosistem", "ekosistem.kategori", "ekosistem.daftar", "ekosistem.approval",
+      "platform-management", "platform-management.daftar", "platform-management.approval",
       "routing", "routing.setup", "routing.approval",
       "konfigurasi", "konfigurasi.kategori", "konfigurasi.sla", "konfigurasi.category-ecosystem", "konfigurasi.approval", "audit-logs",
     ],
