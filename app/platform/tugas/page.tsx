@@ -8,9 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { FileUploader } from "@/components/shared/file-uploader";
 import { CASES, CASE_TASKS } from "@/lib/mock-data";
 import { CaseTaskStatus } from "@/lib/types";
 import { useCasesData } from "@/lib/mock-service/store";
@@ -109,7 +109,7 @@ export default function ManajemenTugasPage() {
             return (
               <TableRow key={t.id}>
                 <TableCell className="whitespace-nowrap">
-                  <Link href={`/bappebti/kasus/${t.ticket}`} className="font-medium text-navy hover:underline">
+                  <Link href={`/platform/kasus/${t.ticket}`} className="font-medium text-navy hover:underline">
                     {t.ticket}
                   </Link>
                 </TableCell>
@@ -189,7 +189,13 @@ export default function ManajemenTugasPage() {
             </div>
             <div>
               <Label htmlFor="task-doc">Upload Dokumen (opsional)</Label>
-              <Input id="task-doc" type="file" onChange={(e) => setDocument(e.target.files?.[0]?.name ?? "")} />
+              <FileUploader
+                files={document ? [document] : []}
+                onChange={(files) => setDocument(files[0] ?? "")}
+                multiple={false}
+                maxFiles={1}
+                label="Klik atau seret dokumen pendukung ke sini"
+              />
             </div>
           </div>
           <DialogFooter>

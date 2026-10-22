@@ -130,7 +130,7 @@ export default function CaseQueuePage() {
               <TableCell className="text-muted">{actionRequired(c.status)}</TableCell>
               <TableCell>
                 <div className="flex items-center gap-1.5">
-                  <Link href={`/bappebti/kasus/${c.ticket}`}>
+                  <Link href={`/platform/kasus/${c.ticket}`}>
                     <Button variant="outline" size="sm">Kelola</Button>
                   </Link>
                   {isSupervisor && (

@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +16,7 @@ import { CaseStatusExplanation } from "@/components/shared/case-status-explanati
 import { EscalationBanner } from "@/components/shared/escalation-banner";
 import { ClarificationThread } from "@/components/shared/clarification-thread";
 import { EvidenceList } from "@/components/shared/evidence-list";
+import { FileUploader } from "@/components/shared/file-uploader";
 import { ResolutionPanel } from "@/components/shared/resolution-panel";
 import { CaseActionDialog, TONE_TO_BUTTON_VARIANT } from "@/components/shared/case-action-dialog";
 import { useToast } from "@/components/shared/toast-provider";
@@ -31,6 +31,7 @@ import {
   setCurrentOwner,
   addTimelineEvent,
   proposeResolution,
+  addEvidence,
 } from "@/lib/mock-service/store";
 import { useTasksForCase, addTask, updateTaskStatus, deleteTask } from "@/lib/mock-service/task-store";
 import { DEMO_USERS, ROLE_LABEL, getViewerGroup, ViewerGroup } from "@/lib/permissions";
@@ -53,6 +54,7 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
   const [activeAction, setActiveAction] = useState<CaseActionId | null>(null);
   const [escalating, setEscalating] = useState(false);
   const [resolutionText, setResolutionText] = useState("");
+  const [newEvidenceFiles, setNewEvidenceFiles] = useState<string[]>([]);
   const [taskDesc, setTaskDesc] = useState("");
   const [taskAssignee, setTaskAssignee] = useState(ASSIGNABLE_NAMES[0] ?? "");
   const [taskDoc, setTaskDoc] = useState("");
@@ -80,6 +82,7 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
   const viewerGroup: ViewerGroup = getViewerGroup(user.role);
   const isBappebti = viewerGroup === "Bappebti";
   const isInternal = viewerGroup !== "User";
+  const isPlatform = viewerGroup === "Platform";
 
   // Role Restriction Rule (Bab II): a Platform CS/PIC may only open tickets
   // assigned to them; direct-URL access to another ticket is blocked.
@@ -147,6 +150,8 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
   }
 
   const canManageTasks = viewerGroup === "Bappebti" || viewerGroup === "Platform" || viewerGroup === "EkosistemActive";
+  const canProposeResolution = isPlatform || isBappebti;
+  const canUploadEvidence = isBappebti;
   const canEscalateToBappebti =
     (viewerGroup === "Platform" || viewerGroup === "EkosistemActive") && c.currentOwner !== "Bappebti" && c.status !== "Selesai";
 
@@ -231,9 +236,9 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
           <TabsTrigger value="bukti">Bukti</TabsTrigger>
           <TabsTrigger value="respons">Respon ke Public</TabsTrigger>
           {isInternal && <TabsTrigger value="catatan">Catatan Internal</TabsTrigger>}
-          {isInternal && <TabsTrigger value="kronologi">Kronologi Kasus</TabsTrigger>}
-          <TabsTrigger value="resolusi">Resolusi</TabsTrigger>
           {isInternal && <TabsTrigger value="tugas">Tugas Internal</TabsTrigger>}
+          <TabsTrigger value="resolusi">Resolusi</TabsTrigger>
+          {isInternal && <TabsTrigger value="kronologi">Kronologi Kasus</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="ringkasan">
@@ -273,8 +278,25 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
 
         <TabsContent value="bukti">
           <Card>
-            <CardContent className="py-4">
+            <CardContent className="py-4 space-y-4">
               <EvidenceList files={c.evidences} />
+              {canUploadEvidence && (
+                <div className="pt-3 border-t border-border space-y-2">
+                  <p className="text-xs font-semibold text-navy">Unggah Bukti Tambahan</p>
+                  <FileUploader files={newEvidenceFiles} onChange={setNewEvidenceFiles} />
+                  <Button
+                    size="sm"
+                    disabled={newEvidenceFiles.length === 0}
+                    onClick={() => {
+                      addEvidence(ticket, newEvidenceFiles);
+                      showToast("Bukti berhasil diunggah.");
+                      setNewEvidenceFiles([]);
+                    }}
+                  >
+                    Simpan Bukti
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -364,61 +386,6 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
         )}
 
         {isInternal && (
-          <TabsContent value="kronologi">
-            <Card>
-              <CardHeader>
-                <CardTitle>Kronologi Kasus</CardTitle>
-                <p className="text-[11px] text-muted mt-1">Jejak riwayat aktivitas dan tindakan kasus (read-only).</p>
-              </CardHeader>
-              <CardContent className="py-4 space-y-2">
-                {c.timeline.length === 0 && <p className="text-sm text-muted">Belum ada aktivitas tercatat.</p>}
-                {[...c.timeline].reverse().map((t, i) => (
-                  <div key={i} className="rounded-md border border-border px-3 py-2 text-sm">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium">{t.actor}</span>
-                      <span className="text-[11px] text-muted">{t.datetime}</span>
-                    </div>
-                    <p className="text-[11px] text-muted mb-1">{t.role} &middot; {t.action}</p>
-                    <p>{t.note}</p>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        )}
-
-        <TabsContent value="resolusi">
-          {viewerGroup === "Platform" && (
-            <Card className="mb-4">
-              <CardHeader>
-                <CardTitle>Ajukan Resolusi</CardTitle>
-              </CardHeader>
-              <CardContent className="py-4 space-y-2">
-                <Textarea
-                  placeholder="Tulis usulan resolusi untuk pelapor..."
-                  value={resolutionText}
-                  onChange={(e) => setResolutionText(e.target.value)}
-                  className="text-sm min-h-[70px]"
-                />
-                <Button
-                  size="sm"
-                  variant="success"
-                  disabled={!resolutionText.trim()}
-                  onClick={() => {
-                    proposeResolution(ticket, resolutionText.trim(), user.name, "Platform");
-                    showToast("Usulan resolusi telah diajukan kepada pelapor.");
-                    setResolutionText("");
-                  }}
-                >
-                  Ajukan Resolusi
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-          <ResolutionPanel complaintCase={c} />
-        </TabsContent>
-
-        {isInternal && (
           <TabsContent value="tugas">
             <Card>
               <CardHeader>
@@ -484,29 +451,84 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
                       onChange={(e) => setTaskDesc(e.target.value)}
                       className="text-xs min-h-[60px]"
                     />
-                    <div className="flex flex-wrap items-end gap-2">
-                      <div>
-                        <Label className="text-[11px]">Assignee</Label>
-                        <Select className="h-8 text-xs w-48" value={taskAssignee} onChange={(e) => setTaskAssignee(e.target.value)}>
-                          {ASSIGNABLE_NAMES.map((n) => (
-                            <option key={n} value={n}>{n}</option>
-                          ))}
-                        </Select>
-                      </div>
-                      <div>
-                        <Label className="text-[11px]">Upload Dokumen (opsional)</Label>
-                        <Input
-                          type="file"
-                          className="h-8 text-xs"
-                          onChange={(e) => setTaskDoc(e.target.files?.[0]?.name ?? "")}
-                        />
-                      </div>
-                      <Button size="sm" disabled={!taskDesc.trim()} onClick={submitTask}>
-                        <Plus className="size-3.5" /> Tambah Tugas
-                      </Button>
+                    <div>
+                      <Label className="text-[11px]">Assignee</Label>
+                      <Select className="h-8 text-xs w-48" value={taskAssignee} onChange={(e) => setTaskAssignee(e.target.value)}>
+                        {ASSIGNABLE_NAMES.map((n) => (
+                          <option key={n} value={n}>{n}</option>
+                        ))}
+                      </Select>
                     </div>
+                    <div>
+                      <Label className="text-[11px]">Upload Dokumen (opsional)</Label>
+                      <FileUploader
+                        files={taskDoc ? [taskDoc] : []}
+                        onChange={(files) => setTaskDoc(files[0] ?? "")}
+                        multiple={false}
+                        maxFiles={1}
+                        label="Klik atau seret dokumen pendukung ke sini"
+                      />
+                    </div>
+                    <Button size="sm" disabled={!taskDesc.trim()} onClick={submitTask}>
+                      <Plus className="size-3.5" /> Tambah Tugas
+                    </Button>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
+
+        <TabsContent value="resolusi">
+          {canProposeResolution && (
+            <Card className="mb-4">
+              <CardHeader>
+                <CardTitle>Ajukan Resolusi</CardTitle>
+              </CardHeader>
+              <CardContent className="py-4 space-y-2">
+                <Textarea
+                  placeholder="Tulis usulan resolusi untuk pelapor..."
+                  value={resolutionText}
+                  onChange={(e) => setResolutionText(e.target.value)}
+                  className="text-sm min-h-[70px]"
+                />
+                <Button
+                  size="sm"
+                  variant="success"
+                  disabled={!resolutionText.trim()}
+                  onClick={() => {
+                    proposeResolution(ticket, resolutionText.trim(), user.name, isBappebti ? "Bappebti" : "Platform");
+                    showToast("Usulan resolusi telah diajukan kepada pelapor.");
+                    setResolutionText("");
+                  }}
+                >
+                  Ajukan Resolusi
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+          <ResolutionPanel complaintCase={c} />
+        </TabsContent>
+
+        {isInternal && (
+          <TabsContent value="kronologi">
+            <Card>
+              <CardHeader>
+                <CardTitle>Kronologi Kasus</CardTitle>
+                <p className="text-[11px] text-muted mt-1">Jejak riwayat aktivitas dan tindakan kasus (read-only).</p>
+              </CardHeader>
+              <CardContent className="py-4 space-y-2">
+                {c.timeline.length === 0 && <p className="text-sm text-muted">Belum ada aktivitas tercatat.</p>}
+                {[...c.timeline].reverse().map((t, i) => (
+                  <div key={i} className="rounded-md border border-border px-3 py-2 text-sm">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-medium">{t.actor}</span>
+                      <span className="text-[11px] text-muted">{t.datetime}</span>
+                    </div>
+                    <p className="text-[11px] text-muted mb-1">{t.role} &middot; {t.action}</p>
+                    <p>{t.note}</p>
+                  </div>
+                ))}
               </CardContent>
             </Card>
           </TabsContent>

@@ -1,4 +1,4 @@
-import KasusDetailClient from "./client";
+import KasusDetailClient from "@/components/shared/kasus-detail-client";
 import { CASES } from "@/lib/mock-data";
 
 export function generateStaticParams() {

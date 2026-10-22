@@ -12,15 +12,13 @@ import { Select } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { StatusBadge } from "@/components/shared/badges";
+import { FileUploader } from "@/components/shared/file-uploader";
 import { useToast } from "@/components/shared/toast-provider";
 import { CATEGORY_LIST, PLATFORM_LIST, PROVINCE_LIST } from "@/lib/mock-data";
 import { usePublikAuth } from "@/lib/publik-auth";
 import {
   CheckCircle2,
   ChevronRight,
-  FileText,
-  Upload,
-  X,
   Info,
 } from "lucide-react";
 
@@ -184,10 +182,6 @@ export default function BuatPengaduanPage() {
     setFeedbackTopic("");
     setFeedbackMessage("");
     setFeedbackSubmitted(false);
-  }
-
-  function removeFile(file: string) {
-    setFiles((prev) => prev.filter((f) => f !== file));
   }
 
   function handleSelectService(type: ServiceType) {
@@ -590,39 +584,12 @@ export default function BuatPengaduanPage() {
           <CardHeader>
             <CardTitle>Bukti Pendukung</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            <div className="rounded-md border-2 border-dashed border-border p-8 text-center">
-              <Upload className="size-7 text-muted mx-auto mb-2" />
-              <p className="text-sm font-medium">Seret file ke sini atau klik untuk memilih</p>
-              <p className="text-[11px] text-muted mt-1">
-                PDF, JPG, PNG — maksimal 10MB per file, maksimal 5 file
-              </p>
-            </div>
-
-            {files.length > 0 && (
-              <div>
-                <p className="text-xs font-semibold text-navy mb-2">File terlampir</p>
-                <ul className="flex flex-col gap-2">
-                  {files.map((file) => (
-                    <li
-                      key={file}
-                      className="flex items-center gap-2 rounded-md border border-border p-2.5 text-xs"
-                    >
-                      <FileText className="size-4 text-navy shrink-0" />
-                      <span className="flex-1">{file}</span>
-                      <button
-                        type="button"
-                        onClick={() => removeFile(file)}
-                        className="text-muted hover:text-red"
-                        aria-label={`Hapus ${file}`}
-                      >
-                        <X className="size-3.5" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+          <CardContent>
+            <FileUploader
+              files={files}
+              onChange={setFiles}
+              hint="PDF, JPG, PNG — maksimal 10MB per file, maksimal 5 file"
+            />
           </CardContent>
         </Card>
       )}
