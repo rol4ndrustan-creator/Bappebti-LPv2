@@ -282,6 +282,26 @@ export interface ComplaintCase {
   entityResponse?: string;
   closureReason?: string;
   reopenEligible?: boolean;
+
+  /** Internal Platform CS/staff member (DEMO_USERS name) this ticket is assigned to — distinct from `institution.caseOfficer`, which tracks whichever institution currently owns the case overall. */
+  platformPic?: string;
+}
+
+// Tugas Internal — a lightweight task-reminder module scoped to a case,
+// shared between the case detail page's "Tugas Internal" tab and the
+// Platform portal's "Manajemen Tugas" menu (same underlying store).
+export type CaseTaskStatus = "Pending" | "In Progress" | "Done";
+
+export interface CaseTask {
+  id: string;
+  ticket: string;
+  description: string;
+  createdBy: string;
+  createdByRole: string;
+  assignee: string;
+  status: CaseTaskStatus;
+  document?: string;
+  createdAt: string;
 }
 
 export interface Member {

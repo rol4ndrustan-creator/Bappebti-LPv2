@@ -5,6 +5,7 @@ import { ClarificationMessage } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { EmptyState } from "./empty-state";
 import { MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -20,15 +21,26 @@ export function ClarificationThread({
   messages,
   onReply,
   replyPlaceholder = "Tulis jawaban klarifikasi Anda...",
+  confirmMessage,
 }: {
   messages: ClarificationMessage[];
   onReply?: (message: string) => void;
   replyPlaceholder?: string;
+  /** When set, sending a message first shows a confirmation dialog with this text before calling onReply. */
+  confirmMessage?: string;
 }) {
   const [text, setText] = React.useState("");
+  const [confirming, setConfirming] = React.useState(false);
 
   if (messages.length === 0 && !onReply) {
     return <EmptyState icon={MessageSquare} title="Belum ada percakapan klarifikasi" />;
+  }
+
+  function send() {
+    if (!text.trim() || !onReply) return;
+    onReply(text.trim());
+    setText("");
+    setConfirming(false);
   }
 
   return (
@@ -73,14 +85,27 @@ export function ClarificationThread({
             disabled={!text.trim()}
             onClick={() => {
               if (!text.trim()) return;
-              onReply(text.trim());
-              setText("");
+              if (confirmMessage) setConfirming(true);
+              else send();
             }}
           >
             Kirim Jawaban
           </Button>
         </div>
       )}
+
+      <Dialog open={confirming} onOpenChange={setConfirming}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Konfirmasi Pengiriman</DialogTitle>
+            <DialogDescription>{confirmMessage}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button size="sm" variant="secondary" onClick={() => setConfirming(false)}>Batal</Button>
+            <Button size="sm" onClick={send}>Ya, Kirim</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

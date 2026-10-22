@@ -1,17 +1,24 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge, SlaBadge } from "@/components/shared/badges";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { CASES, formatCurrency } from "@/lib/mock-data";
-import { CaseStatus } from "@/lib/types";
+import { CaseStatus, ComplaintCase } from "@/lib/types";
 import { useToast } from "@/components/shared/toast-provider";
 import { useDemoSession } from "@/lib/demo-session";
-import { useCasesData, addTimelineEvent, setWorkflowState, setCurrentOwner, proposeResolution } from "@/lib/mock-service/store";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { useCasesData, setPlatformPic } from "@/lib/mock-service/store";
+import { PLATFORM_STAFF } from "@/lib/permissions";
+import { UserCog } from "lucide-react";
+
+const UNASSIGNED = "Belum Ditugaskan";
 
 function actionRequired(status: CaseStatus): string {
   switch (status) {
@@ -37,87 +44,34 @@ function actionRequired(status: CaseStatus): string {
 export default function CaseQueuePage() {
   const { showToast } = useToast();
   const { user } = useDemoSession();
+  const isSupervisor = user.role === "PLATFORM_SUPERVISOR";
   const baseCases = useMemo(() => CASES.filter((c) => c.currentOwner === "Platform"), []);
-  const cases = useCasesData(baseCases).filter((c) => c.currentOwner === "Platform");
-  const [expanded, setExpanded] = useState<string | null>(null);
-  const [noteText, setNoteText] = useState("");
-  const [clarificationText, setClarificationText] = useState("");
-  const [resolutionText, setResolutionText] = useState("");
+  const allCases = useCasesData(baseCases).filter((c) => c.currentOwner === "Platform");
 
-  function toggleExpand(ticket: string) {
-    setExpanded((prev) => (prev === ticket ? null : ticket));
-    setNoteText("");
-    setClarificationText("");
-    setResolutionText("");
+  // Data scoping (Bab II): a CS/PIC only ever sees tickets assigned to them.
+  const scopedCases = isSupervisor ? allCases : allCases.filter((c) => c.platformPic === user.name);
+
+  const [search, setSearch] = useState("");
+  const [picFilter, setPicFilter] = useState("");
+  const [assigning, setAssigning] = useState<ComplaintCase | null>(null);
+  const [assigneeDraft, setAssigneeDraft] = useState("");
+
+  const cases = scopedCases.filter((c) => {
+    const matchesSearch = !search || c.ticket.toLowerCase().includes(search.toLowerCase()) || c.title.toLowerCase().includes(search.toLowerCase());
+    const matchesPic = !picFilter || (picFilter === UNASSIGNED ? !c.platformPic : c.platformPic === picFilter);
+    return matchesSearch && matchesPic;
+  });
+
+  function openAssign(c: ComplaintCase) {
+    setAssigning(c);
+    setAssigneeDraft(c.platformPic ?? "");
   }
 
-  function handleAddNote(ticket: string) {
-    if (!noteText.trim()) {
-      showToast("Catatan investigasi tidak boleh kosong.");
-      return;
-    }
-    addTimelineEvent(ticket, {
-      actor: user.name,
-      role: "Platform",
-      action: "Catatan investigasi ditambahkan",
-      note: noteText.trim(),
-      status: "info",
-      visibility: "internal",
-    });
-    showToast(`Catatan investigasi untuk ${ticket} berhasil disimpan.`);
-    setNoteText("");
-  }
-
-  function handleRequestClarification(ticket: string) {
-    if (!clarificationText.trim()) {
-      showToast("Pesan klarifikasi tidak boleh kosong.");
-      return;
-    }
-    setWorkflowState(ticket, "WAITING_REPORTER_INFORMATION", "Menunggu Data dari Anda", {
-      actor: user.name,
-      role: "Platform",
-      action: "Permintaan klarifikasi dikirim ke pelapor",
-      note: clarificationText.trim(),
-      status: "warning",
-      visibility: "public",
-    });
-    showToast(`Permintaan klarifikasi untuk ${ticket} telah dikirim ke pelapor.`);
-    setClarificationText("");
-  }
-
-  function handleUploadEvidence(ticket: string) {
-    addTimelineEvent(ticket, {
-      actor: user.name,
-      role: "Platform",
-      action: "Bukti penanganan diunggah",
-      note: "Bukti penanganan diunggah oleh platform (demo).",
-      status: "info",
-      visibility: "public",
-    });
-    showToast(`Bukti penanganan untuk ${ticket} berhasil diunggah (demo).`);
-  }
-
-  function handleProposeResolution(ticket: string) {
-    if (!resolutionText.trim()) {
-      showToast("Usulan resolusi tidak boleh kosong.");
-      return;
-    }
-    proposeResolution(ticket, resolutionText.trim(), user.name, "Platform");
-    showToast(`Usulan resolusi untuk ${ticket} telah diajukan kepada pelapor.`);
-    setResolutionText("");
-  }
-
-  function handleEscalate(ticket: string) {
-    setCurrentOwner(ticket, "Bappebti");
-    addTimelineEvent(ticket, {
-      actor: user.name,
-      role: "Platform",
-      action: "Kasus dieskalasi ke Bappebti",
-      note: "Kasus dieskalasi oleh platform ke Bappebti untuk supervisi lebih lanjut.",
-      status: "warning",
-      visibility: "internal",
-    });
-    showToast("Kasus dieskalasi ke Bappebti");
+  function confirmAssign() {
+    if (!assigning) return;
+    setPlatformPic(assigning.ticket, assigneeDraft);
+    showToast(assigneeDraft ? `${assigning.ticket} ditugaskan ke ${assigneeDraft}.` : `Penugasan ${assigning.ticket} dibatalkan.`);
+    setAssigning(null);
   }
 
   return (
@@ -127,6 +81,30 @@ export default function CaseQueuePage() {
         description="Daftar kasus pengaduan yang saat ini menjadi tanggung jawab Platform / Pialang untuk ditangani."
       />
 
+      <div className="mb-3 flex flex-wrap items-end gap-2">
+        <div className="w-full max-w-xs">
+          <Label>Cari</Label>
+          <Input placeholder="Nomor tiket atau judul..." value={search} onChange={(e) => setSearch(e.target.value)} />
+        </div>
+        {isSupervisor && (
+          <div className="w-56">
+            <Label>PIC</Label>
+            <Select value={picFilter} onChange={(e) => setPicFilter(e.target.value)}>
+              <option value="">Semua PIC</option>
+              <option value={UNASSIGNED}>{UNASSIGNED}</option>
+              {PLATFORM_STAFF.map((s) => (
+                <option key={s.id} value={s.name}>{s.name}</option>
+              ))}
+            </Select>
+          </div>
+        )}
+        {(search || picFilter) && (
+          <Button variant="secondary" size="sm" onClick={() => { setSearch(""); setPicFilter(""); }}>
+            Reset Filter
+          </Button>
+        )}
+      </div>
+
       <Table>
         <TableHeader>
           <TableRow>
@@ -135,122 +113,68 @@ export default function CaseQueuePage() {
             <TableHead>Kategori</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>SLA</TableHead>
+            <TableHead>PIC</TableHead>
             <TableHead>Tindakan Diperlukan</TableHead>
             <TableHead>Aksi</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {cases.map((c) => (
-            <>
-              <TableRow key={c.ticket}>
-                <TableCell className="font-medium text-navy">{c.ticket}</TableCell>
-                <TableCell className="max-w-[220px] truncate">{c.title}</TableCell>
-                <TableCell className="text-muted">{c.category}</TableCell>
-                <TableCell><StatusBadge status={c.status} /></TableCell>
-                <TableCell><SlaBadge sla={c.slaStatus} /></TableCell>
-                <TableCell className="text-muted">{actionRequired(c.status)}</TableCell>
-                <TableCell>
-                  <Button variant="outline" size="sm" onClick={() => toggleExpand(c.ticket)}>
-                    Kelola
-                    {expanded === c.ticket ? (
-                      <ChevronUp className="size-3.5" />
-                    ) : (
-                      <ChevronDown className="size-3.5" />
-                    )}
-                  </Button>
-                </TableCell>
-              </TableRow>
-              {expanded === c.ticket && (
-                <TableRow key={`${c.ticket}-detail`}>
-                  <TableCell colSpan={7} className="bg-muted-bg/50">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 py-2">
-                      <div>
-                        <h4 className="text-xs font-semibold text-navy mb-2">Kronologi Kasus</h4>
-                        <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-                          {c.timeline.map((t, i) => (
-                            <div key={i} className="rounded-md border border-border bg-white p-2">
-                              <div className="flex items-center justify-between text-[11px] text-muted">
-                                <span>{t.datetime}</span>
-                                <span>{t.role}</span>
-                              </div>
-                              <p className="text-xs font-medium mt-0.5">{t.action}</p>
-                              <p className="text-xs text-muted mt-0.5">{t.note}</p>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                          <div>
-                            <span className="text-muted">Pelapor: </span>
-                            {c.reporterName}
-                          </div>
-                          <div>
-                            <span className="text-muted">Nominal: </span>
-                            {formatCurrency(c.amount)}
-                          </div>
-                          <div className="col-span-2">
-                            <span className="text-muted">Resolusi yang diharapkan: </span>
-                            {c.expectedResolution}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-3">
-                        <div>
-                          <h4 className="text-xs font-semibold text-navy mb-1">Tambah Catatan Investigasi</h4>
-                          <Textarea
-                            placeholder="Tulis catatan investigasi..."
-                            value={noteText}
-                            onChange={(e) => setNoteText(e.target.value)}
-                            className="text-xs min-h-[60px]"
-                          />
-                          <Button size="sm" className="mt-1" onClick={() => handleAddNote(c.ticket)}>
-                            Simpan Catatan
-                          </Button>
-                        </div>
-
-                        <div>
-                          <h4 className="text-xs font-semibold text-navy mb-1">Minta Klarifikasi ke Pelapor</h4>
-                          <Textarea
-                            placeholder="Tulis permintaan klarifikasi..."
-                            value={clarificationText}
-                            onChange={(e) => setClarificationText(e.target.value)}
-                            className="text-xs min-h-[60px]"
-                          />
-                          <Button size="sm" variant="secondary" className="mt-1" onClick={() => handleRequestClarification(c.ticket)}>
-                            Kirim Permintaan Klarifikasi
-                          </Button>
-                        </div>
-
-                        <div>
-                          <h4 className="text-xs font-semibold text-navy mb-1">Usulkan Resolusi</h4>
-                          <Textarea
-                            placeholder="Tulis usulan resolusi..."
-                            value={resolutionText}
-                            onChange={(e) => setResolutionText(e.target.value)}
-                            className="text-xs min-h-[60px]"
-                          />
-                          <Button size="sm" variant="success" className="mt-1" onClick={() => handleProposeResolution(c.ticket)}>
-                            Ajukan Resolusi
-                          </Button>
-                        </div>
-
-                        <div className="flex items-center gap-2 pt-1">
-                          <Button size="sm" variant="outline" onClick={() => handleUploadEvidence(c.ticket)}>
-                            Unggah Bukti Penanganan
-                          </Button>
-                          <Button size="sm" variant="destructive" onClick={() => handleEscalate(c.ticket)}>
-                            Eskalasi ke Bappebti
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )}
-            </>
+            <TableRow key={c.ticket}>
+              <TableCell className="font-medium text-navy">{c.ticket}</TableCell>
+              <TableCell className="max-w-[220px] truncate">{c.title}</TableCell>
+              <TableCell className="text-muted">{c.category}</TableCell>
+              <TableCell><StatusBadge status={c.status} /></TableCell>
+              <TableCell><SlaBadge sla={c.slaStatus} /></TableCell>
+              <TableCell className="text-muted whitespace-nowrap">{c.platformPic || UNASSIGNED}</TableCell>
+              <TableCell className="text-muted">{actionRequired(c.status)}</TableCell>
+              <TableCell>
+                <div className="flex items-center gap-1.5">
+                  <Link href={`/bappebti/kasus/${c.ticket}`}>
+                    <Button variant="outline" size="sm">Kelola</Button>
+                  </Link>
+                  {isSupervisor && (
+                    <Button variant="ghost" size="sm" onClick={() => openAssign(c)}>
+                      <UserCog className="size-3.5" /> Assign PIC
+                    </Button>
+                  )}
+                </div>
+              </TableCell>
+            </TableRow>
           ))}
+          {cases.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={8} className="text-center text-muted py-6">
+                {isSupervisor ? "Tidak ada kasus yang sesuai dengan filter." : "Tidak ada tiket yang ditugaskan kepada Anda."}
+              </TableCell>
+            </TableRow>
+          )}
         </TableBody>
       </Table>
+
+      <Dialog open={!!assigning} onOpenChange={(v) => !v && setAssigning(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Assign PIC</DialogTitle>
+            <DialogDescription>
+              {assigning?.ticket} — {assigning?.title}. Total nilai transaksi: {formatCurrency(assigning?.amount)}.
+            </DialogDescription>
+          </DialogHeader>
+          <div>
+            <Label htmlFor="assign-pic-select">Petugas (PIC)</Label>
+            <Select id="assign-pic-select" value={assigneeDraft} onChange={(e) => setAssigneeDraft(e.target.value)}>
+              <option value="">{UNASSIGNED}</option>
+              {PLATFORM_STAFF.map((s) => (
+                <option key={s.id} value={s.name}>{s.name}</option>
+              ))}
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button size="sm" variant="secondary" onClick={() => setAssigning(null)}>Batal</Button>
+            <Button size="sm" onClick={confirmAssign}>Simpan</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -2,6 +2,7 @@ import {
   AdminUser,
   ApprovalRequest,
   AuditLogEntry,
+  CaseTask,
   ClarificationRequest,
   ComplaintCase,
   ComplaintCategoryConfig,
@@ -164,6 +165,7 @@ export const CASES: ComplaintCase[] = [
     severity: "Tinggi",
     status: "Diproses",
     currentOwner: "Platform",
+    platformPic: "Rina Kusuma",
     responsibility: "MEMBER ASSIGNED",
     slaStatus: "Mendekati SLA",
     slaDeadline: "16 Jun 2026, 10:00",
@@ -1982,6 +1984,42 @@ export function getClarificationById(id: string): ClarificationRequest | undefin
 export function getClarificationsForCase(ticket: string): ClarificationRequest[] {
   return CLARIFICATIONS.filter((c) => c.caseTicket === ticket);
 }
+
+// Tugas Internal / Manajemen Tugas — shared between the case detail page's
+// "Tugas Internal" tab and the Platform portal's "Manajemen Tugas" menu.
+export const CASE_TASKS: CaseTask[] = [
+  {
+    id: "TASK-001",
+    ticket: "BPP-2026-000184",
+    description: "Konfirmasi status transfer dana ke pelapor melalui tim finance internal.",
+    createdBy: "Ferry Hartono",
+    createdByRole: "Platform",
+    assignee: "Rina Kusuma",
+    status: "In Progress",
+    document: "Bukti Transfer Internal.pdf",
+    createdAt: "14 Jun 2026, 10:05",
+  },
+  {
+    id: "TASK-002",
+    ticket: "BPP-2026-000184",
+    description: "Siapkan draf tanggapan ke pelapor sebelum batas waktu SLA.",
+    createdBy: "Rina Kusuma",
+    createdByRole: "Platform",
+    assignee: "Rina Kusuma",
+    status: "Pending",
+    createdAt: "14 Jun 2026, 14:20",
+  },
+  {
+    id: "TASK-003",
+    ticket: "BPP-2026-000198",
+    description: "Tinjau kembali bukti pendukung yang diunggah pelapor.",
+    createdBy: "Dewi Anjani",
+    createdByRole: "Bappebti",
+    assignee: "Ferry Hartono",
+    status: "Done",
+    createdAt: "10 Jun 2026, 09:00",
+  },
+];
 
 /** @deprecated use formatCurrencyIDR from lib/format.ts — kept for existing pages */
 export { formatCurrencyIDR as formatCurrency } from "./format";

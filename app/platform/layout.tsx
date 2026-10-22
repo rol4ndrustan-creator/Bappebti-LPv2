@@ -1,12 +1,13 @@
 import { PortalShell, SidebarItem } from "@/components/layout/portal-shell";
 import { RequireInternalAuth } from "@/components/shared/require-internal-auth";
-import { LayoutDashboard, ListChecks, Clock, MessageCircle, FileBarChart } from "lucide-react";
+import { LayoutDashboard, ListChecks, Clock, MessageCircle, FileBarChart, ClipboardCheck } from "lucide-react";
 
 const iconCls = "size-4 shrink-0";
 
 const sidebarItems: SidebarItem[] = [
   { label: "Dashboard Platform", href: "/platform", icon: <LayoutDashboard className={iconCls} /> },
   { label: "Case Queue", href: "/platform/case-queue", icon: <ListChecks className={iconCls} /> },
+  { label: "Manajemen Tugas", href: "/platform/tugas", icon: <ClipboardCheck className={iconCls} /> },
   { label: "SLA & Resolution", href: "/platform/sla-resolution", icon: <Clock className={iconCls} /> },
   { label: "Klarifikasi", href: "/platform/klarifikasi", icon: <MessageCircle className={iconCls} /> },
   { label: "Reporting", href: "/platform/reporting", icon: <FileBarChart className={iconCls} /> },

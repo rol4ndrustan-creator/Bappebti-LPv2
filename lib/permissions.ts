@@ -14,6 +14,8 @@ export type Role =
   | "BURSA_SUPERVISOR"
   | "CLEARING_CASE_OFFICER"
   | "CLEARING_SUPERVISOR"
+  // Ekosistem Pengawas (oversight-only institutions, e.g. asosiasi)
+  | "ASOSIASI_CASE_OFFICER"
   // Bappebti
   | "BAPPEBTI_INTAKE_OFFICER"
   | "BAPPEBTI_CASE_OFFICER"
@@ -44,7 +46,7 @@ export type Ability =
   | "create_incident"
   | "merge_duplicate_cases";
 
-export const ROLE_GROUP: Record<Role, "Publik" | "Platform" | "Ekosistem" | "Bappebti" | "Administrasi"> = {
+export const ROLE_GROUP: Record<Role, "Publik" | "Platform" | "Ekosistem" | "EkosistemPengawas" | "Bappebti" | "Administrasi"> = {
   PUBLIC_REPORTER: "Publik",
   PUBLIC_REPRESENTATIVE: "Publik",
   PLATFORM_CASE_OFFICER: "Platform",
@@ -53,6 +55,7 @@ export const ROLE_GROUP: Record<Role, "Publik" | "Platform" | "Ekosistem" | "Bap
   BURSA_SUPERVISOR: "Ekosistem",
   CLEARING_CASE_OFFICER: "Ekosistem",
   CLEARING_SUPERVISOR: "Ekosistem",
+  ASOSIASI_CASE_OFFICER: "EkosistemPengawas",
   BAPPEBTI_INTAKE_OFFICER: "Bappebti",
   BAPPEBTI_CASE_OFFICER: "Bappebti",
   BAPPEBTI_SUPERVISOR: "Bappebti",
@@ -71,6 +74,7 @@ export const ROLE_LABEL: Record<Role, string> = {
   BURSA_SUPERVISOR: "Supervisor Bursa",
   CLEARING_CASE_OFFICER: "Petugas Kasus Kliring",
   CLEARING_SUPERVISOR: "Supervisor Kliring",
+  ASOSIASI_CASE_OFFICER: "Petugas Asosiasi",
   BAPPEBTI_INTAKE_OFFICER: "Petugas Intake Bappebti",
   BAPPEBTI_CASE_OFFICER: "Petugas Kasus Bappebti",
   BAPPEBTI_SUPERVISOR: "Supervisor Bappebti",
@@ -98,7 +102,7 @@ const ALL_MEMBERS: Role[] = [
 const ALL_PUBLIC: Role[] = ["PUBLIC_REPORTER", "PUBLIC_REPRESENTATIVE"];
 
 export const PERMISSIONS: Record<Ability, Role[]> = {
-  view_complaint: [...ALL_PUBLIC, ...ALL_MEMBERS, ...ALL_BAPPEBTI, "SYSTEM_ADMIN", "AUDITOR_READ_ONLY"],
+  view_complaint: [...ALL_PUBLIC, ...ALL_MEMBERS, "ASOSIASI_CASE_OFFICER", ...ALL_BAPPEBTI, "SYSTEM_ADMIN", "AUDITOR_READ_ONLY"],
   view_reporter_identity: [...ALL_BAPPEBTI, "SYSTEM_ADMIN"],
   view_sensitive_evidence: [...ALL_BAPPEBTI, "SYSTEM_ADMIN"],
   assign_case: ["BAPPEBTI_INTAKE_OFFICER", "BAPPEBTI_CASE_OFFICER", "BAPPEBTI_SUPERVISOR", "BAPPEBTI_EXECUTIVE", "PLATFORM_SUPERVISOR", "BURSA_SUPERVISOR", "CLEARING_SUPERVISOR"],
@@ -136,8 +140,10 @@ export const DEMO_USERS: DemoUser[] = [
   { id: "rina", name: "Rina Kusuma", role: "PLATFORM_CASE_OFFICER", institution: "PT Bursa Digital Nusantara", portalHref: "/platform" },
   { id: "indra", name: "Indra Kusnadi", role: "PLATFORM_CASE_OFFICER", institution: "PT Indodax Nasional Indonesia", portalHref: "/platform" },
   { id: "yoga", name: "Yoga Pratama", role: "PLATFORM_CASE_OFFICER", institution: "PT Crypto Indonesia Berkat", portalHref: "/platform" },
+  { id: "ferry", name: "Ferry Hartono", role: "PLATFORM_SUPERVISOR", institution: "PT Bursa Digital Nusantara", portalHref: "/platform" },
   { id: "ahmad", name: "Ahmad Pratama", role: "BURSA_CASE_OFFICER", institution: "Bursa Berjangka Jakarta", portalHref: "/ekosistem/bursa" },
   { id: "sari", name: "Sari Wulandari", role: "CLEARING_CASE_OFFICER", institution: "Kliring Berjangka Indonesia", portalHref: "/ekosistem/kliring" },
+  { id: "lina", name: "Lina Hapsari", role: "ASOSIASI_CASE_OFFICER", institution: "Asosiasi Pialang Berjangka Indonesia", portalHref: "/asosiasi" },
   { id: "dewi", name: "Dewi Anjani", role: "BAPPEBTI_CASE_OFFICER", institution: "Bappebti", portalHref: "/bappebti" },
   { id: "bambang", name: "Bambang Setiawan", role: "BAPPEBTI_SUPERVISOR", institution: "Bappebti", portalHref: "/bappebti" },
   { id: "ratna", name: "Ratna Maharani", role: "BAPPEBTI_EXECUTIVE", institution: "Bappebti", portalHref: "/bappebti" },
@@ -145,3 +151,21 @@ export const DEMO_USERS: DemoUser[] = [
 ];
 
 export const DEFAULT_DEMO_USER_ID = DEMO_USERS[0].id;
+
+/** Platform CS/staff directory for PIC assignment — every PLATFORM_CASE_OFFICER persona. */
+export const PLATFORM_STAFF = DEMO_USERS.filter((u) => u.role === "PLATFORM_CASE_OFFICER");
+
+// The 5-way viewer grouping used by the Detail Pengaduan access matrix
+// (Bab III "List Akses Management Pengaduan"): User (public reporter),
+// Bappebti, Platform, Ekosistem Active (bursa/kliring — operationally
+// involved), Ekosistem Pengawas (asosiasi — oversight-only, read-mostly).
+export type ViewerGroup = "User" | "Bappebti" | "Platform" | "EkosistemActive" | "EkosistemPengawas";
+
+export function getViewerGroup(role: Role): ViewerGroup {
+  const group = ROLE_GROUP[role];
+  if (group === "Publik") return "User";
+  if (group === "Platform") return "Platform";
+  if (group === "EkosistemPengawas") return "EkosistemPengawas";
+  if (group === "Ekosistem") return "EkosistemActive";
+  return "Bappebti"; // Bappebti + Administrasi (SYSTEM_ADMIN/AUDITOR_READ_ONLY) share the regulator view
+}
