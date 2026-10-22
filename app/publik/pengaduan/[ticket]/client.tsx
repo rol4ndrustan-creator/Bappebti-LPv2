@@ -13,13 +13,14 @@ import { CaseProgressTracker } from "@/components/shared/case-progress-tracker";
 import { ResponsibilityPanel } from "@/components/shared/responsibility-panel";
 import { ClarificationThread } from "@/components/shared/clarification-thread";
 import { EvidenceList } from "@/components/shared/evidence-list";
+import { FileUploader } from "@/components/shared/file-uploader";
 import { ResolutionPanel } from "@/components/shared/resolution-panel";
 import { PrototypeNotice } from "@/components/shared/prototype-notice";
 import { useToast } from "@/components/shared/toast-provider";
 import { getCaseByTicket } from "@/lib/mock-data";
 import { formatCurrencyIDR } from "@/lib/format";
-import { useCaseData, addClarificationReply, respondToResolution } from "@/lib/mock-service/store";
-import { Printer, Info, Activity, MessageSquare, Paperclip, FileCheck2, FileText } from "lucide-react";
+import { useCaseData, addClarificationReply, respondToResolution, addEvidence } from "@/lib/mock-service/store";
+import { Printer, Info, Activity, MessageSquare, Paperclip, FileCheck2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function PengaduanDetailClient({ ticket }: { ticket: string }) {
@@ -27,6 +28,7 @@ export default function PengaduanDetailClient({ ticket }: { ticket: string }) {
   const c = useCaseData(base);
   const { showToast } = useToast();
   const [tab, setTab] = useState("ringkasan");
+  const [newEvidenceFiles, setNewEvidenceFiles] = useState<string[]>([]);
 
   if (!c) {
     return (
@@ -93,10 +95,7 @@ export default function PengaduanDetailClient({ ticket }: { ticket: string }) {
           <Tabs value={tab} onValueChange={setTab}>
             <TabsList>
               <TabsTrigger value="ringkasan">
-                <Info className="size-3.5" /> Ringkasan
-              </TabsTrigger>
-              <TabsTrigger value="perkembangan">
-                <Activity className="size-3.5" /> Perkembangan
+                <Info className="size-3.5" /> Ringkasan Pengaduan
               </TabsTrigger>
               <TabsTrigger value="pesan">
                 <MessageSquare className="size-3.5" /> Pesan dan Klarifikasi
@@ -110,14 +109,14 @@ export default function PengaduanDetailClient({ ticket }: { ticket: string }) {
                   <span className="ml-0.5 inline-flex size-1.5 rounded-full bg-amber" aria-label="Tindakan diperlukan" />
                 )}
               </TabsTrigger>
-              <TabsTrigger value="informasi">
-                <FileText className="size-3.5" /> Informasi Pengaduan
+              <TabsTrigger value="perkembangan">
+                <Activity className="size-3.5" /> Perkembangan
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="ringkasan">
               <Card>
-                <CardContent className="py-4">
+                <CardContent className="py-4 space-y-3">
                   <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                     <div>
                       <dt className="text-muted">Kategori</dt>
@@ -135,14 +134,78 @@ export default function PengaduanDetailClient({ ticket }: { ticket: string }) {
                       <dt className="text-muted">Nilai Transaksi</dt>
                       <dd className="font-medium">{formatCurrencyIDR(c.amount)}</dd>
                     </div>
+                    <div>
+                      <dt className="text-muted">Tanggal Pengaduan Dibuat</dt>
+                      <dd className="font-medium">{c.createdAt}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-muted">ID Pengguna Platform</dt>
+                      <dd className="font-medium">{c.platformUserId || "-"}</dd>
+                    </div>
                   </dl>
-                  <Separator className="my-3" />
+                  <Separator />
+                  <div>
+                    <p className="text-xs font-semibold text-navy mb-1">Kronologi (Data Asli)</p>
+                    <p className="text-xs text-foreground/80">{c.chronology}</p>
+                  </div>
                   <div>
                     <p className="text-xs font-semibold text-navy mb-1">Solusi yang Diharapkan</p>
                     <p className="text-xs text-foreground/80">{c.expectedResolution}</p>
                   </div>
+                  <p className="text-[11px] text-muted">
+                    Kronologi awal bersifat baca-saja. Informasi tambahan atau koreksi dapat disampaikan
+                    melalui tab Pesan dan Klarifikasi, dan akan dicatat sebagai amandemen — bukan
+                    menimpa data yang telah disampaikan sebelumnya.
+                  </p>
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="pesan">
+              <Card>
+                <CardContent className="py-4">
+                  <ClarificationThread
+                    messages={c.clarifications}
+                    onReply={(message) => {
+                      addClarificationReply(ticket, c.reporterName, "Pelapor", message);
+                      showToast("Jawaban klarifikasi telah dikirim.");
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="bukti">
+              <Card>
+                <CardContent className="py-4 space-y-4">
+                  <EvidenceList files={c.evidences} />
+                  <div className="pt-3 border-t border-border space-y-2">
+                    <p className="text-xs font-semibold text-navy">Unggah Bukti Tambahan</p>
+                    <FileUploader files={newEvidenceFiles} onChange={setNewEvidenceFiles} />
+                    <Button
+                      size="sm"
+                      disabled={newEvidenceFiles.length === 0}
+                      onClick={() => {
+                        addEvidence(ticket, newEvidenceFiles);
+                        showToast("Bukti berhasil diunggah.");
+                        setNewEvidenceFiles([]);
+                      }}
+                    >
+                      Simpan Bukti
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="solusi">
+              <ResolutionPanel
+                complaintCase={c}
+                onRespond={(decision, reason) => {
+                  respondToResolution(ticket, decision, reason);
+                  showToast("Tanggapan Anda atas solusi telah dikirim.");
+                }}
+              />
             </TabsContent>
 
             <TabsContent value="perkembangan">
@@ -165,65 +228,6 @@ export default function PengaduanDetailClient({ ticket }: { ticket: string }) {
                       ))}
                     </ol>
                   )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="pesan">
-              <Card>
-                <CardContent className="py-4">
-                  <ClarificationThread
-                    messages={c.clarifications}
-                    onReply={(message) => {
-                      addClarificationReply(ticket, c.reporterName, "Pelapor", message);
-                      showToast("Jawaban klarifikasi telah dikirim.");
-                    }}
-                  />
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="bukti">
-              <Card>
-                <CardContent className="py-4">
-                  <EvidenceList files={c.evidences} />
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="solusi">
-              <ResolutionPanel
-                complaintCase={c}
-                onRespond={(decision, reason) => {
-                  respondToResolution(ticket, decision, reason);
-                  showToast("Tanggapan Anda atas solusi telah dikirim.");
-                }}
-              />
-            </TabsContent>
-
-            <TabsContent value="informasi">
-              <Card>
-                <CardContent className="py-4 space-y-3">
-                  <div>
-                    <p className="text-xs font-semibold text-navy mb-1">Kronologi (Data Asli)</p>
-                    <p className="text-xs text-foreground/80">{c.chronology}</p>
-                  </div>
-                  <Separator />
-                  <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                    <div>
-                      <dt className="text-muted">Tanggal Pengaduan Dibuat</dt>
-                      <dd className="font-medium">{c.createdAt}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-muted">ID Pengguna Platform</dt>
-                      <dd className="font-medium">{c.platformUserId || "-"}</dd>
-                    </div>
-                  </dl>
-                  <p className="text-[11px] text-muted">
-                    Kronologi awal bersifat baca-saja. Informasi tambahan atau koreksi dapat disampaikan
-                    melalui tab Pesan dan Klarifikasi, dan akan dicatat sebagai amandemen — bukan
-                    menimpa data yang telah disampaikan sebelumnya.
-                  </p>
                 </CardContent>
               </Card>
             </TabsContent>

@@ -82,11 +82,9 @@ export default function ManajemenTugasPage() {
             : "Daftar tugas internal yang didelegasikan kepada Anda."
         }
         actions={
-          isSupervisor ? (
-            <Button size="sm" onClick={() => setAddOpen(true)}>
-              <Plus className="size-3.5" /> Tambah Tugas
-            </Button>
-          ) : undefined
+          <Button size="sm" onClick={() => setAddOpen(true)}>
+            <Plus className="size-3.5" /> Tambah Tugas
+          </Button>
         }
       />
 

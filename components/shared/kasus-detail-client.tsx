@@ -151,7 +151,7 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
 
   const canManageTasks = viewerGroup === "Bappebti" || viewerGroup === "Platform" || viewerGroup === "EkosistemActive";
   const canProposeResolution = isPlatform || isBappebti;
-  const canUploadEvidence = isBappebti;
+  const canUploadEvidence = isBappebti || isPlatform;
   const canEscalateToBappebti =
     (viewerGroup === "Platform" || viewerGroup === "EkosistemActive") && c.currentOwner !== "Bappebti" && c.status !== "Selesai";
 

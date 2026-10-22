@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/shared/searchable-select";
 import { CaseActionDefinition, ActionButtonTone } from "@/lib/case-actions";
 import { ComplaintCase } from "@/lib/types";
 import type { VariantProps } from "class-variance-authority";
@@ -110,30 +111,28 @@ export function CaseActionDialog({
                   onChange={(e) => setValues((prev) => ({ ...prev, [f.id]: e.target.value }))}
                 />
               )}
-              {f.type === "select" && (
-                <Select
-                  id={f.id}
-                  value={values[f.id] ?? ""}
-                  onChange={(e) => setValues((prev) => ({ ...prev, [f.id]: e.target.value }))}
-                >
-                  <option value="">Pilih...</option>
-                  {f.optionGroups
-                    ? f.optionGroups.map((group) => (
-                        <optgroup key={group.label} label={group.label}>
-                          {group.options.map((opt) => (
-                            <option key={opt} value={opt}>
-                              {opt}
-                            </option>
-                          ))}
-                        </optgroup>
-                      ))
-                    : f.options?.map((opt) => (
-                        <option key={opt} value={opt}>
-                          {opt}
-                        </option>
-                      ))}
-                </Select>
-              )}
+              {f.type === "select" &&
+                (f.optionGroups ? (
+                  <SearchableSelect
+                    id={f.id}
+                    value={values[f.id] ?? ""}
+                    onChange={(v) => setValues((prev) => ({ ...prev, [f.id]: v }))}
+                    groups={f.optionGroups}
+                  />
+                ) : (
+                  <Select
+                    id={f.id}
+                    value={values[f.id] ?? ""}
+                    onChange={(e) => setValues((prev) => ({ ...prev, [f.id]: e.target.value }))}
+                  >
+                    <option value="">Pilih...</option>
+                    {f.options?.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </Select>
+                ))}
             </div>
           ))}
         </div>
