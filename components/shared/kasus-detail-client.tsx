@@ -5,13 +5,15 @@ import Link from "next/link";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { SeverityBadge } from "@/components/shared/badges";
+import { StatusBadgeSelect } from "@/components/shared/status-badge-select";
+import { SearchableSelect } from "@/components/shared/searchable-select";
 import { CaseStatusExplanation } from "@/components/shared/case-status-explanation";
 import { EscalationBanner } from "@/components/shared/escalation-banner";
 import { ClarificationThread } from "@/components/shared/clarification-thread";
@@ -21,7 +23,7 @@ import { ResolutionPanel } from "@/components/shared/resolution-panel";
 import { CaseActionDialog, TONE_TO_BUTTON_VARIANT } from "@/components/shared/case-action-dialog";
 import { useToast } from "@/components/shared/toast-provider";
 import { useDemoSession } from "@/lib/demo-session";
-import { getCaseByTicket, formatCurrency, CASE_TASKS } from "@/lib/mock-data";
+import { getCaseByTicket, formatCurrency, CASE_TASKS, ECOSYSTEM_ENTITIES } from "@/lib/mock-data";
 import { CASE_ACTIONS, CaseActionId, executeCaseAction } from "@/lib/case-actions";
 import {
   useCaseData,
@@ -35,8 +37,19 @@ import {
 } from "@/lib/mock-service/store";
 import { useTasksForCase, addTask, updateTaskStatus, deleteTask } from "@/lib/mock-service/task-store";
 import { DEMO_USERS, ROLE_LABEL, getViewerGroup, ViewerGroup } from "@/lib/permissions";
-import { InternalNoteClassification, Severity, CaseTaskStatus } from "@/lib/types";
+import { InternalNoteTargetType, Severity, TaskDelegationType } from "@/lib/types";
 import { Plus, Trash2, Lock } from "lucide-react";
+
+const NOTE_TARGET_TYPES: InternalNoteTargetType[] = ["Semua Pihak Tertutup", "Bursa", "Kliring", "Custody", "Bappebti"];
+const DELEGATION_TYPES: TaskDelegationType[] = ["Internal Platform", "Bursa", "Kliring", "Custody"];
+/** Bursa/Kliring/Custody institutions (Manajemen Ekosistem master data) used by both the Catatan Internal sasaran-entitas picker and the Tugas Internal delegation picker. */
+const ECOSYSTEM_LEMBAGA = ECOSYSTEM_ENTITIES.filter(
+  (e) => e.ecosystemType === "Ecosystem Aktif" && (e.category === "Bursa" || e.category === "Kliring" || e.category === "Custody")
+).map((e) => ({ id: e.id, name: e.name, type: e.category as "Bursa" | "Kliring" | "Custody" }));
+
+function lembagaOptionsFor(type: string): string[] {
+  return ECOSYSTEM_LEMBAGA.filter((e) => e.type === type).map((e) => e.name);
+}
 
 const BACK_HREF: Record<ViewerGroup, string> = {
   User: "/bappebti/antrean",
@@ -47,7 +60,6 @@ const BACK_HREF: Record<ViewerGroup, string> = {
 };
 
 const SEVERITY_OPTIONS: Severity[] = ["Rendah", "Sedang", "Tinggi", "Kritis"];
-const TASK_STATUSES: CaseTaskStatus[] = ["Pending", "In Progress", "Done"];
 const ASSIGNABLE_NAMES = DEMO_USERS.filter((u) => u.role !== "PUBLIC_REPORTER" && u.role !== "PUBLIC_REPRESENTATIVE").map((u) => u.name);
 
 export default function KasusDetailClient({ ticket }: { ticket: string }) {
@@ -58,12 +70,15 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
   const tasks = useTasksForCase(ticket, CASE_TASKS);
 
   const [noteText, setNoteText] = useState("");
-  const [noteClass, setNoteClass] = useState<InternalNoteClassification>("Operasional");
+  const [noteTargetType, setNoteTargetType] = useState<InternalNoteTargetType>("Semua Pihak Tertutup");
+  const [noteTargetEntity, setNoteTargetEntity] = useState("");
   const [activeAction, setActiveAction] = useState<CaseActionId | null>(null);
   const [escalating, setEscalating] = useState(false);
   const [resolutionText, setResolutionText] = useState("");
   const [newEvidenceFiles, setNewEvidenceFiles] = useState<string[]>([]);
   const [taskDesc, setTaskDesc] = useState("");
+  const [delegationType, setDelegationType] = useState<TaskDelegationType>("Internal Platform");
+  const [delegationEntity, setDelegationEntity] = useState("");
   const [taskAssignee, setTaskAssignee] = useState(ASSIGNABLE_NAMES[0] ?? "");
   const [taskDoc, setTaskDoc] = useState("");
 
@@ -112,7 +127,7 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
             </p>
             <div className="mt-4">
               <Link href="/platform/case-queue">
-                <Button variant="secondary" size="sm">Kembali ke Case Queue</Button>
+                <Button variant="secondary" size="sm">Kembali ke Manajemen Pengaduan</Button>
               </Link>
             </div>
           </CardContent>
@@ -144,6 +159,7 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
 
   function submitTask() {
     if (!taskDesc.trim() || !taskAssignee) return;
+    if (delegationType !== "Internal Platform" && !delegationEntity) return;
     addTask({
       ticket,
       description: taskDesc.trim(),
@@ -151,10 +167,15 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
       createdByRole: ROLE_LABEL[user.role],
       assignee: taskAssignee,
       document: taskDoc || undefined,
+      delegationType: delegationType === "Internal Platform" ? undefined : delegationType,
+      delegationEntity: delegationType === "Internal Platform" ? undefined : delegationEntity,
     });
     showToast("Tugas internal berhasil ditambahkan.");
     setTaskDesc("");
     setTaskDoc("");
+    setDelegationType("Internal Platform");
+    setDelegationEntity("");
+    setTaskAssignee(ASSIGNABLE_NAMES[0] ?? "");
   }
 
   const canManageTasks = viewerGroup === "Bappebti" || viewerGroup === "Platform" || viewerGroup === "EkosistemActive";
@@ -354,17 +375,41 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
                       <span className="font-medium">{n.author}</span>
                       <span className="text-[11px] text-muted">{n.timestamp}</span>
                     </div>
-                    <p className="text-[11px] text-muted mb-1">{n.role} &middot; {n.institution} &middot; {n.classification}</p>
+                    <p className="text-[11px] text-muted mb-1">
+                      {n.role} &middot; {n.institution} &middot; {n.targetType}
+                      {n.targetEntity ? ` — ${n.targetEntity}` : ""}
+                    </p>
                     <p>{n.text}</p>
                   </div>
                 ))}
                 <div className="pt-2 space-y-2">
-                  <Select value={noteClass} onChange={(e) => setNoteClass(e.target.value as InternalNoteClassification)} className="w-48">
-                    <option value="Operasional">Operasional</option>
-                    <option value="Supervisi">Supervisi</option>
-                    <option value="Legal">Legal</option>
-                    <option value="Penegakan">Penegakan</option>
-                  </Select>
+                  <div className="grid grid-cols-2 gap-2 max-w-md">
+                    <div>
+                      <Label className="text-[11px]">Sasaran Entitas</Label>
+                      <Select
+                        value={noteTargetType}
+                        onChange={(e) => {
+                          setNoteTargetType(e.target.value as InternalNoteTargetType);
+                          setNoteTargetEntity("");
+                        }}
+                      >
+                        {NOTE_TARGET_TYPES.map((t) => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </Select>
+                    </div>
+                    {(noteTargetType === "Bursa" || noteTargetType === "Kliring" || noteTargetType === "Custody") && (
+                      <div>
+                        <Label className="text-[11px]">Nama Perusahaan / Lembaga</Label>
+                        <SearchableSelect
+                          value={noteTargetEntity}
+                          onChange={setNoteTargetEntity}
+                          groups={[{ label: noteTargetType, options: lembagaOptionsFor(noteTargetType) }]}
+                          placeholder="Pilih lembaga..."
+                        />
+                      </div>
+                    )}
+                  </div>
                   <Textarea
                     placeholder="Tulis catatan internal..."
                     value={noteText}
@@ -372,16 +417,25 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
                   />
                   <Button
                     size="sm"
-                    disabled={!noteText.trim()}
+                    disabled={
+                      !noteText.trim() ||
+                      ((noteTargetType === "Bursa" || noteTargetType === "Kliring" || noteTargetType === "Custody") && !noteTargetEntity)
+                    }
                     onClick={() => {
                       addInternalNote(ticket, {
                         author: user.name,
                         role: ROLE_LABEL[user.role],
                         institution: user.institution,
-                        classification: noteClass,
+                        targetType: noteTargetType,
+                        targetEntity:
+                          noteTargetType === "Bursa" || noteTargetType === "Kliring" || noteTargetType === "Custody"
+                            ? noteTargetEntity
+                            : undefined,
                         text: noteText.trim(),
                       });
                       setNoteText("");
+                      setNoteTargetType("Semua Pihak Tertutup");
+                      setNoteTargetEntity("");
                       showToast("Catatan internal berhasil ditambahkan.");
                     }}
                   >
@@ -427,25 +481,16 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
                       </div>
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted mb-1.5">
                         <span>Dari: <span className="text-foreground">{t.createdBy}</span></span>
-                        <span>Untuk: <span className="text-foreground">{t.assignee}</span></span>
+                        <span>
+                          Untuk: <span className="text-foreground">{t.assignee}</span>
+                          {t.delegationType && t.delegationType !== "Internal Platform" && (
+                            <span className="text-foreground"> ({t.delegationEntity} — {t.delegationType})</span>
+                          )}
+                        </span>
                         <span>{t.createdAt}</span>
                         {t.document && <span>Dokumen: <span className="text-foreground">{t.document}</span></span>}
                       </div>
-                      {canEdit ? (
-                        <Select
-                          className="h-7 text-xs w-40"
-                          value={t.status}
-                          onChange={(e) => updateTaskStatus(t.id, e.target.value as CaseTaskStatus)}
-                        >
-                          {TASK_STATUSES.map((s) => (
-                            <option key={s} value={s}>{s}</option>
-                          ))}
-                        </Select>
-                      ) : (
-                        <Badge variant={t.status === "Done" ? "green" : t.status === "In Progress" ? "amber" : "muted"}>
-                          {t.status}
-                        </Badge>
-                      )}
+                      <StatusBadgeSelect value={t.status} editable={canEdit} onChange={(s) => updateTaskStatus(t.id, s)} />
                     </div>
                   );
                 })}
@@ -459,13 +504,51 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
                       onChange={(e) => setTaskDesc(e.target.value)}
                       className="text-xs min-h-[60px]"
                     />
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-[11px]">Tipe Entitas Tujuan</Label>
+                        <Select
+                          className="h-8 text-xs"
+                          value={delegationType}
+                          onChange={(e) => {
+                            setDelegationType(e.target.value as TaskDelegationType);
+                            setDelegationEntity("");
+                            setTaskAssignee(e.target.value === "Internal Platform" ? ASSIGNABLE_NAMES[0] ?? "" : "");
+                          }}
+                        >
+                          {DELEGATION_TYPES.map((t) => (
+                            <option key={t} value={t}>{t}</option>
+                          ))}
+                        </Select>
+                      </div>
+                      {delegationType !== "Internal Platform" && (
+                        <div>
+                          <Label className="text-[11px]">Perusahaan / Lembaga Tujuan</Label>
+                          <SearchableSelect
+                            value={delegationEntity}
+                            onChange={setDelegationEntity}
+                            groups={[{ label: delegationType, options: lembagaOptionsFor(delegationType) }]}
+                            placeholder="Pilih lembaga..."
+                          />
+                        </div>
+                      )}
+                    </div>
                     <div>
-                      <Label className="text-[11px]">Assignee</Label>
-                      <Select className="h-8 text-xs w-48" value={taskAssignee} onChange={(e) => setTaskAssignee(e.target.value)}>
-                        {ASSIGNABLE_NAMES.map((n) => (
-                          <option key={n} value={n}>{n}</option>
-                        ))}
-                      </Select>
+                      <Label className="text-[11px]">Assignee / Petugas</Label>
+                      {delegationType === "Internal Platform" ? (
+                        <Select className="h-8 text-xs w-48" value={taskAssignee} onChange={(e) => setTaskAssignee(e.target.value)}>
+                          {ASSIGNABLE_NAMES.map((n) => (
+                            <option key={n} value={n}>{n}</option>
+                          ))}
+                        </Select>
+                      ) : (
+                        <Input
+                          className="h-8 text-xs w-56"
+                          placeholder="Nama petugas / bagian penanggung jawab..."
+                          value={taskAssignee}
+                          onChange={(e) => setTaskAssignee(e.target.value)}
+                        />
+                      )}
                     </div>
                     <div>
                       <Label className="text-[11px]">Upload Dokumen (opsional)</Label>

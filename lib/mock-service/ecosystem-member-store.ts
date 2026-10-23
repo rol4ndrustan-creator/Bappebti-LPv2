@@ -1,16 +1,19 @@
 "use client";
 
-// Management Member (List Revisi 3) — Bappebti's CRUD over the Ekosistem
-// Active (infrastruktur pasar: Bursa/Kliring/Custody) and Ekosistem
-// Pengawas (pelaku usaha di bawah asosiasi) membership directories. Same
-// localStorage + event-bus pattern as the other mock-service stores —
-// EKOSISTEM_ACTIVE_MEMBERS / EKOSISTEM_PENGAWAS_MEMBERS in lib/mock-data.ts
-// stay read-only seed data; additions, edits and removals are layered on
-// top. Both the Bappebti CRUD screen and the two portals' read-only "Data
-// Member" pages read from the same merged list.
+// Management Member (List Revisi 3, corrected by List Revisi 4) —
+// Bappebti's CRUD over the Platform<->Ekosistem Active (Bursa/Kliring/
+// Custody) membership relationships and the Ekosistem Pengawas (pelaku
+// usaha di bawah asosiasi) membership directory. Same localStorage +
+// event-bus pattern as the other mock-service stores —
+// PLATFORM_ECOSYSTEM_MEMBERSHIPS / EKOSISTEM_PENGAWAS_MEMBERS in
+// lib/mock-data.ts stay read-only seed data; additions, edits and
+// removals are layered on top. The Bappebti CRUD screen, /platform/member
+// (filtered to the logged-in platform) and /ekosistem/active/member
+// (filtered to the role-switcher's selected institution) all read from
+// the same merged list.
 
 import * as React from "react";
-import { EcosystemActiveMember, EcosystemPengawasMember } from "../types";
+import { EcosystemPengawasMember, PlatformEcosystemMembership } from "../types";
 import { subscribe, emitChange, getVersion } from "./event-bus";
 
 const ACTIVE_ADDED_KEY = "bappebti-demo-added-active-members";
@@ -40,29 +43,29 @@ function writeJSON(key: string, value: unknown) {
   emitChange();
 }
 
-// --- Ekosistem Active members -----------------------------------------
+// --- Platform <-> Ekosistem Active memberships --------------------------
 
-export function addActiveMember(member: EcosystemActiveMember) {
-  writeJSON(ACTIVE_ADDED_KEY, [...readJSON<EcosystemActiveMember[]>(ACTIVE_ADDED_KEY, []), member]);
+export function addPlatformMembership(membership: PlatformEcosystemMembership) {
+  writeJSON(ACTIVE_ADDED_KEY, [...readJSON<PlatformEcosystemMembership[]>(ACTIVE_ADDED_KEY, []), membership]);
 }
 
-export function updateActiveMember(id: string, patch: Partial<EcosystemActiveMember>) {
-  const edits = readJSON<Record<string, Partial<EcosystemActiveMember>>>(ACTIVE_EDITS_KEY, {});
+export function updatePlatformMembership(id: string, patch: Partial<PlatformEcosystemMembership>) {
+  const edits = readJSON<Record<string, Partial<PlatformEcosystemMembership>>>(ACTIVE_EDITS_KEY, {});
   edits[id] = { ...edits[id], ...patch };
   writeJSON(ACTIVE_EDITS_KEY, edits);
 }
 
-export function deleteActiveMember(id: string) {
+export function deletePlatformMembership(id: string) {
   const deleted = new Set(readJSON<string[]>(ACTIVE_DELETED_KEY, []));
   deleted.add(id);
   writeJSON(ACTIVE_DELETED_KEY, Array.from(deleted));
 }
 
-export function useEcosystemActiveMembers(seed: EcosystemActiveMember[]): EcosystemActiveMember[] {
+export function usePlatformEcosystemMemberships(seed: PlatformEcosystemMembership[]): PlatformEcosystemMembership[] {
   const version = React.useSyncExternalStore(subscribe, getVersion, getVersion);
   return React.useMemo(() => {
-    const added = readJSON<EcosystemActiveMember[]>(ACTIVE_ADDED_KEY, []);
-    const edits = readJSON<Record<string, Partial<EcosystemActiveMember>>>(ACTIVE_EDITS_KEY, {});
+    const added = readJSON<PlatformEcosystemMembership[]>(ACTIVE_ADDED_KEY, []);
+    const edits = readJSON<Record<string, Partial<PlatformEcosystemMembership>>>(ACTIVE_EDITS_KEY, {});
     const deleted = new Set(readJSON<string[]>(ACTIVE_DELETED_KEY, []));
     return [...seed, ...added]
       .filter((m) => !deleted.has(m.id))

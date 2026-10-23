@@ -30,6 +30,22 @@ export function StatusBadge({ status }: { status: CaseStatus }) {
   return <Badge variant={map[status]}>{status.toUpperCase()}</Badge>;
 }
 
+/** Simplified 4-state status badge (Pending/In Progress/Resolved/Closed) for compact listing tables — List Revisi 4's "Manajemen Pengaduan" table, distinct from the full regulator-grade StatusBadge used on the detail page. */
+export function SimpleStatusBadge({ status }: { status: CaseStatus }) {
+  const SIMPLE_MAP: Record<CaseStatus, { label: string; variant: BadgeVariant }> = {
+    Baru: { label: "Pending", variant: "navy" },
+    Verifikasi: { label: "Pending", variant: "navy" },
+    Diproses: { label: "In Progress", variant: "amber" },
+    "Menunggu Klarifikasi": { label: "In Progress", variant: "amber" },
+    "Resolusi Diajukan": { label: "In Progress", variant: "amber" },
+    "Resolusi Disetujui": { label: "Resolved", variant: "green" },
+    Selesai: { label: "Closed", variant: "green" },
+    Ditolak: { label: "Closed", variant: "red" },
+  };
+  const { label, variant } = SIMPLE_MAP[status];
+  return <Badge variant={variant}>{label}</Badge>;
+}
+
 export function ComplaintTypeBadge({ type }: { type?: ComplaintType }) {
   const resolved = type ?? "Pengaduan";
   return <Badge variant={resolved === "Kritik dan Saran" ? "amber" : "navy"}>{resolved}</Badge>;

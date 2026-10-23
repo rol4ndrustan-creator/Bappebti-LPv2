@@ -10,10 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CASES, formatCurrency } from "@/lib/mock-data";
 import { useCasesData } from "@/lib/mock-service/store";
+import { useEkosistemActiveRole } from "@/lib/ekosistem-active-role";
 
 export default function EkosistemActivePengaduanPage() {
-  const baseCases = useMemo(() => CASES.filter((c) => c.currentOwner === "Bursa" || c.currentOwner === "Kliring"), []);
-  const allCases = useCasesData(baseCases).filter((c) => c.currentOwner === "Bursa" || c.currentOwner === "Kliring");
+  const { roleType } = useEkosistemActiveRole();
+  const baseCases = useMemo(() => CASES.filter((c) => c.currentOwner === roleType), [roleType]);
+  const allCases = useCasesData(baseCases).filter((c) => c.currentOwner === roleType);
   const [search, setSearch] = useState("");
 
   const cases = allCases.filter(
@@ -24,7 +26,7 @@ export default function EkosistemActivePengaduanPage() {
     <div>
       <PageHeader
         title="Manajemen Pengaduan"
-        description="Kasus sengketa aktif yang dialihkan untuk dikoordinasikan oleh Bursa, Kliring, dan Custody."
+        description={`Kasus sengketa aktif yang dialihkan untuk dikoordinasikan — konteks saat ini: ${roleType}.`}
       />
 
       <div className="mb-3 w-full max-w-xs">

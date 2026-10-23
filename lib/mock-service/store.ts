@@ -17,6 +17,7 @@ import {
   EscalationLevel,
   InternalNote,
   InternalWorkflowState,
+  LinkedEcosystemEntity,
   OwnerType,
   PublicStatus,
   ReporterResolutionDecision,
@@ -52,6 +53,7 @@ interface CaseOverride {
   resolutionProposalOverride?: string;
   platformPicOverride?: string;
   evidenceAdditions?: string[];
+  linkedEcosystemEntitiesOverride?: LinkedEcosystemEntity[];
 }
 
 /** Same fallback formula as getInstitution() in workflow-config.ts, kept in sync so a live owner/severity change is reflected immediately even on cases whose institution structure was pre-authored in the seed data. */
@@ -110,6 +112,7 @@ export function getMergedCase(base: ComplaintCase | undefined): ComplaintCase | 
     resolutionProposal: o.resolutionProposalOverride ?? base.resolutionProposal,
     platformPic: o.platformPicOverride ?? base.platformPic,
     evidences: [...base.evidences, ...(o.evidenceAdditions ?? [])],
+    linkedEcosystemEntities: o.linkedEcosystemEntitiesOverride ?? base.linkedEcosystemEntities ?? [],
     institution:
       o.caseOfficerOverride || o.escalationLevelOverride !== undefined
         ? {
@@ -211,6 +214,12 @@ export function setCaseOfficer(ticket: string, name: string) {
 export function setPlatformPic(ticket: string, name: string) {
   mutate(ticket, (o) => {
     o.platformPicOverride = name;
+  });
+}
+
+export function setLinkedEcosystemEntities(ticket: string, entities: LinkedEcosystemEntity[]) {
+  mutate(ticket, (o) => {
+    o.linkedEcosystemEntitiesOverride = entities;
   });
 }
 

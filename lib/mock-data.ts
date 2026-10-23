@@ -7,7 +7,6 @@ import {
   ComplaintCase,
   ComplaintCategoryConfig,
   ConfigChangeRequest,
-  EcosystemActiveMember,
   EcosystemCategoryConfig,
   EcosystemChangeRequest,
   EcosystemEntity,
@@ -16,6 +15,7 @@ import {
   IncidentRecord,
   Member,
   NotificationItem,
+  PlatformEcosystemMembership,
   RoleDefinition,
   RoutingChangeRequest,
   RoutingMapping,
@@ -292,7 +292,7 @@ export const CASES: ComplaintCase[] = [
         role: "Bappebti Case Officer",
         institution: "Bappebti",
         timestamp: "14 Jun 2026, 10:20",
-        classification: "Operasional",
+        targetType: "Bappebti",
         text: "Riwayat login akun menunjukkan akses dari perangkat dan lokasi yang tidak dikenali pelapor pada rentang waktu transaksi tidak sah terjadi.",
         visibility: "internal",
       },
@@ -301,7 +301,7 @@ export const CASES: ComplaintCase[] = [
         role: "Bappebti Supervisor",
         institution: "Bappebti",
         timestamp: "15 Jun 2026, 09:00",
-        classification: "Supervisi",
+        targetType: "Bappebti",
         text: "Perlu ditentukan apakah kasus ini dieskalasi ke unit Penegakan mengingat nilai kerugian tinggi dan indikasi keterlambatan respons platform yang berulang.",
         visibility: "internal",
       },
@@ -518,7 +518,7 @@ export const CASES: ComplaintCase[] = [
         role: "Bappebti Case Officer",
         institution: "Bappebti",
         timestamp: "15 Jun 2026, 11:10",
-        classification: "Penegakan",
+        targetType: "Bappebti",
         text: "Mitra pemasaran yang disebutkan pelapor tidak terdaftar dalam basis data agen resmi platform. Direkomendasikan investigasi lanjutan oleh unit Penegakan dan koordinasi dengan pihak kepolisian bila ditemukan indikasi pidana.",
         visibility: "internal",
       },
@@ -1399,14 +1399,14 @@ export const ECOSYSTEM_ENTITIES: EcosystemEntity[] = [
   { id: "ECO-004", name: "PT Pintu Kemana Saja", category: "Platform/Pialang", ecosystemType: "Ecosystem Aktif", license: "PBK-004/BAPPEBTI/2024", bursa: "Bursa Aset Kripto Indonesia", kliring: "Kliring Aset Digital Nusantara", status: "Disetujui", establishedAt: "15 Jan 2020", registeredAt: "16 Jan 2024", decidedBy: "Bambang Setiawan", decidedAt: "20 Jan 2024" },
   { id: "ECO-005", name: "PT Monex Investindo Futures", category: "Platform/Pialang", ecosystemType: "Ecosystem Aktif", license: "PBK-005/BAPPEBTI/2024", bursa: "Bursa Berjangka Jakarta", kliring: "Kliring Berjangka Indonesia", status: "Disetujui", establishedAt: "02 Feb 2000", registeredAt: "18 Jan 2024", decidedBy: "Dewi Anjani", decidedAt: "22 Jan 2024" },
   { id: "ECO-006", name: "PT Rifan Financindo Berjangka", category: "Platform/Pialang", ecosystemType: "Ecosystem Aktif", license: "PBK-006/BAPPEBTI/2024", bursa: "Bursa Berjangka Jakarta", kliring: "Kliring Berjangka Indonesia", status: "Disetujui", establishedAt: "11 Nov 1999", registeredAt: "20 Jan 2024", decidedBy: "Dewi Anjani", decidedAt: "24 Jan 2024" },
-  { id: "ECO-007", name: "Bursa Komoditi Nusantara", category: "Bursa", ecosystemType: "Ecosystem Aktif", license: "BK-001/BAPPEBTI/2020", status: "Disetujui", establishedAt: "10 Jan 2000", registeredAt: "05 Feb 2020", decidedBy: "Bambang Setiawan", decidedAt: "10 Feb 2020" },
-  { id: "ECO-008", name: "Bursa Aset Kripto Indonesia", category: "Bursa", ecosystemType: "Ecosystem Aktif", license: "BK-002/BAPPEBTI/2021", status: "Disetujui", establishedAt: "05 May 2018", registeredAt: "11 Mar 2021", decidedBy: "Bambang Setiawan", decidedAt: "15 Mar 2021" },
-  { id: "ECO-009", name: "Bursa Berjangka Jakarta", category: "Bursa", ecosystemType: "Ecosystem Aktif", license: "BK-003/BAPPEBTI/2019", status: "Disetujui", establishedAt: "21 Aug 1999", registeredAt: "02 Jan 2019", decidedBy: "Ratna Maharani", decidedAt: "08 Jan 2019" },
-  { id: "ECO-010", name: "Kliring Berjangka Indonesia", category: "Kliring", ecosystemType: "Ecosystem Aktif", license: "KK-001/BAPPEBTI/2019", status: "Disetujui", establishedAt: "21 Aug 1999", registeredAt: "02 Jan 2019", decidedBy: "Ratna Maharani", decidedAt: "08 Jan 2019" },
-  { id: "ECO-011", name: "Kliring Aset Digital Nusantara", category: "Kliring", ecosystemType: "Ecosystem Aktif", license: "KK-002/BAPPEBTI/2021", status: "Disetujui", establishedAt: "05 May 2018", registeredAt: "11 Mar 2021", decidedBy: "Bambang Setiawan", decidedAt: "15 Mar 2021" },
+  { id: "ECO-007", name: "Bursa Komoditi Nusantara", category: "Bursa", ecosystemType: "Ecosystem Aktif", license: "BK-001/BAPPEBTI/2020", officialEmail: "helpdesk@bursakomoditinusantara.co.id", status: "Disetujui", establishedAt: "10 Jan 2000", registeredAt: "05 Feb 2020", decidedBy: "Bambang Setiawan", decidedAt: "10 Feb 2020" },
+  { id: "ECO-008", name: "Bursa Aset Kripto Indonesia", category: "Bursa", ecosystemType: "Ecosystem Aktif", license: "BK-002/BAPPEBTI/2021", officialEmail: "helpdesk@bursakripto.co.id", status: "Disetujui", establishedAt: "05 May 2018", registeredAt: "11 Mar 2021", decidedBy: "Bambang Setiawan", decidedAt: "15 Mar 2021" },
+  { id: "ECO-009", name: "Bursa Berjangka Jakarta", category: "Bursa", ecosystemType: "Ecosystem Aktif", license: "BK-003/BAPPEBTI/2019", officialEmail: "helpdesk@bbj.co.id", status: "Disetujui", establishedAt: "21 Aug 1999", registeredAt: "02 Jan 2019", decidedBy: "Ratna Maharani", decidedAt: "08 Jan 2019" },
+  { id: "ECO-010", name: "Kliring Berjangka Indonesia", category: "Kliring", ecosystemType: "Ecosystem Aktif", license: "KK-001/BAPPEBTI/2019", officialEmail: "helpdesk@kbi.co.id", status: "Disetujui", establishedAt: "21 Aug 1999", registeredAt: "02 Jan 2019", decidedBy: "Ratna Maharani", decidedAt: "08 Jan 2019" },
+  { id: "ECO-011", name: "Kliring Aset Digital Nusantara", category: "Kliring", ecosystemType: "Ecosystem Aktif", license: "KK-002/BAPPEBTI/2021", officialEmail: "helpdesk@kadn.co.id", status: "Disetujui", establishedAt: "05 May 2018", registeredAt: "11 Mar 2021", decidedBy: "Bambang Setiawan", decidedAt: "15 Mar 2021" },
   { id: "ECO-012", name: "Asosiasi Pialang Berjangka Indonesia", category: "Asosiasi", ecosystemType: "Ecosystem Pengawas", license: "AS-001/BAPPEBTI/2018", status: "Disetujui", establishedAt: "17 Jun 1999", registeredAt: "10 Jun 2018", decidedBy: "Ratna Maharani", decidedAt: "15 Jun 2018" },
   { id: "ECO-016", name: "Badan Arbitrase Perdagangan Berjangka Komoditi Indonesia", shortName: "BAKTI", category: "Asosiasi", ecosystemType: "Ecosystem Pengawas", license: "AS-016/BAPPEBTI/2019", status: "Disetujui", establishedAt: "03 Mar 2010", registeredAt: "22 Apr 2019", decidedBy: "Ratna Maharani", decidedAt: "28 Apr 2019" },
-  { id: "ECO-015", name: "PT Kustodian Aset Komoditi Indonesia", category: "Custody", ecosystemType: "Ecosystem Aktif", license: "CUS-001/BAPPEBTI/2022", status: "Disetujui", establishedAt: "14 Feb 2015", registeredAt: "20 Apr 2022", decidedBy: "Bambang Setiawan", decidedAt: "25 Apr 2022" },
+  { id: "ECO-015", name: "PT Kustodian Aset Komoditi Indonesia", category: "Custody", ecosystemType: "Ecosystem Aktif", license: "CUS-001/BAPPEBTI/2022", officialEmail: "helpdesk@kustodiankomoditi.co.id", status: "Disetujui", establishedAt: "14 Feb 2015", registeredAt: "20 Apr 2022", decidedBy: "Bambang Setiawan", decidedAt: "25 Apr 2022" },
   {
     id: "ECO-013",
     name: "PT Nusantara Komoditi Berjangka",
@@ -2024,16 +2024,30 @@ export const CASE_TASKS: CaseTask[] = [
   },
 ];
 
-// Management Member (List Revisi 3) — Bappebti-curated membership
-// directory, read-only in the Ekosistem Active / Ekosistem Pengawas
-// portals' Data Member menu. sourceEntityId references ECOSYSTEM_ENTITIES.
-export const EKOSISTEM_ACTIVE_MEMBERS: EcosystemActiveMember[] = [
-  { id: "BKN-001", sourceEntityId: "ECO-007", name: "Bursa Komoditi Nusantara", memberType: "Bursa", license: "BK-001/BAPPEBTI/2020", registeredAt: "05 Feb 2020", picName: "Hasan Fadilah", picEmail: "hasan.fadilah@bkn.co.id", status: "Aktif", createdBy: "Dewi Anjani", createdAt: "05 Feb 2020" },
-  { id: "CFX-01", sourceEntityId: "ECO-008", name: "Bursa Aset Kripto Indonesia", memberType: "Bursa", license: "BK-002/BAPPEBTI/2021", registeredAt: "11 Mar 2021", picName: "Dian Permata", picEmail: "dian.permata@bursakripto.co.id", status: "Aktif", createdBy: "Dewi Anjani", createdAt: "11 Mar 2021" },
-  { id: "BBJ-001", sourceEntityId: "ECO-009", name: "Bursa Berjangka Jakarta", memberType: "Bursa", license: "BK-003/BAPPEBTI/2019", registeredAt: "02 Jan 2019", picName: "Wahyu Setiadi", picEmail: "wahyu.setiadi@bbj.co.id", status: "Aktif", createdBy: "Bambang Setiawan", createdAt: "02 Jan 2019" },
-  { id: "KBI-001", sourceEntityId: "ECO-010", name: "Kliring Berjangka Indonesia", memberType: "Kliring", license: "KK-001/BAPPEBTI/2019", registeredAt: "02 Jan 2019", picName: "Maya Anggraini", picEmail: "maya.anggraini@kbi.co.id", status: "Aktif", createdBy: "Bambang Setiawan", createdAt: "02 Jan 2019" },
-  { id: "KADN-001", sourceEntityId: "ECO-011", name: "Kliring Aset Digital Nusantara", memberType: "Kliring", license: "KK-002/BAPPEBTI/2021", registeredAt: "11 Mar 2021", picName: "Reza Pahlevi", picEmail: "reza.pahlevi@kadn.co.id", status: "Aktif", createdBy: "Bambang Setiawan", createdAt: "11 Mar 2021" },
-  { id: "ICC-002", sourceEntityId: "ECO-015", name: "PT Kustodian Aset Komoditi Indonesia", memberType: "Custody", license: "CUS-001/BAPPEBTI/2022", registeredAt: "20 Apr 2022", picName: "Siti Nurhaliza", picEmail: "siti.nurhaliza@kustodiankomoditi.co.id", status: "Non-Aktif", createdBy: "Dewi Anjani", createdAt: "20 Apr 2022" },
+// Management Member (List Revisi 3, corrected by List Revisi 4) —
+// Bappebti-curated Platform <-> Bursa/Kliring/Custody membership records.
+// Read in one direction by /platform/member (filtered to the logged-in
+// platform) and in the other by /ekosistem/active/member (filtered to the
+// role-switcher's selected institution). platformEntityId/ecosystemEntityId
+// reference ECOSYSTEM_ENTITIES.
+export const PLATFORM_ECOSYSTEM_MEMBERSHIPS: PlatformEcosystemMembership[] = [
+  { id: "MBR-PL-001", platformEntityId: "ECO-001", platformName: "PT Bursa Digital Nusantara", ecosystemType: "Bursa", ecosystemEntityId: "ECO-007", ecosystemEntityName: "Bursa Komoditi Nusantara", registeredAt: "10 Jan 2024", picName: "Rina Kusuma", picContact: "rina.kusuma@bursadigitalnusantara.co.id", status: "Aktif", createdBy: "Dewi Anjani", createdAt: "10 Jan 2024" },
+  { id: "MBR-PL-002", platformEntityId: "ECO-001", platformName: "PT Bursa Digital Nusantara", ecosystemType: "Kliring", ecosystemEntityId: "ECO-010", ecosystemEntityName: "Kliring Berjangka Indonesia", registeredAt: "10 Jan 2024", picName: "Rina Kusuma", picContact: "rina.kusuma@bursadigitalnusantara.co.id", status: "Aktif", createdBy: "Dewi Anjani", createdAt: "10 Jan 2024" },
+  { id: "MBR-PL-003", platformEntityId: "ECO-001", platformName: "PT Bursa Digital Nusantara", ecosystemType: "Custody", ecosystemEntityId: "ECO-015", ecosystemEntityName: "PT Kustodian Aset Komoditi Indonesia", registeredAt: "15 Feb 2024", picName: "Rina Kusuma", picContact: "rina.kusuma@bursadigitalnusantara.co.id", status: "Aktif", createdBy: "Dewi Anjani", createdAt: "15 Feb 2024" },
+  { id: "MBR-PL-004", platformEntityId: "ECO-002", platformName: "PT Indodax Nasional Indonesia", ecosystemType: "Bursa", ecosystemEntityId: "ECO-008", ecosystemEntityName: "Bursa Aset Kripto Indonesia", registeredAt: "12 Jan 2024", picName: "Indra Kusnadi", picContact: "indra.kusnadi@indodax.co.id", status: "Aktif", createdBy: "Dewi Anjani", createdAt: "12 Jan 2024" },
+  { id: "MBR-PL-005", platformEntityId: "ECO-002", platformName: "PT Indodax Nasional Indonesia", ecosystemType: "Kliring", ecosystemEntityId: "ECO-011", ecosystemEntityName: "Kliring Aset Digital Nusantara", registeredAt: "12 Jan 2024", picName: "Indra Kusnadi", picContact: "indra.kusnadi@indodax.co.id", status: "Aktif", createdBy: "Dewi Anjani", createdAt: "12 Jan 2024" },
+  { id: "MBR-PL-006", platformEntityId: "ECO-002", platformName: "PT Indodax Nasional Indonesia", ecosystemType: "Custody", ecosystemEntityId: "ECO-015", ecosystemEntityName: "PT Kustodian Aset Komoditi Indonesia", registeredAt: "18 Feb 2024", picName: "Indra Kusnadi", picContact: "indra.kusnadi@indodax.co.id", status: "Suspended", createdBy: "Dewi Anjani", createdAt: "18 Feb 2024" },
+  { id: "MBR-PL-007", platformEntityId: "ECO-003", platformName: "PT Crypto Indonesia Berkat", ecosystemType: "Bursa", ecosystemEntityId: "ECO-008", ecosystemEntityName: "Bursa Aset Kripto Indonesia", registeredAt: "14 Jan 2024", picName: "Yoga Pratama", picContact: "yoga.pratama@cryptoindonesiaberkat.co.id", status: "Aktif", createdBy: "Bambang Setiawan", createdAt: "14 Jan 2024" },
+  { id: "MBR-PL-008", platformEntityId: "ECO-003", platformName: "PT Crypto Indonesia Berkat", ecosystemType: "Kliring", ecosystemEntityId: "ECO-011", ecosystemEntityName: "Kliring Aset Digital Nusantara", registeredAt: "14 Jan 2024", picName: "Yoga Pratama", picContact: "yoga.pratama@cryptoindonesiaberkat.co.id", status: "Aktif", createdBy: "Bambang Setiawan", createdAt: "14 Jan 2024" },
+  { id: "MBR-PL-009", platformEntityId: "ECO-004", platformName: "PT Pintu Kemana Saja", ecosystemType: "Bursa", ecosystemEntityId: "ECO-008", ecosystemEntityName: "Bursa Aset Kripto Indonesia", registeredAt: "16 Jan 2024", picName: "Dewi Lestari", picContact: "dewi.lestari@pintu.co.id", status: "Aktif", createdBy: "Bambang Setiawan", createdAt: "16 Jan 2024" },
+  { id: "MBR-PL-010", platformEntityId: "ECO-004", platformName: "PT Pintu Kemana Saja", ecosystemType: "Kliring", ecosystemEntityId: "ECO-011", ecosystemEntityName: "Kliring Aset Digital Nusantara", registeredAt: "16 Jan 2024", picName: "Dewi Lestari", picContact: "dewi.lestari@pintu.co.id", status: "Non-Aktif", createdBy: "Bambang Setiawan", createdAt: "16 Jan 2024" },
+  { id: "MBR-PL-011", platformEntityId: "ECO-005", platformName: "PT Monex Investindo Futures", ecosystemType: "Bursa", ecosystemEntityId: "ECO-009", ecosystemEntityName: "Bursa Berjangka Jakarta", registeredAt: "18 Jan 2024", picName: "Arief Budiman", picContact: "arief.budiman@monexfutures.co.id", status: "Aktif", createdBy: "Dewi Anjani", createdAt: "18 Jan 2024" },
+  { id: "MBR-PL-012", platformEntityId: "ECO-005", platformName: "PT Monex Investindo Futures", ecosystemType: "Kliring", ecosystemEntityId: "ECO-010", ecosystemEntityName: "Kliring Berjangka Indonesia", registeredAt: "18 Jan 2024", picName: "Arief Budiman", picContact: "arief.budiman@monexfutures.co.id", status: "Aktif", createdBy: "Dewi Anjani", createdAt: "18 Jan 2024" },
+  { id: "MBR-PL-013", platformEntityId: "ECO-005", platformName: "PT Monex Investindo Futures", ecosystemType: "Custody", ecosystemEntityId: "ECO-015", ecosystemEntityName: "PT Kustodian Aset Komoditi Indonesia", registeredAt: "22 Feb 2024", picName: "Arief Budiman", picContact: "arief.budiman@monexfutures.co.id", status: "Aktif", createdBy: "Dewi Anjani", createdAt: "22 Feb 2024" },
+  { id: "MBR-PL-014", platformEntityId: "ECO-006", platformName: "PT Rifan Financindo Berjangka", ecosystemType: "Bursa", ecosystemEntityId: "ECO-009", ecosystemEntityName: "Bursa Berjangka Jakarta", registeredAt: "20 Jan 2024", picName: "Lestari Wijaya", picContact: "lestari.wijaya@rifanfinancindo.co.id", status: "Aktif", createdBy: "Dewi Anjani", createdAt: "20 Jan 2024" },
+  { id: "MBR-PL-015", platformEntityId: "ECO-006", platformName: "PT Rifan Financindo Berjangka", ecosystemType: "Kliring", ecosystemEntityId: "ECO-010", ecosystemEntityName: "Kliring Berjangka Indonesia", registeredAt: "20 Jan 2024", picName: "Lestari Wijaya", picContact: "lestari.wijaya@rifanfinancindo.co.id", status: "Aktif", createdBy: "Dewi Anjani", createdAt: "20 Jan 2024" },
+  { id: "MBR-PL-016", platformEntityId: "ECO-013", platformName: "PT Nusantara Komoditi Berjangka", ecosystemType: "Bursa", ecosystemEntityId: "ECO-009", ecosystemEntityName: "Bursa Berjangka Jakarta", registeredAt: "14 Jun 2026", picName: "Rina Amelia", picContact: "rina.amelia@nusantarakomoditi.co.id", status: "Aktif", createdBy: "Bambang Setiawan", createdAt: "14 Jun 2026" },
+  { id: "MBR-PL-017", platformEntityId: "ECO-013", platformName: "PT Nusantara Komoditi Berjangka", ecosystemType: "Kliring", ecosystemEntityId: "ECO-010", ecosystemEntityName: "Kliring Berjangka Indonesia", registeredAt: "14 Jun 2026", picName: "Rina Amelia", picContact: "rina.amelia@nusantarakomoditi.co.id", status: "Aktif", createdBy: "Bambang Setiawan", createdAt: "14 Jun 2026" },
 ];
 
 export const EKOSISTEM_PENGAWAS_MEMBERS: EcosystemPengawasMember[] = [

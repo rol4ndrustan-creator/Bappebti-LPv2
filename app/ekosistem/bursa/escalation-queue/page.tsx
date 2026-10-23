@@ -216,7 +216,7 @@ export default function EscalationQueuePage() {
                                     author: user.name,
                                     role: "Bursa Case Officer",
                                     institution: ACTIVE_BURSA,
-                                    classification: "Supervisi",
+                                    targetType: "Semua Pihak Tertutup",
                                     text: noteText.trim(),
                                   });
                                   showToast("Catatan supervisi disimpan");

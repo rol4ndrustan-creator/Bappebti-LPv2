@@ -199,14 +199,17 @@ export interface ResolutionRecord {
   decisionMethod?: "Manual" | "Otomatis";
 }
 
-export type InternalNoteClassification = "Operasional" | "Supervisi" | "Legal" | "Penegakan";
+/** Sasaran catatan internal — siapa yang dimaksudkan membaca/menindaklanjuti (List Revisi 4). */
+export type InternalNoteTargetType = "Semua Pihak Tertutup" | "Bursa" | "Kliring" | "Custody" | "Bappebti";
 
 export interface InternalNote {
   author: string;
   role: string;
   institution: string;
   timestamp: string;
-  classification: InternalNoteClassification;
+  targetType: InternalNoteTargetType;
+  /** Specific lembaga name — only set when targetType is Bursa/Kliring/Custody. */
+  targetEntity?: string;
   text: string;
   /** Internal notes are never shown to the public or member portals. */
   visibility: "internal";
@@ -285,12 +288,25 @@ export interface ComplaintCase {
 
   /** Internal Platform CS/staff member (DEMO_USERS name) this ticket is assigned to — distinct from `institution.caseOfficer`, which tracks whichever institution currently owns the case overall. */
   platformPic?: string;
+  /** Ecosystem institutions (Bursa/Kliring/Custody) linked to this ticket via the Manajemen Pengaduan "Hubungkan Member" modal — a ticket may be linked to more than one. */
+  linkedEcosystemEntities?: LinkedEcosystemEntity[];
+}
+
+/** One Bursa/Kliring/Custody institution linked to a complaint ticket (List Revisi 4 — Kolom Member). */
+export interface LinkedEcosystemEntity {
+  /** EcosystemEntity.id. */
+  id: string;
+  type: "Bursa" | "Kliring" | "Custody";
+  name: string;
 }
 
 // Tugas Internal — a lightweight task-reminder module scoped to a case,
 // shared between the case detail page's "Tugas Internal" tab and the
 // Platform portal's "Manajemen Tugas" menu (same underlying store).
 export type CaseTaskStatus = "Pending" | "In Progress" | "Done";
+
+/** Who a task is delegated to (List Revisi 4) — "Internal Platform" keeps the task inside the platform's own staff; the other three delegate it to an affiliated ecosystem institution. */
+export type TaskDelegationType = "Internal Platform" | "Bursa" | "Kliring" | "Custody";
 
 export interface CaseTask {
   id: string;
@@ -302,6 +318,9 @@ export interface CaseTask {
   status: CaseTaskStatus;
   document?: string;
   createdAt: string;
+  delegationType?: TaskDelegationType;
+  /** Specific lembaga name — only set when delegationType is Bursa/Kliring/Custody. */
+  delegationEntity?: string;
 }
 
 export interface Member {
@@ -542,28 +561,32 @@ export interface EcosystemChangeRequest {
   reason?: string;
 }
 
-// Management Member (List Revisi 3) — the Bappebti-curated membership
-// directory shown read-only in the Ekosistem Active / Ekosistem Pengawas
-// portals' "Data Member" menu. Distinct from EcosystemEntity (the
-// Manajemen Ekosistem / Platform Management master data): a member record
-// references the source entity but adds its own operational/compliance
-// identity (internal code, PIC, membership status) and is maintained
-// entirely from the Bappebti "Management Member" CRUD screen.
-export type EcosystemActiveMemberType = "Bursa" | "Kliring" | "Custody";
-export type EcosystemActiveMemberStatus = "Aktif" | "Non-Aktif";
+// Management Member (List Revisi 3, corrected by List Revisi 4) — the
+// Bappebti-curated relationship between a Platform/Pialang and the
+// ecosystem institution (Bursa/Kliring/Custody) it is a registered member
+// of. The "member" is always the PLATFORM here, never the institution
+// itself: /platform/member (List Revisi 4 #1) reads this filtered to the
+// logged-in platform, and /ekosistem/active/member (List Revisi 4 #5B)
+// reads it filtered to whichever institution is the active role-switcher
+// context — both directions of the same relationship.
+export type PlatformMembershipEcosystemType = "Bursa" | "Kliring" | "Custody";
+export type PlatformMembershipStatus = "Aktif" | "Suspended" | "Non-Aktif";
 
-export interface EcosystemActiveMember {
-  /** Kode Entitas Internal, e.g. "KBI-001". */
+export interface PlatformEcosystemMembership {
+  /** Kode Keanggotaan, e.g. "MBR-PL-099". */
   id: string;
-  /** EcosystemEntity.id this record was created from (Manajemen Ekosistem master data). */
-  sourceEntityId: string;
-  name: string;
-  memberType: EcosystemActiveMemberType;
-  license: string;
+  /** EcosystemEntity.id of the platform (category === "Platform/Pialang"). */
+  platformEntityId: string;
+  platformName: string;
+  ecosystemType: PlatformMembershipEcosystemType;
+  /** EcosystemEntity.id of the Bursa/Kliring/Custody institution. */
+  ecosystemEntityId: string;
+  ecosystemEntityName: string;
   registeredAt: string;
+  /** The platform's own PIC/contact for this membership — shown from the institution's side (List Revisi 4 #5B "PIC Platform & Kontak Aduan"). */
   picName: string;
-  picEmail: string;
-  status: EcosystemActiveMemberStatus;
+  picContact: string;
+  status: PlatformMembershipStatus;
   createdBy: string;
   createdAt: string;
 }

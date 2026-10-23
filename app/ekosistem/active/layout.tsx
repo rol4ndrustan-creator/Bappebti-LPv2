@@ -1,4 +1,6 @@
 import { PortalShell, SidebarItem } from "@/components/layout/portal-shell";
+import { EkosistemActiveRoleProvider } from "@/lib/ekosistem-active-role";
+import { EkosistemActiveRoleSwitcher } from "@/components/shared/ekosistem-active-role-switcher";
 import { LayoutDashboard, ListChecks, ClipboardCheck, Users } from "lucide-react";
 
 const iconCls = "size-4 shrink-0";
@@ -12,8 +14,16 @@ const sidebarItems: SidebarItem[] = [
 
 export default function EkosistemActiveLayout({ children }: { children: React.ReactNode }) {
   return (
-    <PortalShell title="Ekosistem Active" subtitle="Infrastruktur Pasar — Bursa, Kliring, Custody" sidebarItems={sidebarItems} portal="ekosistem">
-      {children}
-    </PortalShell>
+    <EkosistemActiveRoleProvider>
+      <PortalShell
+        title="Ekosistem Active"
+        subtitle="Infrastruktur Pasar — Bursa, Kliring, Custody"
+        sidebarItems={sidebarItems}
+        portal="ekosistem"
+        extraHeader={<EkosistemActiveRoleSwitcher />}
+      >
+        {children}
+      </PortalShell>
+    </EkosistemActiveRoleProvider>
   );
 }

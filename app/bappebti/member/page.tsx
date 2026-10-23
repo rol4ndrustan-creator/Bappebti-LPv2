@@ -11,36 +11,42 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { SearchableSelect } from "@/components/shared/searchable-select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { ECOSYSTEM_ENTITIES, EKOSISTEM_ACTIVE_MEMBERS, EKOSISTEM_PENGAWAS_MEMBERS } from "@/lib/mock-data";
+import { ECOSYSTEM_ENTITIES, PLATFORM_ECOSYSTEM_MEMBERSHIPS, EKOSISTEM_PENGAWAS_MEMBERS } from "@/lib/mock-data";
 import {
-  useEcosystemActiveMembers,
-  addActiveMember,
-  updateActiveMember,
-  deleteActiveMember,
+  usePlatformEcosystemMemberships,
+  addPlatformMembership,
+  updatePlatformMembership,
+  deletePlatformMembership,
   useEcosystemPengawasMembers,
   addPengawasMember,
   updatePengawasMember,
   deletePengawasMember,
 } from "@/lib/mock-service/ecosystem-member-store";
 import {
-  EcosystemActiveMember,
-  EcosystemActiveMemberStatus,
-  EcosystemActiveMemberType,
   EcosystemAssociation,
   EcosystemPengawasMember,
   EcosystemPengawasMembershipStatus,
   PelakuUsahaCategory,
+  PlatformEcosystemMembership,
+  PlatformMembershipEcosystemType,
+  PlatformMembershipStatus,
 } from "@/lib/types";
 import { useDemoSession } from "@/lib/demo-session";
 import { useToast } from "@/components/shared/toast-provider";
 import { formatDateID } from "@/lib/format";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 
-const ACTIVE_TYPE_BY_CATEGORY: Record<string, EcosystemActiveMemberType> = { Bursa: "Bursa", Kliring: "Kliring", Custody: "Custody" };
-const ACTIVE_STATUSES: EcosystemActiveMemberStatus[] = ["Aktif", "Non-Aktif"];
+const ACTIVE_ECOSYSTEM_TYPES: PlatformMembershipEcosystemType[] = ["Bursa", "Kliring", "Custody"];
+const ACTIVE_STATUSES: PlatformMembershipStatus[] = ["Aktif", "Suspended", "Non-Aktif"];
 const PENGAWAS_STATUSES: EcosystemPengawasMembershipStatus[] = ["Aktif", "Suspended", "Non-Aktif"];
 const PELAKU_USAHA_CATEGORIES: PelakuUsahaCategory[] = ["Pialang Berjangka", "CPFAK / PFAK", "Platform"];
 const ASSOCIATIONS: EcosystemAssociation[] = ["ASPEBTINDO", "BAKTI"];
+
+const ACTIVE_STATUS_VARIANT: Record<PlatformMembershipStatus, "green" | "amber" | "muted"> = {
+  Aktif: "green",
+  Suspended: "amber",
+  "Non-Aktif": "muted",
+};
 
 const PENGAWAS_STATUS_VARIANT: Record<EcosystemPengawasMembershipStatus, "green" | "amber" | "muted"> = {
   Aktif: "green",
@@ -49,15 +55,16 @@ const PENGAWAS_STATUS_VARIANT: Record<EcosystemPengawasMembershipStatus, "green"
 };
 
 interface ActiveFormState {
-  sourceEntityId: string;
-  name: string;
-  memberType: EcosystemActiveMemberType;
-  license: string;
+  platformEntityId: string;
+  platformName: string;
+  ecosystemType: PlatformMembershipEcosystemType;
+  ecosystemEntityId: string;
+  ecosystemEntityName: string;
   id: string;
   registeredAt: string;
   picName: string;
-  picEmail: string;
-  status: EcosystemActiveMemberStatus;
+  picContact: string;
+  status: PlatformMembershipStatus;
 }
 
 interface PengawasFormState {
@@ -78,91 +85,98 @@ export default function ManagementMemberPage() {
   const { showToast } = useToast();
   const [tab, setTab] = useState("active");
 
-  const activeMembers = useEcosystemActiveMembers(EKOSISTEM_ACTIVE_MEMBERS);
+  const activeMembers = usePlatformEcosystemMemberships(PLATFORM_ECOSYSTEM_MEMBERSHIPS);
   const pengawasMembers = useEcosystemPengawasMembers(EKOSISTEM_PENGAWAS_MEMBERS);
 
-  const activeCandidates = useMemo(
+  // Shared master data: every Platform/Pialang entity (Step 1 of the Tambah
+  // Member cascade) and every Bursa/Kliring/Custody institution (Step 3,
+  // filtered to the ecosystemType chosen in Step 2).
+  const pelakuUsahaCandidates = useMemo(() => ECOSYSTEM_ENTITIES.filter((e) => e.category === "Platform/Pialang"), []);
+  const ecosystemCandidates = useMemo(
     () => ECOSYSTEM_ENTITIES.filter((e) => e.ecosystemType === "Ecosystem Aktif" && e.category !== "Platform/Pialang"),
     []
   );
-  const pelakuUsahaCandidates = useMemo(() => ECOSYSTEM_ENTITIES.filter((e) => e.category === "Platform/Pialang"), []);
 
-  // --- Tab A: Member Ekosistem Active ---
-  const [activeDialog, setActiveDialog] = useState<"add" | EcosystemActiveMember | null>(null);
+  // --- Tab A: Member Ekosistem Active (cascading: Platform -> Tipe Ekosistem -> Lembaga -> atribut) ---
+  const [activeDialog, setActiveDialog] = useState<"add" | PlatformEcosystemMembership | null>(null);
   const [activeForm, setActiveForm] = useState<ActiveFormState>({
-    sourceEntityId: "",
-    name: "",
-    memberType: "Bursa",
-    license: "",
+    platformEntityId: "",
+    platformName: "",
+    ecosystemType: "Bursa",
+    ecosystemEntityId: "",
+    ecosystemEntityName: "",
     id: "",
     registeredAt: "",
     picName: "",
-    picEmail: "",
+    picContact: "",
     status: "Aktif",
   });
 
   function openAddActive() {
     setActiveForm({
-      sourceEntityId: "",
-      name: "",
-      memberType: "Bursa",
-      license: "",
+      platformEntityId: "",
+      platformName: "",
+      ecosystemType: "Bursa",
+      ecosystemEntityId: "",
+      ecosystemEntityName: "",
       id: "",
       registeredAt: formatDateID(new Date()),
       picName: "",
-      picEmail: "",
+      picContact: "",
       status: "Aktif",
     });
     setActiveDialog("add");
   }
 
-  function openEditActive(m: EcosystemActiveMember) {
+  function openEditActive(m: PlatformEcosystemMembership) {
     setActiveForm({
-      sourceEntityId: m.sourceEntityId,
-      name: m.name,
-      memberType: m.memberType,
-      license: m.license,
+      platformEntityId: m.platformEntityId,
+      platformName: m.platformName,
+      ecosystemType: m.ecosystemType,
+      ecosystemEntityId: m.ecosystemEntityId,
+      ecosystemEntityName: m.ecosystemEntityName,
       id: m.id,
       registeredAt: m.registeredAt,
       picName: m.picName,
-      picEmail: m.picEmail,
+      picContact: m.picContact,
       status: m.status,
     });
     setActiveDialog(m);
   }
 
-  function selectActiveEntity(name: string) {
-    const entity = activeCandidates.find((e) => e.name === name);
+  function selectActivePlatform(name: string) {
+    const entity = pelakuUsahaCandidates.find((e) => e.name === name);
     if (!entity) return;
-    setActiveForm((f) => ({
-      ...f,
-      sourceEntityId: entity.id,
-      name: entity.name,
-      memberType: ACTIVE_TYPE_BY_CATEGORY[entity.category] ?? "Bursa",
-      license: entity.license ?? "",
-    }));
+    setActiveForm((f) => ({ ...f, platformEntityId: entity.id, platformName: entity.name }));
+  }
+
+  function selectActiveLembaga(name: string) {
+    const entity = ecosystemCandidates.find((e) => e.category === activeForm.ecosystemType && e.name === name);
+    if (!entity) return;
+    setActiveForm((f) => ({ ...f, ecosystemEntityId: entity.id, ecosystemEntityName: entity.name }));
   }
 
   function submitActive() {
-    if (!activeForm.id.trim() || !activeForm.name.trim()) return;
-    const record: EcosystemActiveMember = {
+    if (!activeForm.id.trim() || !activeForm.platformName || !activeForm.ecosystemEntityName) return;
+    const record: PlatformEcosystemMembership = {
       id: activeForm.id.trim(),
-      sourceEntityId: activeForm.sourceEntityId,
-      name: activeForm.name,
-      memberType: activeForm.memberType,
-      license: activeForm.license,
+      platformEntityId: activeForm.platformEntityId,
+      platformName: activeForm.platformName,
+      ecosystemType: activeForm.ecosystemType,
+      ecosystemEntityId: activeForm.ecosystemEntityId,
+      ecosystemEntityName: activeForm.ecosystemEntityName,
       registeredAt: activeForm.registeredAt,
       picName: activeForm.picName,
-      picEmail: activeForm.picEmail,
+      picContact: activeForm.picContact,
       status: activeForm.status,
       createdBy: user.name,
       createdAt: formatDateID(new Date()),
     };
     if (activeDialog === "add") {
-      addActiveMember(record);
+      addPlatformMembership(record);
       showToast("Member Ekosistem Active berhasil ditambahkan.");
     } else if (activeDialog) {
-      updateActiveMember(activeDialog.id, record);
+      updatePlatformMembership(activeDialog.id, record);
       showToast("Profil member berhasil diperbarui.");
     }
     setActiveDialog(null);
@@ -276,12 +290,12 @@ export default function ManagementMemberPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Kode Entitas</TableHead>
-                <TableHead>Nama Lembaga</TableHead>
-                <TableHead>Tipe</TableHead>
-                <TableHead>No. Izin/SK</TableHead>
+                <TableHead>Kode Keanggotaan</TableHead>
+                <TableHead>Platform / Pialang</TableHead>
+                <TableHead>Tipe Ekosistem</TableHead>
+                <TableHead>Lembaga</TableHead>
                 <TableHead>Terdaftar</TableHead>
-                <TableHead>PIC Operasional</TableHead>
+                <TableHead>PIC & Kontak</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Aksi</TableHead>
               </TableRow>
@@ -290,13 +304,13 @@ export default function ManagementMemberPage() {
               {activeMembers.map((m) => (
                 <TableRow key={m.id}>
                   <TableCell className="font-medium text-navy whitespace-nowrap">{m.id}</TableCell>
-                  <TableCell className="max-w-[200px] truncate">{m.name}</TableCell>
-                  <TableCell className="text-muted whitespace-nowrap">{m.memberType}</TableCell>
-                  <TableCell className="text-muted whitespace-nowrap">{m.license}</TableCell>
+                  <TableCell className="max-w-[180px] truncate">{m.platformName}</TableCell>
+                  <TableCell className="text-muted whitespace-nowrap">{m.ecosystemType}</TableCell>
+                  <TableCell className="max-w-[180px] truncate">{m.ecosystemEntityName}</TableCell>
                   <TableCell className="text-muted whitespace-nowrap">{m.registeredAt}</TableCell>
-                  <TableCell className="text-muted max-w-[180px] truncate">{m.picName}</TableCell>
+                  <TableCell className="text-muted max-w-[180px] truncate">{m.picName} &middot; {m.picContact}</TableCell>
                   <TableCell>
-                    <Badge variant={m.status === "Aktif" ? "green" : "muted"}>{m.status}</Badge>
+                    <Badge variant={ACTIVE_STATUS_VARIANT[m.status]}>{m.status}</Badge>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
@@ -306,7 +320,7 @@ export default function ManagementMemberPage() {
                       <button
                         title="Hapus Keanggotaan"
                         onClick={() => {
-                          deleteActiveMember(m.id);
+                          deletePlatformMembership(m.id);
                           showToast("Keanggotaan dihapus.");
                         }}
                         className="rounded p-1 text-muted hover:bg-red-bg hover:text-red"
@@ -387,59 +401,83 @@ export default function ManagementMemberPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Tambah/Ubah Member — Ekosistem Active */}
+      {/* Tambah/Ubah Member — Ekosistem Active (cascading: Platform -> Tipe Ekosistem -> Lembaga -> atribut) */}
       <Dialog open={!!activeDialog} onOpenChange={(v) => !v && setActiveDialog(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{activeDialog === "add" ? "Tambah Member Ekosistem Active" : "Ubah Profil Member"}</DialogTitle>
-            <DialogDescription>Infrastruktur pasar — Bursa, Kliring, atau Custody.</DialogDescription>
+            <DialogDescription>Petakan keanggotaan sebuah Platform/Pialang di salah satu lembaga Bursa, Kliring, atau Custody.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label>Entitas (dari Manajemen Ekosistem)</Label>
+              <Label>Langkah 1 — Platform / Pialang</Label>
               <SearchableSelect
-                value={activeForm.name}
-                onChange={selectActiveEntity}
-                groups={[{ label: "Bursa / Kliring / Custody", options: activeCandidates.map((e) => e.name) }]}
-                placeholder="Pilih entitas..."
+                value={activeForm.platformName}
+                onChange={selectActivePlatform}
+                groups={[{ label: "Platform / Pialang", options: pelakuUsahaCandidates.map((e) => e.name) }]}
+                placeholder="Pilih platform..."
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="active-type">Tipe Ekosistem</Label>
-                <Input id="active-type" value={activeForm.memberType} disabled />
+                <Label htmlFor="active-type">Langkah 2 — Tipe Ekosistem</Label>
+                <Select
+                  id="active-type"
+                  value={activeForm.ecosystemType}
+                  onChange={(e) =>
+                    setActiveForm((f) => ({
+                      ...f,
+                      ecosystemType: e.target.value as PlatformMembershipEcosystemType,
+                      ecosystemEntityId: "",
+                      ecosystemEntityName: "",
+                    }))
+                  }
+                >
+                  {ACTIVE_ECOSYSTEM_TYPES.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </Select>
               </div>
               <div>
-                <Label htmlFor="active-license">No. SK/Izin Bappebti</Label>
-                <Input id="active-license" value={activeForm.license} disabled />
+                <Label>Langkah 3 — Lembaga / Perusahaan</Label>
+                <SearchableSelect
+                  value={activeForm.ecosystemEntityName}
+                  onChange={selectActiveLembaga}
+                  groups={[{
+                    label: activeForm.ecosystemType,
+                    options: ecosystemCandidates.filter((e) => e.category === activeForm.ecosystemType).map((e) => e.name),
+                  }]}
+                  placeholder="Pilih lembaga..."
+                />
               </div>
             </div>
+            <p className="text-[11px] font-semibold text-navy">Langkah 4 — Atribut Keanggotaan</p>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="active-id">Kode Entitas Internal</Label>
-                <Input id="active-id" value={activeForm.id} onChange={(e) => setActiveForm((f) => ({ ...f, id: e.target.value }))} placeholder="mis. KBI-001" />
+                <Label htmlFor="active-id">Kode Anggota Internal</Label>
+                <Input id="active-id" value={activeForm.id} onChange={(e) => setActiveForm((f) => ({ ...f, id: e.target.value }))} placeholder="mis. MBR-PL-018" />
               </div>
               <div>
-                <Label htmlFor="active-registered">Tanggal Terdaftar</Label>
+                <Label htmlFor="active-registered">Tanggal Efektif</Label>
                 <Input id="active-registered" value={activeForm.registeredAt} onChange={(e) => setActiveForm((f) => ({ ...f, registeredAt: e.target.value }))} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="active-pic-name">PIC Operasional</Label>
-                <Input id="active-pic-name" value={activeForm.picName} onChange={(e) => setActiveForm((f) => ({ ...f, picName: e.target.value }))} />
+                <Label htmlFor="active-pic-name">PIC / Kontak</Label>
+                <Input id="active-pic-name" value={activeForm.picName} onChange={(e) => setActiveForm((f) => ({ ...f, picName: e.target.value }))} placeholder="Nama PIC" />
               </div>
               <div>
-                <Label htmlFor="active-pic-email">Email PIC</Label>
-                <Input id="active-pic-email" type="email" value={activeForm.picEmail} onChange={(e) => setActiveForm((f) => ({ ...f, picEmail: e.target.value }))} />
+                <Label htmlFor="active-pic-contact">Kontak PIC</Label>
+                <Input id="active-pic-contact" value={activeForm.picContact} onChange={(e) => setActiveForm((f) => ({ ...f, picContact: e.target.value }))} placeholder="Email / telepon" />
               </div>
             </div>
             <div>
-              <Label htmlFor="active-status">Status</Label>
+              <Label htmlFor="active-status">Status Keanggotaan</Label>
               <Select
                 id="active-status"
                 value={activeForm.status}
-                onChange={(e) => setActiveForm((f) => ({ ...f, status: e.target.value as EcosystemActiveMemberStatus }))}
+                onChange={(e) => setActiveForm((f) => ({ ...f, status: e.target.value as PlatformMembershipStatus }))}
               >
                 {ACTIVE_STATUSES.map((s) => (
                   <option key={s} value={s}>{s}</option>
@@ -449,7 +487,11 @@ export default function ManagementMemberPage() {
           </div>
           <DialogFooter>
             <Button size="sm" variant="secondary" onClick={() => setActiveDialog(null)}>Batal</Button>
-            <Button size="sm" disabled={!activeForm.id.trim() || !activeForm.name.trim()} onClick={submitActive}>
+            <Button
+              size="sm"
+              disabled={!activeForm.id.trim() || !activeForm.platformName || !activeForm.ecosystemEntityName}
+              onClick={submitActive}
+            >
               {activeDialog === "add" ? "Tambah Member" : "Simpan Perubahan"}
             </Button>
           </DialogFooter>
