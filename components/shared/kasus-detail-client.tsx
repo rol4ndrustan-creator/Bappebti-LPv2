@@ -38,6 +38,14 @@ import { DEMO_USERS, ROLE_LABEL, getViewerGroup, ViewerGroup } from "@/lib/permi
 import { InternalNoteClassification, Severity, CaseTaskStatus } from "@/lib/types";
 import { Plus, Trash2, Lock } from "lucide-react";
 
+const BACK_HREF: Record<ViewerGroup, string> = {
+  User: "/bappebti/antrean",
+  Bappebti: "/bappebti/antrean",
+  Platform: "/platform/case-queue",
+  EkosistemActive: "/ekosistem/active/pengaduan",
+  EkosistemPengawas: "/ekosistem/pengawas/pengaduan",
+};
+
 const SEVERITY_OPTIONS: Severity[] = ["Rendah", "Sedang", "Tinggi", "Kritis"];
 const TASK_STATUSES: CaseTaskStatus[] = ["Pending", "In Progress", "Done"];
 const ASSIGNABLE_NAMES = DEMO_USERS.filter((u) => u.role !== "PUBLIC_REPORTER" && u.role !== "PUBLIC_REPRESENTATIVE").map((u) => u.name);
@@ -181,7 +189,7 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
         title={`${c.ticket} — ${c.title}`}
         description="Detail pengaduan, riwayat penanganan, dan tindakan yang tersedia sesuai peran Anda."
         actions={
-          <Link href={viewerGroup === "Platform" ? "/platform/case-queue" : "/bappebti/antrean"}>
+          <Link href={BACK_HREF[viewerGroup]}>
             <Button variant="secondary" size="sm">
               Kembali ke Daftar
             </Button>

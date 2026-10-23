@@ -15,6 +15,7 @@ import { nowDateTimeID } from "../format";
 
 const ADDED_KEY = "bappebti-demo-added-tasks";
 const STATUS_KEY = "bappebti-demo-task-status";
+const DOCUMENT_KEY = "bappebti-demo-task-document";
 const DELETED_KEY = "bappebti-demo-deleted-tasks";
 
 function readJSON<T>(key: string, fallback: T): T {
@@ -59,13 +60,25 @@ export function deleteTask(id: string) {
   writeJSON(DELETED_KEY, Array.from(deleted));
 }
 
+/** Attaches/replaces a task's supporting document — the Manajemen Tugas table's inline "+ Unggah" action. */
+export function updateTaskDocument(id: string, document: string) {
+  const map = readJSON<Record<string, string>>(DOCUMENT_KEY, {});
+  map[id] = document;
+  writeJSON(DOCUMENT_KEY, map);
+}
+
 function mergeTasks(seed: CaseTask[]): CaseTask[] {
   const added = readJSON<CaseTask[]>(ADDED_KEY, []);
   const statusMap = readJSON<Record<string, CaseTaskStatus>>(STATUS_KEY, {});
+  const documentMap = readJSON<Record<string, string>>(DOCUMENT_KEY, {});
   const deleted = new Set(readJSON<string[]>(DELETED_KEY, []));
   return [...seed, ...added]
     .filter((t) => !deleted.has(t.id))
-    .map((t) => (statusMap[t.id] ? { ...t, status: statusMap[t.id] } : t));
+    .map((t) => ({
+      ...t,
+      ...(statusMap[t.id] ? { status: statusMap[t.id] } : null),
+      ...(documentMap[t.id] ? { document: documentMap[t.id] } : null),
+    }));
 }
 
 export function useAllTasks(seed: CaseTask[]): CaseTask[] {

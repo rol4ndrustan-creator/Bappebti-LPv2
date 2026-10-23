@@ -1,30 +1,21 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { PageHeader } from "@/components/shared/page-header";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { FileUploader } from "@/components/shared/file-uploader";
+import { TaskTable } from "@/components/shared/task-table";
 import { CASES, CASE_TASKS } from "@/lib/mock-data";
-import { CaseTaskStatus } from "@/lib/types";
 import { useCasesData } from "@/lib/mock-service/store";
-import { useAllTasks, addTask, updateTaskStatus, deleteTask } from "@/lib/mock-service/task-store";
+import { useAllTasks, addTask } from "@/lib/mock-service/task-store";
 import { useDemoSession } from "@/lib/demo-session";
 import { useToast } from "@/components/shared/toast-provider";
 import { PLATFORM_STAFF, ROLE_LABEL } from "@/lib/permissions";
-import { Plus, Trash2 } from "lucide-react";
-
-const TASK_STATUSES: CaseTaskStatus[] = ["Pending", "In Progress", "Done"];
-
-function statusVariant(status: CaseTaskStatus) {
-  return status === "Done" ? "green" : status === "In Progress" ? "amber" : "muted";
-}
+import { Plus } from "lucide-react";
 
 export default function ManajemenTugasPage() {
   const { user } = useDemoSession();
@@ -88,74 +79,12 @@ export default function ManajemenTugasPage() {
         }
       />
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nomor Tiket</TableHead>
-            <TableHead>Deskripsi Tugas</TableHead>
-            <TableHead>Dari Siapa</TableHead>
-            <TableHead>Assignee</TableHead>
-            <TableHead>Dokumen</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Aksi</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {tasks.map((t) => {
-            const canEdit = t.assignee === user.name || t.createdBy === user.name;
-            const canDelete = t.createdBy === user.name;
-            return (
-              <TableRow key={t.id}>
-                <TableCell className="whitespace-nowrap">
-                  <Link href={`/platform/kasus/${t.ticket}`} className="font-medium text-navy hover:underline">
-                    {t.ticket}
-                  </Link>
-                </TableCell>
-                <TableCell className="max-w-[260px]">{t.description}</TableCell>
-                <TableCell className="text-muted whitespace-nowrap">{t.createdBy}</TableCell>
-                <TableCell className="whitespace-nowrap">{t.assignee}</TableCell>
-                <TableCell className="text-muted whitespace-nowrap">{t.document || "-"}</TableCell>
-                <TableCell>
-                  {canEdit ? (
-                    <Select
-                      className="h-7 text-xs w-36"
-                      value={t.status}
-                      onChange={(e) => updateTaskStatus(t.id, e.target.value as CaseTaskStatus)}
-                    >
-                      {TASK_STATUSES.map((s) => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </Select>
-                  ) : (
-                    <Badge variant={statusVariant(t.status)}>{t.status}</Badge>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {canDelete && (
-                    <button
-                      title="Hapus tugas"
-                      onClick={() => {
-                        deleteTask(t.id);
-                        showToast("Tugas dihapus.");
-                      }}
-                      className="rounded p-1 text-muted hover:bg-red-bg hover:text-red"
-                    >
-                      <Trash2 className="size-3.5" />
-                    </button>
-                  )}
-                </TableCell>
-              </TableRow>
-            );
-          })}
-          {tasks.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={7} className="text-center text-muted py-6">
-                {isSupervisor ? "Belum ada tugas internal." : "Belum ada tugas yang didelegasikan kepada Anda."}
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+      <TaskTable
+        tasks={tasks}
+        currentUserName={user.name}
+        caseDetailPath={(ticket) => `/platform/kasus/${ticket}`}
+        emptyMessage={isSupervisor ? "Belum ada tugas internal." : "Belum ada tugas yang didelegasikan kepada Anda."}
+      />
 
       <Dialog open={addOpen} onOpenChange={(v) => { setAddOpen(v); if (!v) resetForm(); }}>
         <DialogContent>

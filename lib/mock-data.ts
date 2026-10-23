@@ -7,9 +7,11 @@ import {
   ComplaintCase,
   ComplaintCategoryConfig,
   ConfigChangeRequest,
+  EcosystemActiveMember,
   EcosystemCategoryConfig,
   EcosystemChangeRequest,
   EcosystemEntity,
+  EcosystemPengawasMember,
   FeedbackItem,
   IncidentRecord,
   Member,
@@ -1403,6 +1405,7 @@ export const ECOSYSTEM_ENTITIES: EcosystemEntity[] = [
   { id: "ECO-010", name: "Kliring Berjangka Indonesia", category: "Kliring", ecosystemType: "Ecosystem Aktif", license: "KK-001/BAPPEBTI/2019", status: "Disetujui", establishedAt: "21 Aug 1999", registeredAt: "02 Jan 2019", decidedBy: "Ratna Maharani", decidedAt: "08 Jan 2019" },
   { id: "ECO-011", name: "Kliring Aset Digital Nusantara", category: "Kliring", ecosystemType: "Ecosystem Aktif", license: "KK-002/BAPPEBTI/2021", status: "Disetujui", establishedAt: "05 May 2018", registeredAt: "11 Mar 2021", decidedBy: "Bambang Setiawan", decidedAt: "15 Mar 2021" },
   { id: "ECO-012", name: "Asosiasi Pialang Berjangka Indonesia", category: "Asosiasi", ecosystemType: "Ecosystem Pengawas", license: "AS-001/BAPPEBTI/2018", status: "Disetujui", establishedAt: "17 Jun 1999", registeredAt: "10 Jun 2018", decidedBy: "Ratna Maharani", decidedAt: "15 Jun 2018" },
+  { id: "ECO-016", name: "Badan Arbitrase Perdagangan Berjangka Komoditi Indonesia", shortName: "BAKTI", category: "Asosiasi", ecosystemType: "Ecosystem Pengawas", license: "AS-016/BAPPEBTI/2019", status: "Disetujui", establishedAt: "03 Mar 2010", registeredAt: "22 Apr 2019", decidedBy: "Ratna Maharani", decidedAt: "28 Apr 2019" },
   { id: "ECO-015", name: "PT Kustodian Aset Komoditi Indonesia", category: "Custody", ecosystemType: "Ecosystem Aktif", license: "CUS-001/BAPPEBTI/2022", status: "Disetujui", establishedAt: "14 Feb 2015", registeredAt: "20 Apr 2022", decidedBy: "Bambang Setiawan", decidedAt: "25 Apr 2022" },
   {
     id: "ECO-013",
@@ -2019,6 +2022,27 @@ export const CASE_TASKS: CaseTask[] = [
     status: "Done",
     createdAt: "10 Jun 2026, 09:00",
   },
+];
+
+// Management Member (List Revisi 3) — Bappebti-curated membership
+// directory, read-only in the Ekosistem Active / Ekosistem Pengawas
+// portals' Data Member menu. sourceEntityId references ECOSYSTEM_ENTITIES.
+export const EKOSISTEM_ACTIVE_MEMBERS: EcosystemActiveMember[] = [
+  { id: "BKN-001", sourceEntityId: "ECO-007", name: "Bursa Komoditi Nusantara", memberType: "Bursa", license: "BK-001/BAPPEBTI/2020", registeredAt: "05 Feb 2020", picName: "Hasan Fadilah", picEmail: "hasan.fadilah@bkn.co.id", status: "Aktif", createdBy: "Dewi Anjani", createdAt: "05 Feb 2020" },
+  { id: "CFX-01", sourceEntityId: "ECO-008", name: "Bursa Aset Kripto Indonesia", memberType: "Bursa", license: "BK-002/BAPPEBTI/2021", registeredAt: "11 Mar 2021", picName: "Dian Permata", picEmail: "dian.permata@bursakripto.co.id", status: "Aktif", createdBy: "Dewi Anjani", createdAt: "11 Mar 2021" },
+  { id: "BBJ-001", sourceEntityId: "ECO-009", name: "Bursa Berjangka Jakarta", memberType: "Bursa", license: "BK-003/BAPPEBTI/2019", registeredAt: "02 Jan 2019", picName: "Wahyu Setiadi", picEmail: "wahyu.setiadi@bbj.co.id", status: "Aktif", createdBy: "Bambang Setiawan", createdAt: "02 Jan 2019" },
+  { id: "KBI-001", sourceEntityId: "ECO-010", name: "Kliring Berjangka Indonesia", memberType: "Kliring", license: "KK-001/BAPPEBTI/2019", registeredAt: "02 Jan 2019", picName: "Maya Anggraini", picEmail: "maya.anggraini@kbi.co.id", status: "Aktif", createdBy: "Bambang Setiawan", createdAt: "02 Jan 2019" },
+  { id: "KADN-001", sourceEntityId: "ECO-011", name: "Kliring Aset Digital Nusantara", memberType: "Kliring", license: "KK-002/BAPPEBTI/2021", registeredAt: "11 Mar 2021", picName: "Reza Pahlevi", picEmail: "reza.pahlevi@kadn.co.id", status: "Aktif", createdBy: "Bambang Setiawan", createdAt: "11 Mar 2021" },
+  { id: "ICC-002", sourceEntityId: "ECO-015", name: "PT Kustodian Aset Komoditi Indonesia", memberType: "Custody", license: "CUS-001/BAPPEBTI/2022", registeredAt: "20 Apr 2022", picName: "Siti Nurhaliza", picEmail: "siti.nurhaliza@kustodiankomoditi.co.id", status: "Non-Aktif", createdBy: "Dewi Anjani", createdAt: "20 Apr 2022" },
+];
+
+export const EKOSISTEM_PENGAWAS_MEMBERS: EcosystemPengawasMember[] = [
+  { id: "ASP-PL-045", sourceEntityId: "ECO-005", association: "ASPEBTINDO", companyName: "PT Monex Investindo Futures", category: "Pialang Berjangka", license: "PBK-005/BAPPEBTI/2024", joinedAt: "18 Jan 2024", picName: "Arief Budiman", picContact: "arief.budiman@monexfutures.co.id / 021-5551005", status: "Aktif", createdBy: "Dewi Anjani", createdAt: "18 Jan 2024" },
+  { id: "ASP-PL-046", sourceEntityId: "ECO-006", association: "ASPEBTINDO", companyName: "PT Rifan Financindo Berjangka", category: "Pialang Berjangka", license: "PBK-006/BAPPEBTI/2024", joinedAt: "20 Jan 2024", picName: "Lestari Wijaya", picContact: "lestari.wijaya@rifanfinancindo.co.id / 021-5551006", status: "Aktif", createdBy: "Dewi Anjani", createdAt: "20 Jan 2024" },
+  { id: "ASP-PL-047", sourceEntityId: "ECO-013", association: "ASPEBTINDO", companyName: "PT Nusantara Komoditi Berjangka", category: "Pialang Berjangka", license: "PBK-013/BAPPEBTI/2026", joinedAt: "14 Jun 2026", picName: "Rina Amelia", picContact: "rina.amelia@nusantarakomoditi.co.id / 0812-0013-2024", status: "Suspended", createdBy: "Bambang Setiawan", createdAt: "14 Jun 2026" },
+  { id: "BAKTI-MBR-012", sourceEntityId: "ECO-001", association: "BAKTI", companyName: "PT Bursa Digital Nusantara", category: "CPFAK / PFAK", license: "PBK-001/BAPPEBTI/2024", joinedAt: "10 Jan 2024", picName: "Ferry Hartono", picContact: "ferry.hartono@bursadigitalnusantara.co.id / 021-5551001", status: "Aktif", createdBy: "Ratna Maharani", createdAt: "10 Jan 2024" },
+  { id: "BAKTI-MBR-013", sourceEntityId: "ECO-002", association: "BAKTI", companyName: "PT Indodax Nasional Indonesia", category: "CPFAK / PFAK", license: "PBK-002/BAPPEBTI/2024", joinedAt: "12 Jan 2024", picName: "Indra Kusnadi", picContact: "indra.kusnadi@indodax.co.id / 021-5551002", status: "Aktif", createdBy: "Ratna Maharani", createdAt: "12 Jan 2024" },
+  { id: "BAKTI-MBR-014", sourceEntityId: "ECO-003", association: "BAKTI", companyName: "PT Crypto Indonesia Berkat", category: "CPFAK / PFAK", license: "PBK-003/BAPPEBTI/2024", joinedAt: "14 Jan 2024", picName: "Yoga Pratama", picContact: "yoga.pratama@cryptoindonesiaberkat.co.id / 021-5551003", status: "Non-Aktif", createdBy: "Ratna Maharani", createdAt: "14 Jan 2024" },
 ];
 
 /** @deprecated use formatCurrencyIDR from lib/format.ts — kept for existing pages */

@@ -81,6 +81,7 @@ export const MENU_TREE: MenuTreeItem[] = [
       { key: "platform-management.approval", label: "Approval Data Platform", href: "/admin/platform/approval", iconName: "" },
     ],
   },
+  { key: "member-management", label: "Management Member", href: "/bappebti/member", iconName: "IdCard" },
   {
     key: "routing",
     label: "Routing Mapping",

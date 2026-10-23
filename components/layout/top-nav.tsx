@@ -11,7 +11,10 @@ const PORTALS = [
   { label: "Publik", href: "/publik" },
   { label: "Bappebti", href: "/bappebti" },
   { label: "Platform", href: "/platform" },
-  { label: "Ekosistem", href: "/ekosistem" },
+  { label: "Ekosistem Active", href: "/ekosistem/active" },
+  { label: "Ekosistem Pengawas", href: "/ekosistem/pengawas" },
+  { label: "Bursa", href: "/ekosistem/bursa" },
+  { label: "Kliring", href: "/ekosistem/kliring" },
   { label: "Asosiasi", href: "/asosiasi" },
 ];
 

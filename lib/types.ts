@@ -542,6 +542,53 @@ export interface EcosystemChangeRequest {
   reason?: string;
 }
 
+// Management Member (List Revisi 3) — the Bappebti-curated membership
+// directory shown read-only in the Ekosistem Active / Ekosistem Pengawas
+// portals' "Data Member" menu. Distinct from EcosystemEntity (the
+// Manajemen Ekosistem / Platform Management master data): a member record
+// references the source entity but adds its own operational/compliance
+// identity (internal code, PIC, membership status) and is maintained
+// entirely from the Bappebti "Management Member" CRUD screen.
+export type EcosystemActiveMemberType = "Bursa" | "Kliring" | "Custody";
+export type EcosystemActiveMemberStatus = "Aktif" | "Non-Aktif";
+
+export interface EcosystemActiveMember {
+  /** Kode Entitas Internal, e.g. "KBI-001". */
+  id: string;
+  /** EcosystemEntity.id this record was created from (Manajemen Ekosistem master data). */
+  sourceEntityId: string;
+  name: string;
+  memberType: EcosystemActiveMemberType;
+  license: string;
+  registeredAt: string;
+  picName: string;
+  picEmail: string;
+  status: EcosystemActiveMemberStatus;
+  createdBy: string;
+  createdAt: string;
+}
+
+export type EcosystemAssociation = "ASPEBTINDO" | "BAKTI";
+export type PelakuUsahaCategory = "Pialang Berjangka" | "CPFAK / PFAK" | "Platform";
+export type EcosystemPengawasMembershipStatus = "Aktif" | "Suspended" | "Non-Aktif";
+
+export interface EcosystemPengawasMember {
+  /** Kode Anggota, e.g. "ASP-PL-045" or "BAKTI-MBR-012". */
+  id: string;
+  /** EcosystemEntity.id of the pelaku usaha (Platform Management master data). */
+  sourceEntityId: string;
+  association: EcosystemAssociation;
+  companyName: string;
+  category: PelakuUsahaCategory;
+  license: string;
+  joinedAt: string;
+  picName: string;
+  picContact: string;
+  status: EcosystemPengawasMembershipStatus;
+  createdBy: string;
+  createdAt: string;
+}
+
 // Routing Mapping — maps each registered Platform/Pialang entity to the
 // registered institution that handles it for every other active
 // "Ecosystem Aktif" category (Bursa, Kliring, Custody, ...). Column set is

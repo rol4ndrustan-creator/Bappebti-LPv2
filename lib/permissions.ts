@@ -14,8 +14,11 @@ export type Role =
   | "BURSA_SUPERVISOR"
   | "CLEARING_CASE_OFFICER"
   | "CLEARING_SUPERVISOR"
+  // Ekosistem Active coordinator — aggregate view across Bursa/Kliring/Custody
+  | "EKOSISTEM_ACTIVE_COORDINATOR"
   // Ekosistem Pengawas (oversight-only institutions, e.g. asosiasi)
   | "ASOSIASI_CASE_OFFICER"
+  | "EKOSISTEM_PENGAWAS_COORDINATOR"
   // Bappebti
   | "BAPPEBTI_INTAKE_OFFICER"
   | "BAPPEBTI_CASE_OFFICER"
@@ -55,7 +58,9 @@ export const ROLE_GROUP: Record<Role, "Publik" | "Platform" | "Ekosistem" | "Eko
   BURSA_SUPERVISOR: "Ekosistem",
   CLEARING_CASE_OFFICER: "Ekosistem",
   CLEARING_SUPERVISOR: "Ekosistem",
+  EKOSISTEM_ACTIVE_COORDINATOR: "Ekosistem",
   ASOSIASI_CASE_OFFICER: "EkosistemPengawas",
+  EKOSISTEM_PENGAWAS_COORDINATOR: "EkosistemPengawas",
   BAPPEBTI_INTAKE_OFFICER: "Bappebti",
   BAPPEBTI_CASE_OFFICER: "Bappebti",
   BAPPEBTI_SUPERVISOR: "Bappebti",
@@ -74,7 +79,9 @@ export const ROLE_LABEL: Record<Role, string> = {
   BURSA_SUPERVISOR: "Supervisor Bursa",
   CLEARING_CASE_OFFICER: "Petugas Kasus Kliring",
   CLEARING_SUPERVISOR: "Supervisor Kliring",
+  EKOSISTEM_ACTIVE_COORDINATOR: "Koordinator Ekosistem Aktif",
   ASOSIASI_CASE_OFFICER: "Petugas Asosiasi",
+  EKOSISTEM_PENGAWAS_COORDINATOR: "Koordinator Ekosistem Pengawas",
   BAPPEBTI_INTAKE_OFFICER: "Petugas Intake Bappebti",
   BAPPEBTI_CASE_OFFICER: "Petugas Kasus Bappebti",
   BAPPEBTI_SUPERVISOR: "Supervisor Bappebti",
@@ -102,7 +109,16 @@ const ALL_MEMBERS: Role[] = [
 const ALL_PUBLIC: Role[] = ["PUBLIC_REPORTER", "PUBLIC_REPRESENTATIVE"];
 
 export const PERMISSIONS: Record<Ability, Role[]> = {
-  view_complaint: [...ALL_PUBLIC, ...ALL_MEMBERS, "ASOSIASI_CASE_OFFICER", ...ALL_BAPPEBTI, "SYSTEM_ADMIN", "AUDITOR_READ_ONLY"],
+  view_complaint: [
+    ...ALL_PUBLIC,
+    ...ALL_MEMBERS,
+    "EKOSISTEM_ACTIVE_COORDINATOR",
+    "ASOSIASI_CASE_OFFICER",
+    "EKOSISTEM_PENGAWAS_COORDINATOR",
+    ...ALL_BAPPEBTI,
+    "SYSTEM_ADMIN",
+    "AUDITOR_READ_ONLY",
+  ],
   view_reporter_identity: [...ALL_BAPPEBTI, "SYSTEM_ADMIN"],
   view_sensitive_evidence: [...ALL_BAPPEBTI, "SYSTEM_ADMIN"],
   assign_case: ["BAPPEBTI_INTAKE_OFFICER", "BAPPEBTI_CASE_OFFICER", "BAPPEBTI_SUPERVISOR", "BAPPEBTI_EXECUTIVE", "PLATFORM_SUPERVISOR", "BURSA_SUPERVISOR", "CLEARING_SUPERVISOR"],
@@ -144,6 +160,8 @@ export const DEMO_USERS: DemoUser[] = [
   { id: "ahmad", name: "Ahmad Pratama", role: "BURSA_CASE_OFFICER", institution: "Bursa Berjangka Jakarta", portalHref: "/ekosistem/bursa" },
   { id: "sari", name: "Sari Wulandari", role: "CLEARING_CASE_OFFICER", institution: "Kliring Berjangka Indonesia", portalHref: "/ekosistem/kliring" },
   { id: "lina", name: "Lina Hapsari", role: "ASOSIASI_CASE_OFFICER", institution: "Asosiasi Pialang Berjangka Indonesia", portalHref: "/asosiasi" },
+  { id: "galih", name: "Galih Nugraha", role: "EKOSISTEM_ACTIVE_COORDINATOR", institution: "Koordinator Ekosistem Aktif (Bursa, Kliring, Custody)", portalHref: "/ekosistem/active" },
+  { id: "wulan", name: "Wulan Kartika", role: "EKOSISTEM_PENGAWAS_COORDINATOR", institution: "Koordinator Ekosistem Pengawas (ASPEBTINDO & BAKTI)", portalHref: "/ekosistem/pengawas" },
   { id: "dewi", name: "Dewi Anjani", role: "BAPPEBTI_CASE_OFFICER", institution: "Bappebti", portalHref: "/bappebti" },
   { id: "bambang", name: "Bambang Setiawan", role: "BAPPEBTI_SUPERVISOR", institution: "Bappebti", portalHref: "/bappebti" },
   { id: "ratna", name: "Ratna Maharani", role: "BAPPEBTI_EXECUTIVE", institution: "Bappebti", portalHref: "/bappebti" },
