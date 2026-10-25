@@ -41,7 +41,7 @@ import {
 } from "@/lib/mock-service/store";
 import { useTasksForCase, addTask, updateTaskStatus, deleteTask } from "@/lib/mock-service/task-store";
 import { DEMO_USERS, ROLE_LABEL, getViewerGroup, ViewerGroup } from "@/lib/permissions";
-import { InternalNoteTargetType, Severity, TaskDelegationType, TaskPriority } from "@/lib/types";
+import { CaseTask, InternalNoteTargetType, Severity, TaskDelegationType, TaskPriority } from "@/lib/types";
 import { Plus, Trash2, Lock, FileText } from "lucide-react";
 
 const NOTE_TARGET_TYPES: InternalNoteTargetType[] = ["Semua Pihak Tertutup", "Bursa", "Kliring", "Custody", "Bappebti"];
@@ -80,6 +80,7 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
   const [taskDoc, setTaskDoc] = useState("");
   const [taskPriority, setTaskPriority] = useState<TaskPriority>("Sedang");
   const [taskDueDate, setTaskDueDate] = useState("");
+  const [deletingTask, setDeletingTask] = useState<CaseTask | null>(null);
 
   if (!c) {
     return (
@@ -467,10 +468,7 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
                         {canDelete && (
                           <button
                             title="Hapus tugas"
-                            onClick={() => {
-                              deleteTask(t.id);
-                              showToast("Tugas dihapus.");
-                            }}
+                            onClick={() => setDeletingTask(t)}
                             className="text-muted hover:text-red shrink-0"
                           >
                             <Trash2 className="size-3.5" />
@@ -681,6 +679,35 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
             <Button size="sm" variant="secondary" onClick={() => setEscalating(false)}>Batal</Button>
             <Button size="sm" variant={TONE_TO_BUTTON_VARIANT.destructive} onClick={confirmEscalateToBappebti}>
               Ya, Eskalasi
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!deletingTask} onOpenChange={(v) => !v && setDeletingTask(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Hapus Tugas</DialogTitle>
+            <DialogDescription>
+              Tugas &ldquo;{deletingTask?.description}&rdquo; akan dihapus permanen dari daftar. Lanjutkan?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button size="sm" variant="secondary" onClick={() => setDeletingTask(null)}>
+              Batal
+            </Button>
+            <Button
+              size="sm"
+              variant={TONE_TO_BUTTON_VARIANT.destructive}
+              onClick={() => {
+                if (deletingTask) {
+                  deleteTask(deletingTask.id);
+                  showToast("Tugas dihapus.");
+                }
+                setDeletingTask(null);
+              }}
+            >
+              Ya, Hapus
             </Button>
           </DialogFooter>
         </DialogContent>

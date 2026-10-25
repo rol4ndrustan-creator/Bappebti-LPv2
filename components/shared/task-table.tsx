@@ -5,7 +5,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { FileUploader } from "@/components/shared/file-uploader";
 import { StatusBadgeSelect } from "@/components/shared/status-badge-select";
 import { PriorityBadge } from "@/components/shared/badges";
@@ -66,6 +66,7 @@ export function TaskTable({
   const { showToast } = useToast();
   const [uploadTask, setUploadTask] = useState<CaseTask | null>(null);
   const [uploadFiles, setUploadFiles] = useState<string[]>([]);
+  const [deletingTask, setDeletingTask] = useState<CaseTask | null>(null);
 
   function closeUpload() {
     setUploadTask(null);
@@ -159,10 +160,7 @@ export function TaskTable({
                       {canDelete && (
                         <button
                           title="Hapus tugas"
-                          onClick={() => {
-                            deleteTask(t.id);
-                            showToast("Tugas dihapus.");
-                          }}
+                          onClick={() => setDeletingTask(t)}
                           className="rounded p-1 text-muted hover:bg-red-bg hover:text-red"
                         >
                           <Trash2 className="size-3.5" />
@@ -211,6 +209,35 @@ export function TaskTable({
               }}
             >
               Simpan
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!deletingTask} onOpenChange={(v) => !v && setDeletingTask(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Hapus Tugas</DialogTitle>
+            <DialogDescription>
+              Tugas &ldquo;{deletingTask?.description}&rdquo; ({deletingTask?.ticket}) akan dihapus permanen dari daftar. Lanjutkan?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button size="sm" variant="secondary" onClick={() => setDeletingTask(null)}>
+              Batal
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => {
+                if (deletingTask) {
+                  deleteTask(deletingTask.id);
+                  showToast("Tugas dihapus.");
+                }
+                setDeletingTask(null);
+              }}
+            >
+              Ya, Hapus
             </Button>
           </DialogFooter>
         </DialogContent>
