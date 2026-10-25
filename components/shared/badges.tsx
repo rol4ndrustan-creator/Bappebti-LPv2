@@ -1,5 +1,5 @@
 import { Badge, badgeVariants } from "@/components/ui/badge";
-import { CaseStatus, ComplaintType, OwnerType, Responsibility, Severity, SlaStatus } from "@/lib/types";
+import { CaseStatus, ComplaintType, OwnerType, Responsibility, Severity, SlaStatus, TaskPriority } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import type { VariantProps } from "class-variance-authority";
 
@@ -101,6 +101,13 @@ export function TrendBadge({ trend }: { trend?: "naik" | "turun" | "stabil" }) {
 export function RiskBadge({ risk }: { risk: "Rendah" | "Sedang" | "Tinggi" }) {
   const map: Record<"Rendah" | "Sedang" | "Tinggi", BadgeVariant> = { Rendah: "green", Sedang: "amber", Tinggi: "red" };
   return <Badge variant={map[risk]}>{risk.toUpperCase()}</Badge>;
+}
+
+/** Tugas Internal / Manajemen Tugas priority pill (List Revisi 8) — same color scale as RiskBadge, shared verbatim between the "Manajemen Tugas" tables and the case detail page's "Tugas Internal" tab so priority reads identically in both places. */
+export function PriorityBadge({ priority }: { priority?: TaskPriority }) {
+  if (!priority) return <span className="text-muted">-</span>;
+  const map: Record<TaskPriority, BadgeVariant> = { Rendah: "green", Sedang: "amber", Tinggi: "red" };
+  return <Badge variant={map[priority]}>{priority.toUpperCase()}</Badge>;
 }
 
 export function cellMuted(text?: string) {

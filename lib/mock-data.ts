@@ -2001,6 +2001,8 @@ export const CASE_TASKS: CaseTask[] = [
     status: "In Progress",
     document: "Bukti Transfer Internal.pdf",
     createdAt: "14 Jun 2026, 10:05",
+    priority: "Tinggi",
+    dueDate: "16 Jun 2026",
   },
   {
     id: "TASK-002",
@@ -2011,6 +2013,8 @@ export const CASE_TASKS: CaseTask[] = [
     assignee: "Rina Kusuma",
     status: "Pending",
     createdAt: "14 Jun 2026, 14:20",
+    priority: "Sedang",
+    dueDate: "15 Jun 2026",
   },
   {
     id: "TASK-003",
@@ -2021,6 +2025,8 @@ export const CASE_TASKS: CaseTask[] = [
     assignee: "Ferry Hartono",
     status: "Done",
     createdAt: "10 Jun 2026, 09:00",
+    priority: "Sedang",
+    dueDate: "12 Jun 2026",
   },
   // Ekosistem Active role-switcher demo tasks (List Revisi 6, standardized
   // to real BPP-2026-... case tickets in List Revisi 7 so they stay
@@ -2040,6 +2046,8 @@ export const CASE_TASKS: CaseTask[] = [
     createdAt: "02 Jul 2026, 08:30",
     delegationType: "Bursa",
     delegationEntity: "PT Bursa Komoditi Nusantara (CFX)",
+    priority: "Tinggi",
+    dueDate: "03 Jul 2026",
   },
   {
     id: "TASK-005",
@@ -2052,6 +2060,8 @@ export const CASE_TASKS: CaseTask[] = [
     createdAt: "03 Jul 2026, 11:15",
     delegationType: "Bursa",
     delegationEntity: "PT Bursa Komoditi Nusantara (CFX)",
+    priority: "Sedang",
+    dueDate: "06 Jul 2026",
   },
   {
     id: "TASK-006",
@@ -2065,6 +2075,8 @@ export const CASE_TASKS: CaseTask[] = [
     createdAt: "01 Jul 2026, 09:50",
     delegationType: "Kliring",
     delegationEntity: "PT Kliring Berjangka Indonesia (KBI)",
+    priority: "Tinggi",
+    dueDate: "03 Jul 2026",
   },
   {
     id: "TASK-007",
@@ -2077,6 +2089,8 @@ export const CASE_TASKS: CaseTask[] = [
     createdAt: "04 Jul 2026, 13:40",
     delegationType: "Kliring",
     delegationEntity: "PT Indonesia Clearing House (ICH)",
+    priority: "Sedang",
+    dueDate: "07 Jul 2026",
   },
   {
     id: "TASK-008",
@@ -2090,6 +2104,8 @@ export const CASE_TASKS: CaseTask[] = [
     createdAt: "28 Jun 2026, 15:20",
     delegationType: "Custody",
     delegationEntity: "PT Kustodian Koin Indonesia (ICC)",
+    priority: "Tinggi",
+    dueDate: "30 Jun 2026",
   },
   {
     id: "TASK-009",
@@ -2101,6 +2117,8 @@ export const CASE_TASKS: CaseTask[] = [
     status: "Done",
     document: "audit_vault_1095.pdf",
     createdAt: "05 Jul 2026, 10:05",
+    priority: "Rendah",
+    dueDate: "08 Jul 2026",
     delegationType: "Custody",
     delegationEntity: "PT Kustodian Koin Indonesia (ICC)",
   },

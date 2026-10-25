@@ -308,6 +308,9 @@ export type CaseTaskStatus = "Pending" | "In Progress" | "Done";
 /** Who a task is delegated to (List Revisi 4) — "Internal Platform" keeps the task inside the platform's own staff; the other three delegate it to an affiliated ecosystem institution. */
 export type TaskDelegationType = "Internal Platform" | "Bursa" | "Kliring" | "Custody";
 
+/** Task urgency (List Revisi 8) — deliberately a 3-level scale distinct from case Severity, since a task reminder never needs "Kritis". */
+export type TaskPriority = "Rendah" | "Sedang" | "Tinggi";
+
 export interface CaseTask {
   id: string;
   ticket: string;
@@ -321,6 +324,9 @@ export interface CaseTask {
   delegationType?: TaskDelegationType;
   /** Specific lembaga name — only set when delegationType is Bursa/Kliring/Custody. */
   delegationEntity?: string;
+  priority?: TaskPriority;
+  /** Batas Waktu — free-form display date (List Revisi 8), e.g. "20 Jul 2026". */
+  dueDate?: string;
 }
 
 export interface Member {

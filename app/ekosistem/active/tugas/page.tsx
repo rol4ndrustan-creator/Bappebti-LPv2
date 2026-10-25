@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -16,9 +17,12 @@ import { useDemoSession } from "@/lib/demo-session";
 import { useToast } from "@/components/shared/toast-provider";
 import { DEMO_USERS, ROLE_LABEL } from "@/lib/permissions";
 import { useEkosistemActiveRole } from "@/lib/ekosistem-active-role";
+import { formatDueDateID } from "@/lib/format";
+import { TaskPriority } from "@/lib/types";
 import { Plus } from "lucide-react";
 
 const ASSIGNABLE_NAMES = DEMO_USERS.filter((u) => u.role !== "PUBLIC_REPORTER" && u.role !== "PUBLIC_REPRESENTATIVE").map((u) => u.name);
+const TASK_PRIORITIES: TaskPriority[] = ["Rendah", "Sedang", "Tinggi"];
 
 export default function EkosistemActiveTugasPage() {
   const { user } = useDemoSession();
@@ -51,12 +55,16 @@ export default function EkosistemActiveTugasPage() {
   const [description, setDescription] = useState("");
   const [assignee, setAssignee] = useState(ASSIGNABLE_NAMES[0] ?? "");
   const [document, setDocument] = useState("");
+  const [priority, setPriority] = useState<TaskPriority>("Sedang");
+  const [dueDate, setDueDate] = useState("");
 
   function resetForm() {
     setTicket("");
     setDescription("");
     setAssignee(ASSIGNABLE_NAMES[0] ?? "");
     setDocument("");
+    setPriority("Sedang");
+    setDueDate("");
   }
 
   function submitTask() {
@@ -68,6 +76,8 @@ export default function EkosistemActiveTugasPage() {
       createdByRole: ROLE_LABEL[user.role],
       assignee,
       document: document || undefined,
+      priority,
+      dueDate: dueDate ? formatDueDateID(dueDate) : undefined,
     });
     showToast("Tugas berhasil ditambahkan.");
     resetForm();
@@ -121,6 +131,20 @@ export default function EkosistemActiveTugasPage() {
                   <option key={n} value={n}>{n}</option>
                 ))}
               </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-[11px]">Prioritas</Label>
+                <Select value={priority} onChange={(e) => setPriority(e.target.value as TaskPriority)}>
+                  {TASK_PRIORITIES.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </Select>
+              </div>
+              <div>
+                <Label className="text-[11px]">Batas Waktu</Label>
+                <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+              </div>
             </div>
             <div>
               <Label htmlFor="task-doc">Upload Dokumen (opsional)</Label>

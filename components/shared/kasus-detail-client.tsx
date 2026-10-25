@@ -11,9 +11,10 @@ import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { SeverityBadge } from "@/components/shared/badges";
+import { SeverityBadge, PriorityBadge } from "@/components/shared/badges";
 import { BackLink } from "@/components/shared/back-link";
 import { StatusBadgeSelect } from "@/components/shared/status-badge-select";
+import { AssigneeBadge } from "@/components/shared/task-table";
 import { SearchableSelect } from "@/components/shared/searchable-select";
 import { CaseStatusExplanation } from "@/components/shared/case-status-explanation";
 import { EscalationBanner } from "@/components/shared/escalation-banner";
@@ -25,6 +26,7 @@ import { CaseActionDialog, TONE_TO_BUTTON_VARIANT } from "@/components/shared/ca
 import { useToast } from "@/components/shared/toast-provider";
 import { useDemoSession } from "@/lib/demo-session";
 import { getCaseByTicket, formatCurrency, CASE_TASKS } from "@/lib/mock-data";
+import { formatDueDateID } from "@/lib/format";
 import { lembagaOptionsFor } from "@/lib/ecosystem-lembaga";
 import { CASE_ACTIONS, CaseActionId, executeCaseAction } from "@/lib/case-actions";
 import {
@@ -39,11 +41,12 @@ import {
 } from "@/lib/mock-service/store";
 import { useTasksForCase, addTask, updateTaskStatus, deleteTask } from "@/lib/mock-service/task-store";
 import { DEMO_USERS, ROLE_LABEL, getViewerGroup, ViewerGroup } from "@/lib/permissions";
-import { InternalNoteTargetType, Severity, TaskDelegationType } from "@/lib/types";
-import { Plus, Trash2, Lock } from "lucide-react";
+import { InternalNoteTargetType, Severity, TaskDelegationType, TaskPriority } from "@/lib/types";
+import { Plus, Trash2, Lock, FileText } from "lucide-react";
 
 const NOTE_TARGET_TYPES: InternalNoteTargetType[] = ["Semua Pihak Tertutup", "Bursa", "Kliring", "Custody", "Bappebti"];
 const DELEGATION_TYPES: TaskDelegationType[] = ["Internal Platform", "Bursa", "Kliring", "Custody"];
+const TASK_PRIORITIES: TaskPriority[] = ["Rendah", "Sedang", "Tinggi"];
 /** Bursa/Kliring/Custody institutions (Manajemen Ekosistem master data) used by both the Catatan Internal sasaran-entitas picker and the Tugas Internal delegation picker. */
 const BACK_HREF: Record<ViewerGroup, string> = {
   User: "/bappebti/antrean",
@@ -75,6 +78,8 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
   const [delegationEntity, setDelegationEntity] = useState("");
   const [taskAssignee, setTaskAssignee] = useState(ASSIGNABLE_NAMES[0] ?? "");
   const [taskDoc, setTaskDoc] = useState("");
+  const [taskPriority, setTaskPriority] = useState<TaskPriority>("Sedang");
+  const [taskDueDate, setTaskDueDate] = useState("");
 
   if (!c) {
     return (
@@ -163,6 +168,8 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
       document: taskDoc || undefined,
       delegationType: delegationType === "Internal Platform" ? undefined : delegationType,
       delegationEntity: delegationType === "Internal Platform" ? undefined : delegationEntity,
+      priority: taskPriority,
+      dueDate: taskDueDate ? formatDueDateID(taskDueDate) : undefined,
     });
     showToast("Tugas internal berhasil ditambahkan.");
     setTaskDesc("");
@@ -170,6 +177,8 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
     setDelegationType("Internal Platform");
     setDelegationEntity("");
     setTaskAssignee(ASSIGNABLE_NAMES[0] ?? "");
+    setTaskPriority("Sedang");
+    setTaskDueDate("");
   }
 
   const canManageTasks = viewerGroup === "Bappebti" || viewerGroup === "Platform" || viewerGroup === "EkosistemActive";
@@ -470,16 +479,25 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
                       </div>
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted mb-1.5">
                         <span>Dari: <span className="text-foreground">{t.createdBy}</span></span>
-                        <span>
-                          Untuk: <span className="text-foreground">{t.assignee}</span>
-                          {t.delegationType && t.delegationType !== "Internal Platform" && (
-                            <span className="text-foreground"> ({t.delegationEntity} — {t.delegationType})</span>
-                          )}
-                        </span>
-                        <span>{t.createdAt}</span>
-                        {t.document && <span>Dokumen: <span className="text-foreground">{t.document}</span></span>}
+                        <span>Untuk: <AssigneeBadge task={t} /></span>
+                        <span>Dibuat: {t.createdAt}</span>
+                        {t.dueDate && <span>Batas Waktu: <span className="text-foreground">{t.dueDate}</span></span>}
+                        {t.document && (
+                          <button
+                            type="button"
+                            onClick={() => showToast("Unduhan dokumen bersifat simulasi pada prototipe ini.")}
+                            className="inline-flex items-center gap-1 text-navy hover:underline"
+                            title={t.document}
+                          >
+                            <FileText className="size-3.5 shrink-0" />
+                            <span className="max-w-[160px] truncate">{t.document}</span>
+                          </button>
+                        )}
                       </div>
-                      <StatusBadgeSelect value={t.status} editable={canEdit} onChange={(s) => updateTaskStatus(t.id, s)} />
+                      <div className="flex items-center gap-2">
+                        <PriorityBadge priority={t.priority} />
+                        <StatusBadgeSelect value={t.status} editable={canEdit} onChange={(s) => updateTaskStatus(t.id, s)} />
+                      </div>
                     </div>
                   );
                 })}
@@ -538,6 +556,29 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
                           onChange={(e) => setTaskAssignee(e.target.value)}
                         />
                       )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-[11px]">Prioritas</Label>
+                        <Select
+                          className="h-8 text-xs"
+                          value={taskPriority}
+                          onChange={(e) => setTaskPriority(e.target.value as TaskPriority)}
+                        >
+                          {TASK_PRIORITIES.map((p) => (
+                            <option key={p} value={p}>{p}</option>
+                          ))}
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-[11px]">Batas Waktu</Label>
+                        <Input
+                          type="date"
+                          className="h-8 text-xs"
+                          value={taskDueDate}
+                          onChange={(e) => setTaskDueDate(e.target.value)}
+                        />
+                      </div>
                     </div>
                     <div>
                       <Label className="text-[11px]">Upload Dokumen (opsional)</Label>

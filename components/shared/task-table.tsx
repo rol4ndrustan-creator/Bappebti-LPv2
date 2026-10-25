@@ -8,13 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { FileUploader } from "@/components/shared/file-uploader";
 import { StatusBadgeSelect } from "@/components/shared/status-badge-select";
+import { PriorityBadge } from "@/components/shared/badges";
 import { useToast } from "@/components/shared/toast-provider";
 import { updateTaskStatus, updateTaskDocument, deleteTask } from "@/lib/mock-service/task-store";
 import { abbreviateLembaga } from "@/lib/ecosystem-lembaga";
 import { CaseTask } from "@/lib/types";
 import { FileText, Upload, Trash2, Pencil } from "lucide-react";
 
-function AssigneeBadge({ task }: { task: CaseTask }) {
+/** Exported (List Revisi 8) so the case detail page's "Tugas Internal" tab can render the exact same entity badge as this table — same data, same wording, in both places. */
+export function AssigneeBadge({ task }: { task: CaseTask }) {
   const isDelegated = task.delegationType && task.delegationType !== "Internal Platform";
   const label = isDelegated ? `${task.delegationType}: ${abbreviateLembaga(task.delegationEntity ?? "")}` : "Internal";
   return (
@@ -77,6 +79,7 @@ export function TaskTable({
           <TableRow>
             <TableHead>Nomor Tiket</TableHead>
             <TableHead>Deskripsi Tugas</TableHead>
+            <TableHead>Prioritas / Batas Waktu</TableHead>
             <TableHead>{lembagaColumn ? "Lembaga" : "Dari Siapa"}</TableHead>
             <TableHead>{lembagaColumn ? "PIC / Penerima" : "Assignee"}</TableHead>
             <TableHead>Dokumen</TableHead>
@@ -105,6 +108,12 @@ export function TaskTable({
                   )}
                 </TableCell>
                 <TableCell className="max-w-[260px]">{t.description}</TableCell>
+                <TableCell className="whitespace-nowrap">
+                  <div className="flex items-center gap-1.5">
+                    <PriorityBadge priority={t.priority} />
+                    {t.dueDate && <span className="text-muted text-[11px]">{t.dueDate}</span>}
+                  </div>
+                </TableCell>
                 <TableCell className="text-muted whitespace-nowrap max-w-[220px] truncate">
                   {lembagaColumn ? (t.delegationEntity ? `[${t.delegationType}] ${t.delegationEntity}` : "-") : t.createdBy}
                 </TableCell>
@@ -167,7 +176,7 @@ export function TaskTable({
           })}
           {tasks.length === 0 && (
             <TableRow>
-              <TableCell colSpan={readOnly ? 6 : 7} className="text-center text-muted py-6">
+              <TableCell colSpan={readOnly ? 7 : 8} className="text-center text-muted py-6">
                 {emptyMessage}
               </TableCell>
             </TableRow>

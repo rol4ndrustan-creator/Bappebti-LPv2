@@ -19,7 +19,7 @@ const DOCUMENT_KEY = "bappebti-demo-task-document";
 const EDITS_KEY = "bappebti-demo-task-edits";
 const DELETED_KEY = "bappebti-demo-deleted-tasks";
 
-type TaskEditableFields = Pick<CaseTask, "description" | "assignee" | "delegationType" | "delegationEntity">;
+type TaskEditableFields = Pick<CaseTask, "description" | "assignee" | "delegationType" | "delegationEntity" | "priority" | "dueDate">;
 
 function readJSON<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;

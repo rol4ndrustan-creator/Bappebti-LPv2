@@ -18,10 +18,12 @@ import { useDemoSession } from "@/lib/demo-session";
 import { useToast } from "@/components/shared/toast-provider";
 import { DEMO_USERS, PLATFORM_STAFF, ROLE_LABEL } from "@/lib/permissions";
 import { lembagaOptionsFor } from "@/lib/ecosystem-lembaga";
-import { CaseTask, TaskDelegationType } from "@/lib/types";
+import { formatDueDateID, parseDueDateID } from "@/lib/format";
+import { CaseTask, TaskDelegationType, TaskPriority } from "@/lib/types";
 import { Plus } from "lucide-react";
 
 const DELEGATION_TYPES: TaskDelegationType[] = ["Internal Platform", "Bursa", "Kliring", "Custody"];
+const TASK_PRIORITIES: TaskPriority[] = ["Rendah", "Sedang", "Tinggi"];
 
 export default function ManajemenTugasPage() {
   const { user } = useDemoSession();
@@ -63,6 +65,8 @@ export default function ManajemenTugasPage() {
   const [delegationEntity, setDelegationEntity] = useState("");
   const [assignee, setAssignee] = useState(PLATFORM_STAFF[0]?.name ?? "");
   const [document, setDocument] = useState("");
+  const [priority, setPriority] = useState<TaskPriority>("Sedang");
+  const [dueDate, setDueDate] = useState("");
 
   function resetForm() {
     setTicket("");
@@ -71,6 +75,8 @@ export default function ManajemenTugasPage() {
     setDelegationEntity("");
     setAssignee(PLATFORM_STAFF[0]?.name ?? "");
     setDocument("");
+    setPriority("Sedang");
+    setDueDate("");
   }
 
   function openAdd() {
@@ -85,6 +91,8 @@ export default function ManajemenTugasPage() {
     setDelegationEntity(t.delegationEntity ?? "");
     setAssignee(t.assignee);
     setDocument(t.document ?? "");
+    setPriority(t.priority ?? "Sedang");
+    setDueDate(parseDueDateID(t.dueDate));
     setEditingTask(t);
   }
 
@@ -97,6 +105,8 @@ export default function ManajemenTugasPage() {
       document: document || undefined,
       delegationType: delegationType === "Internal Platform" ? undefined : delegationType,
       delegationEntity: delegationType === "Internal Platform" ? undefined : delegationEntity,
+      priority,
+      dueDate: dueDate ? formatDueDateID(dueDate) : undefined,
     };
     if (editingTask === "add") {
       addTask({ ticket, createdBy: user.name, createdByRole: ROLE_LABEL[user.role], ...payload });
@@ -198,6 +208,20 @@ export default function ManajemenTugasPage() {
                   onChange={(e) => setAssignee(e.target.value)}
                 />
               )}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-[11px]">Prioritas</Label>
+                <Select value={priority} onChange={(e) => setPriority(e.target.value as TaskPriority)}>
+                  {TASK_PRIORITIES.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </Select>
+              </div>
+              <div>
+                <Label className="text-[11px]">Batas Waktu</Label>
+                <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+              </div>
             </div>
             <div>
               <Label htmlFor="task-doc">Upload Dokumen (opsional)</Label>
