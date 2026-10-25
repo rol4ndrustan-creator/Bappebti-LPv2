@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { SeverityBadge } from "@/components/shared/badges";
+import { BackLink } from "@/components/shared/back-link";
 import { StatusBadgeSelect } from "@/components/shared/status-badge-select";
 import { SearchableSelect } from "@/components/shared/searchable-select";
 import { CaseStatusExplanation } from "@/components/shared/case-status-explanation";
@@ -23,7 +24,8 @@ import { ResolutionPanel } from "@/components/shared/resolution-panel";
 import { CaseActionDialog, TONE_TO_BUTTON_VARIANT } from "@/components/shared/case-action-dialog";
 import { useToast } from "@/components/shared/toast-provider";
 import { useDemoSession } from "@/lib/demo-session";
-import { getCaseByTicket, formatCurrency, CASE_TASKS, ECOSYSTEM_ENTITIES } from "@/lib/mock-data";
+import { getCaseByTicket, formatCurrency, CASE_TASKS } from "@/lib/mock-data";
+import { lembagaOptionsFor } from "@/lib/ecosystem-lembaga";
 import { CASE_ACTIONS, CaseActionId, executeCaseAction } from "@/lib/case-actions";
 import {
   useCaseData,
@@ -43,14 +45,6 @@ import { Plus, Trash2, Lock } from "lucide-react";
 const NOTE_TARGET_TYPES: InternalNoteTargetType[] = ["Semua Pihak Tertutup", "Bursa", "Kliring", "Custody", "Bappebti"];
 const DELEGATION_TYPES: TaskDelegationType[] = ["Internal Platform", "Bursa", "Kliring", "Custody"];
 /** Bursa/Kliring/Custody institutions (Manajemen Ekosistem master data) used by both the Catatan Internal sasaran-entitas picker and the Tugas Internal delegation picker. */
-const ECOSYSTEM_LEMBAGA = ECOSYSTEM_ENTITIES.filter(
-  (e) => e.ecosystemType === "Ecosystem Aktif" && (e.category === "Bursa" || e.category === "Kliring" || e.category === "Custody")
-).map((e) => ({ id: e.id, name: e.name, type: e.category as "Bursa" | "Kliring" | "Custody" }));
-
-function lembagaOptionsFor(type: string): string[] {
-  return ECOSYSTEM_LEMBAGA.filter((e) => e.type === type).map((e) => e.name);
-}
-
 const BACK_HREF: Record<ViewerGroup, string> = {
   User: "/bappebti/antrean",
   Bappebti: "/bappebti/antrean",
@@ -209,13 +203,7 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
       <PageHeader
         title={`${c.ticket} — ${c.title}`}
         description="Detail pengaduan, riwayat penanganan, dan tindakan yang tersedia sesuai peran Anda."
-        actions={
-          <Link href={BACK_HREF[viewerGroup]}>
-            <Button variant="secondary" size="sm">
-              Kembali ke Daftar
-            </Button>
-          </Link>
-        }
+        actions={<BackLink fallbackHref={BACK_HREF[viewerGroup]} />}
       />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -460,8 +448,9 @@ export default function KasusDetailClient({ ticket }: { ticket: string }) {
               <CardContent className="py-4 space-y-3">
                 {tasks.length === 0 && <p className="text-sm text-muted">Belum ada tugas untuk kasus ini.</p>}
                 {tasks.map((t) => {
-                  const canEdit = t.assignee === user.name || t.createdBy === user.name;
-                  const canDelete = t.createdBy === user.name;
+                  // Ekosistem Pengawas's role is monitoring-only (Bab V) — never editable regardless of assignee/creator match.
+                  const canEdit = viewerGroup !== "EkosistemPengawas" && (t.assignee === user.name || t.createdBy === user.name);
+                  const canDelete = viewerGroup !== "EkosistemPengawas" && t.createdBy === user.name;
                   return (
                     <div key={t.id} className="rounded-md border border-border px-3 py-2 text-sm">
                       <div className="flex items-start justify-between gap-2 mb-1">

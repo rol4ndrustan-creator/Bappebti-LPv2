@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge, SlaBadge } from "@/components/shared/badges";
@@ -10,10 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CASES } from "@/lib/mock-data";
 import { useCasesData } from "@/lib/mock-service/store";
+import { useQueryParamState, useCurrentPathWithQuery } from "@/lib/use-query-param";
 
-export default function EkosistemPengawasPengaduanPage() {
+function EkosistemPengawasPengaduanContent() {
   const allCases = useCasesData(CASES);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useQueryParamState("q");
+  const from = encodeURIComponent(useCurrentPathWithQuery());
 
   const cases = allCases.filter(
     (c) =>
@@ -57,7 +59,7 @@ export default function EkosistemPengawasPengaduanPage() {
               <TableCell><StatusBadge status={c.status} /></TableCell>
               <TableCell><SlaBadge sla={c.slaStatus} /></TableCell>
               <TableCell>
-                <Link href={`/ekosistem/pengawas/kasus/${c.ticket}`}>
+                <Link href={`/ekosistem/pengawas/kasus/${c.ticket}?from=${from}`}>
                   <Button variant="outline" size="sm">Lihat</Button>
                 </Link>
               </TableCell>
@@ -73,5 +75,13 @@ export default function EkosistemPengawasPengaduanPage() {
         </TableBody>
       </Table>
     </div>
+  );
+}
+
+export default function EkosistemPengawasPengaduanPage() {
+  return (
+    <Suspense fallback={null}>
+      <EkosistemPengawasPengaduanContent />
+    </Suspense>
   );
 }

@@ -16,7 +16,10 @@ import { nowDateTimeID } from "../format";
 const ADDED_KEY = "bappebti-demo-added-tasks";
 const STATUS_KEY = "bappebti-demo-task-status";
 const DOCUMENT_KEY = "bappebti-demo-task-document";
+const EDITS_KEY = "bappebti-demo-task-edits";
 const DELETED_KEY = "bappebti-demo-deleted-tasks";
+
+type TaskEditableFields = Pick<CaseTask, "description" | "assignee" | "delegationType" | "delegationEntity">;
 
 function readJSON<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
@@ -67,10 +70,18 @@ export function updateTaskDocument(id: string, document: string) {
   writeJSON(DOCUMENT_KEY, map);
 }
 
+/** Edits a task's description/assignee/delegation — the Manajemen Tugas "Edit Tugas" action. */
+export function updateTask(id: string, patch: Partial<TaskEditableFields>) {
+  const edits = readJSON<Record<string, Partial<TaskEditableFields>>>(EDITS_KEY, {});
+  edits[id] = { ...edits[id], ...patch };
+  writeJSON(EDITS_KEY, edits);
+}
+
 function mergeTasks(seed: CaseTask[]): CaseTask[] {
   const added = readJSON<CaseTask[]>(ADDED_KEY, []);
   const statusMap = readJSON<Record<string, CaseTaskStatus>>(STATUS_KEY, {});
   const documentMap = readJSON<Record<string, string>>(DOCUMENT_KEY, {});
+  const edits = readJSON<Record<string, Partial<TaskEditableFields>>>(EDITS_KEY, {});
   const deleted = new Set(readJSON<string[]>(DELETED_KEY, []));
   return [...seed, ...added]
     .filter((t) => !deleted.has(t.id))
@@ -78,6 +89,7 @@ function mergeTasks(seed: CaseTask[]): CaseTask[] {
       ...t,
       ...(statusMap[t.id] ? { status: statusMap[t.id] } : null),
       ...(documentMap[t.id] ? { document: documentMap[t.id] } : null),
+      ...(edits[t.id] ?? null),
     }));
 }
 

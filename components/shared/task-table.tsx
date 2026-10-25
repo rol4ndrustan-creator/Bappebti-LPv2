@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -9,8 +10,27 @@ import { FileUploader } from "@/components/shared/file-uploader";
 import { StatusBadgeSelect } from "@/components/shared/status-badge-select";
 import { useToast } from "@/components/shared/toast-provider";
 import { updateTaskStatus, updateTaskDocument, deleteTask } from "@/lib/mock-service/task-store";
+import { abbreviateLembaga } from "@/lib/ecosystem-lembaga";
 import { CaseTask } from "@/lib/types";
-import { FileText, Upload, Trash2 } from "lucide-react";
+import { FileText, Upload, Trash2, Pencil } from "lucide-react";
+
+function AssigneeBadge({ task }: { task: CaseTask }) {
+  const isDelegated = task.delegationType && task.delegationType !== "Internal Platform";
+  const label = isDelegated ? `${task.delegationType}: ${abbreviateLembaga(task.delegationEntity ?? "")}` : "Internal";
+  return (
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+      <span
+        className={cn(
+          "rounded border px-1 py-0.5 text-[10px] font-semibold uppercase tracking-wide shrink-0",
+          isDelegated ? "border-amber/30 bg-amber-bg text-amber" : "border-navy/20 bg-navy/10 text-navy"
+        )}
+      >
+        {label}
+      </span>
+      <span>{task.assignee}</span>
+    </span>
+  );
+}
 
 /**
  * Shared "Manajemen Tugas" task table — used by the Platform and Ekosistem
@@ -26,6 +46,7 @@ export function TaskTable({
   currentUserName,
   caseDetailPath,
   readOnly = false,
+  onEdit,
   emptyMessage,
 }: {
   tasks: CaseTask[];
@@ -33,6 +54,8 @@ export function TaskTable({
   caseDetailPath: (ticket: string) => string;
   /** Forces every row to read-only regardless of creator/assignee — for Ekosistem Pengawas's oversight-only monitoring. */
   readOnly?: boolean;
+  /** Shows an Edit (pencil) action next to Delete, creator-only — omit to leave editing to the Tugas Internal tab only. */
+  onEdit?: (task: CaseTask) => void;
   emptyMessage: string;
 }) {
   const { showToast } = useToast();
@@ -71,7 +94,9 @@ export function TaskTable({
                 </TableCell>
                 <TableCell className="max-w-[260px]">{t.description}</TableCell>
                 <TableCell className="text-muted whitespace-nowrap">{t.createdBy}</TableCell>
-                <TableCell className="whitespace-nowrap">{t.assignee}</TableCell>
+                <TableCell className="whitespace-nowrap">
+                  <AssigneeBadge task={t} />
+                </TableCell>
                 <TableCell className="whitespace-nowrap">
                   {t.document ? (
                     <button
@@ -100,18 +125,29 @@ export function TaskTable({
                 </TableCell>
                 {!readOnly && (
                   <TableCell>
-                    {canDelete && (
-                      <button
-                        title="Hapus tugas"
-                        onClick={() => {
-                          deleteTask(t.id);
-                          showToast("Tugas dihapus.");
-                        }}
-                        className="rounded p-1 text-muted hover:bg-red-bg hover:text-red"
-                      >
-                        <Trash2 className="size-3.5" />
-                      </button>
-                    )}
+                    <div className="flex items-center gap-1">
+                      {canDelete && onEdit && (
+                        <button
+                          title="Edit tugas"
+                          onClick={() => onEdit(t)}
+                          className="rounded p-1 text-muted hover:bg-muted-bg hover:text-navy"
+                        >
+                          <Pencil className="size-3.5" />
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button
+                          title="Hapus tugas"
+                          onClick={() => {
+                            deleteTask(t.id);
+                            showToast("Tugas dihapus.");
+                          }}
+                          className="rounded p-1 text-muted hover:bg-red-bg hover:text-red"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </TableCell>
                 )}
               </TableRow>

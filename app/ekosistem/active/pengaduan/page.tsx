@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge, SlaBadge } from "@/components/shared/badges";
@@ -11,12 +11,14 @@ import { Label } from "@/components/ui/label";
 import { CASES, formatCurrency } from "@/lib/mock-data";
 import { useCasesData } from "@/lib/mock-service/store";
 import { useEkosistemActiveRole } from "@/lib/ekosistem-active-role";
+import { useQueryParamState, useCurrentPathWithQuery } from "@/lib/use-query-param";
 
-export default function EkosistemActivePengaduanPage() {
+function EkosistemActivePengaduanContent() {
   const { roleType } = useEkosistemActiveRole();
   const baseCases = useMemo(() => CASES.filter((c) => c.currentOwner === roleType), [roleType]);
   const allCases = useCasesData(baseCases).filter((c) => c.currentOwner === roleType);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useQueryParamState("q");
+  const from = encodeURIComponent(useCurrentPathWithQuery());
 
   const cases = allCases.filter(
     (c) => !search || c.ticket.toLowerCase().includes(search.toLowerCase()) || c.title.toLowerCase().includes(search.toLowerCase())
@@ -58,7 +60,7 @@ export default function EkosistemActivePengaduanPage() {
               <TableCell><SlaBadge sla={c.slaStatus} /></TableCell>
               <TableCell className="text-muted whitespace-nowrap">{formatCurrency(c.amount)}</TableCell>
               <TableCell>
-                <Link href={`/ekosistem/active/kasus/${c.ticket}`}>
+                <Link href={`/ekosistem/active/kasus/${c.ticket}?from=${from}`}>
                   <Button variant="outline" size="sm">Kelola</Button>
                 </Link>
               </TableCell>
@@ -74,5 +76,13 @@ export default function EkosistemActivePengaduanPage() {
         </TableBody>
       </Table>
     </div>
+  );
+}
+
+export default function EkosistemActivePengaduanPage() {
+  return (
+    <Suspense fallback={null}>
+      <EkosistemActivePengaduanContent />
+    </Suspense>
   );
 }
