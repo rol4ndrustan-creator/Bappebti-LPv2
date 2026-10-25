@@ -18,6 +18,42 @@ export interface SidebarItem {
    * so the group auto-expands and highlights while the user is in it.
    */
   children?: SidebarItem[];
+  /**
+   * Extra path prefixes that also count as this item being active, for
+   * destination pages reached via an action button rather than the nav
+   * link itself — e.g. a case detail route (`/platform/kasus/[ticket]`)
+   * opened from the "Manajemen Pengaduan" listing, which otherwise isn't a
+   * sub-path of that listing's own href and falls through to matching the
+   * portal's shallower Dashboard-root link instead.
+   */
+  matchPrefixes?: string[];
+}
+
+function pathMatchesPrefix(pathname: string, prefix: string): boolean {
+  return pathname === prefix || pathname.startsWith(prefix + "/");
+}
+
+/** Length of the most specific prefix (own href, or any matchPrefixes) this item matches the pathname on, or null if it doesn't match at all. */
+function itemMatchLength(
+  item: SidebarItem,
+  pathname: string,
+  searchParams: URLSearchParams | null
+): number | null {
+  const [itemPath, itemQuery] = item.href.split("?");
+  let best: number | null = null;
+  if (pathMatchesPrefix(pathname, itemPath)) {
+    const queryMatches =
+      !itemQuery ||
+      (!!searchParams &&
+        Array.from(new URLSearchParams(itemQuery).entries()).every(([key, value]) => searchParams.get(key) === value));
+    if (queryMatches) best = itemPath.length;
+  }
+  for (const prefix of item.matchPrefixes ?? []) {
+    if (pathMatchesPrefix(pathname, prefix) && (best === null || prefix.length > best)) {
+      best = prefix.length;
+    }
+  }
+  return best;
 }
 
 // Only the single most-specific matching item should be highlighted — a
@@ -36,27 +72,33 @@ function computeActiveHref(
 ): string | null {
   if (!pathname) return null;
   let best: string | null = null;
+  let bestLen = -1;
+  let groupBestLen = -1;
   for (const item of sidebarItems) {
-    // Groups manage their own active/expanded state (see SidebarGroup) —
-    // they're excluded here so they don't compete with regular items for
-    // the single "best match" this function returns.
-    if (item.children && item.children.length > 0) continue;
-    const [itemPath, itemQuery] = item.href.split("?");
-    const pathMatches = pathname === itemPath || pathname.startsWith(itemPath + "/");
-    if (!pathMatches) continue;
-    const queryMatches =
-      !itemQuery ||
-      (!!searchParams &&
-        Array.from(new URLSearchParams(itemQuery).entries()).every(([key, value]) => searchParams.get(key) === value));
-    if (queryMatches && (!best || item.href.length > best.length)) {
+    const len = itemMatchLength(item, pathname, searchParams);
+    if (len === null) continue;
+    if (item.children && item.children.length > 0) {
+      // Groups manage their own active/expanded state (see SidebarGroup) —
+      // tracked separately so a more specific group match (e.g. a case
+      // detail route caught by "Manajemen Pengaduan"'s matchPrefixes) can
+      // suppress a shallower regular-item match below, instead of the two
+      // lighting up independently.
+      if (len > groupBestLen) groupBestLen = len;
+      continue;
+    }
+    if (len > bestLen) {
+      bestLen = len;
       best = item.href;
     }
   }
+  if (groupBestLen > bestLen) return null;
   return best;
 }
 
 function SidebarGroup({ item, pathname }: { item: SidebarItem; pathname: string | null }) {
-  const sectionActive = !!pathname && (pathname === item.href || pathname.startsWith(item.href + "/"));
+  const sectionActive =
+    !!pathname &&
+    (pathMatchesPrefix(pathname, item.href) || (item.matchPrefixes ?? []).some((p) => pathMatchesPrefix(pathname, p)));
   // Expanded by default whenever navigation is inside this section; a
   // manual toggle (open/close click) overrides that default from then on.
   const [manualOpen, setManualOpen] = useState<boolean | null>(null);

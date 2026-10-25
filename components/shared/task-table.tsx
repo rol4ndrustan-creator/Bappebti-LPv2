@@ -47,6 +47,7 @@ export function TaskTable({
   caseDetailPath,
   readOnly = false,
   onEdit,
+  lembagaColumn = false,
   emptyMessage,
 }: {
   tasks: CaseTask[];
@@ -56,6 +57,8 @@ export function TaskTable({
   readOnly?: boolean;
   /** Shows an Edit (pencil) action next to Delete, creator-only — omit to leave editing to the Tugas Internal tab only. */
   onEdit?: (task: CaseTask) => void;
+  /** Swaps "Dari Siapa" for a "Lembaga" column (full institution name from delegationType/delegationEntity) and relabels Assignee as "PIC / Penerima" — for Ekosistem Active's own Manajemen Tugas, where every task already belongs to a Bursa/Kliring/Custody institution rather than being delegated out from an internal default. */
+  lembagaColumn?: boolean;
   emptyMessage: string;
 }) {
   const { showToast } = useToast();
@@ -74,8 +77,8 @@ export function TaskTable({
           <TableRow>
             <TableHead>Nomor Tiket</TableHead>
             <TableHead>Deskripsi Tugas</TableHead>
-            <TableHead>Dari Siapa</TableHead>
-            <TableHead>Assignee</TableHead>
+            <TableHead>{lembagaColumn ? "Lembaga" : "Dari Siapa"}</TableHead>
+            <TableHead>{lembagaColumn ? "PIC / Penerima" : "Assignee"}</TableHead>
             <TableHead>Dokumen</TableHead>
             <TableHead>Status</TableHead>
             {!readOnly && <TableHead>Aksi</TableHead>}
@@ -88,15 +91,23 @@ export function TaskTable({
             return (
               <TableRow key={t.id}>
                 <TableCell className="whitespace-nowrap">
-                  <Link href={caseDetailPath(t.ticket)} className="font-medium text-navy hover:underline">
-                    {t.ticket}
-                  </Link>
+                  {t.ticket.startsWith("BPP-") ? (
+                    <Link href={caseDetailPath(t.ticket)} className="font-medium text-navy hover:underline">
+                      {t.ticket}
+                    </Link>
+                  ) : (
+                    // Illustrative tasks not tied to a real pengaduan case (e.g. Ekosistem
+                    // Active's role-switcher demo rows) have no case detail page to link to.
+                    <span className="font-medium text-foreground" title="Tugas simulasi, tidak terkait kasus pengaduan">
+                      {t.ticket}
+                    </span>
+                  )}
                 </TableCell>
                 <TableCell className="max-w-[260px]">{t.description}</TableCell>
-                <TableCell className="text-muted whitespace-nowrap">{t.createdBy}</TableCell>
-                <TableCell className="whitespace-nowrap">
-                  <AssigneeBadge task={t} />
+                <TableCell className="text-muted whitespace-nowrap max-w-[220px] truncate">
+                  {lembagaColumn ? (t.delegationEntity ? `[${t.delegationType}] ${t.delegationEntity}` : "-") : t.createdBy}
                 </TableCell>
+                <TableCell className="whitespace-nowrap">{lembagaColumn ? t.assignee : <AssigneeBadge task={t} />}</TableCell>
                 <TableCell className="whitespace-nowrap">
                   {t.document ? (
                     <button

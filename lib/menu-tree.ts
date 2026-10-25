@@ -17,6 +17,8 @@ export interface MenuTreeItem {
   href: string;
   iconName: string;
   children?: MenuTreeItem[];
+  /** Extra path prefixes (e.g. a case detail route) that also count as this item being active — see SidebarItem.matchPrefixes. */
+  matchPrefixes?: string[];
 }
 
 export const MENU_TREE: MenuTreeItem[] = [
@@ -27,6 +29,7 @@ export const MENU_TREE: MenuTreeItem[] = [
     label: "Manajemen Pengaduan",
     href: "/bappebti/antrean",
     iconName: "ListChecks",
+    matchPrefixes: ["/bappebti/kasus"],
     children: [
       { key: "pengaduan.semua", label: "Semua Pengaduan", href: "/bappebti/antrean", iconName: "" },
       { key: "pengaduan.bappebti", label: "Penanganan Bappebti", href: "/bappebti/pengaduan/penanganan-bappebti", iconName: "" },

@@ -5,7 +5,7 @@ const iconCls = "size-4 shrink-0";
 
 const sidebarItems: SidebarItem[] = [
   { label: "Dashboard Overview", href: "/ekosistem/pengawas", icon: <LayoutDashboard className={iconCls} /> },
-  { label: "Manajemen Pengaduan", href: "/ekosistem/pengawas/pengaduan", icon: <ListChecks className={iconCls} /> },
+  { label: "Manajemen Pengaduan", href: "/ekosistem/pengawas/pengaduan", icon: <ListChecks className={iconCls} />, matchPrefixes: ["/ekosistem/pengawas/kasus"] },
   { label: "Manajemen Tugas", href: "/ekosistem/pengawas/tugas", icon: <ClipboardCheck className={iconCls} /> },
   { label: "Data Member", href: "/ekosistem/pengawas/member", icon: <Users className={iconCls} /> },
 ];

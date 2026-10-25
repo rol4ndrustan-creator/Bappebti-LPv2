@@ -50,6 +50,7 @@ export const BAPPEBTI_SIDEBAR_ITEMS: SidebarItem[] = MENU_TREE.map((item) => ({
   label: item.label,
   href: item.href,
   icon: renderIcon(item.iconName),
+  matchPrefixes: item.matchPrefixes,
   children: item.children?.map((child) => ({
     label: child.label,
     href: child.href,

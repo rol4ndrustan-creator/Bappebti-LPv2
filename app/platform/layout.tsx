@@ -6,7 +6,7 @@ const iconCls = "size-4 shrink-0";
 
 const sidebarItems: SidebarItem[] = [
   { label: "Dashboard Platform", href: "/platform", icon: <LayoutDashboard className={iconCls} /> },
-  { label: "Manajemen Pengaduan", href: "/platform/case-queue", icon: <ListChecks className={iconCls} /> },
+  { label: "Manajemen Pengaduan", href: "/platform/case-queue", icon: <ListChecks className={iconCls} />, matchPrefixes: ["/platform/kasus"] },
   { label: "Manajemen Tugas", href: "/platform/tugas", icon: <ClipboardCheck className={iconCls} /> },
   { label: "Manajemen Member", href: "/platform/member", icon: <Users className={iconCls} /> },
   { label: "SLA & Resolution", href: "/platform/sla-resolution", icon: <Clock className={iconCls} /> },

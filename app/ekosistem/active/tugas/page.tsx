@@ -15,6 +15,7 @@ import { useAllTasks, addTask } from "@/lib/mock-service/task-store";
 import { useDemoSession } from "@/lib/demo-session";
 import { useToast } from "@/components/shared/toast-provider";
 import { DEMO_USERS, ROLE_LABEL } from "@/lib/permissions";
+import { useEkosistemActiveRole } from "@/lib/ekosistem-active-role";
 import { Plus } from "lucide-react";
 
 const ASSIGNABLE_NAMES = DEMO_USERS.filter((u) => u.role !== "PUBLIC_REPORTER" && u.role !== "PUBLIC_REPRESENTATIVE").map((u) => u.name);
@@ -22,11 +23,28 @@ const ASSIGNABLE_NAMES = DEMO_USERS.filter((u) => u.role !== "PUBLIC_REPORTER" &
 export default function EkosistemActiveTugasPage() {
   const { user } = useDemoSession();
   const { showToast } = useToast();
+  const { roleType } = useEkosistemActiveRole();
 
-  const coordinatedCases = useCasesData(useMemo(() => CASES.filter((c) => c.currentOwner === "Bursa" || c.currentOwner === "Kliring"), []));
-  const coordinatedTickets = useMemo(() => new Set(coordinatedCases.map((c) => c.ticket)), [coordinatedCases]);
+  // Only cases actually owned by the currently selected lembaga mode can be
+  // delegated a real task from here — e.g. no case is ever Custody-owned,
+  // so the ticket picker is empty while browsing in Custody mode.
+  const coordinatedCases = useCasesData(useMemo(() => CASES.filter((c) => c.currentOwner === roleType), [roleType]));
+  const coordinatedTicketOwner = useMemo(
+    () => new Map(CASES.filter((c) => c.currentOwner === "Bursa" || c.currentOwner === "Kliring").map((c) => [c.ticket, c.currentOwner])),
+    []
+  );
   const allTasks = useAllTasks(CASE_TASKS);
-  const tasks = useMemo(() => allTasks.filter((t) => coordinatedTickets.has(t.ticket)), [allTasks, coordinatedTickets]);
+  const tasks = useMemo(
+    () =>
+      allTasks.filter((t) => {
+        const owner = coordinatedTicketOwner.get(t.ticket);
+        if (owner) return owner === roleType;
+        // Role-switcher demo tasks (List Revisi 6) aren't tied to a real
+        // case — they're tagged with delegationType instead.
+        return t.delegationType === roleType;
+      }),
+    [allTasks, coordinatedTicketOwner, roleType]
+  );
 
   const [addOpen, setAddOpen] = useState(false);
   const [ticket, setTicket] = useState("");
@@ -60,7 +78,7 @@ export default function EkosistemActiveTugasPage() {
     <div>
       <PageHeader
         title="Manajemen Tugas"
-        description="Tugas investigasi teknis yang terkait kasus-kasus yang dikoordinasikan oleh Ekosistem Active."
+        description={`Tugas investigasi teknis untuk lembaga ${roleType} yang dikoordinasikan oleh Ekosistem Active.`}
         actions={
           <Button size="sm" onClick={() => setAddOpen(true)}>
             <Plus className="size-3.5" /> Tambah Tugas
@@ -72,7 +90,8 @@ export default function EkosistemActiveTugasPage() {
         tasks={tasks}
         currentUserName={user.name}
         caseDetailPath={(t) => `/ekosistem/active/kasus/${t}`}
-        emptyMessage="Belum ada tugas investigasi teknis."
+        lembagaColumn
+        emptyMessage={`Belum ada tugas investigasi teknis untuk lembaga ${roleType}.`}
       />
 
       <Dialog open={addOpen} onOpenChange={(v) => { setAddOpen(v); if (!v) resetForm(); }}>
