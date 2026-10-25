@@ -96,9 +96,10 @@ export function TaskTable({
                       {t.ticket}
                     </Link>
                   ) : (
-                    // Illustrative tasks not tied to a real pengaduan case (e.g. Ekosistem
-                    // Active's role-switcher demo rows) have no case detail page to link to.
-                    <span className="font-medium text-foreground" title="Tugas simulasi, tidak terkait kasus pengaduan">
+                    // Defensive fallback: a task whose ticket isn't the standard BPP-2026-...
+                    // format has no case detail page to link to (List Revisi 7 standardized
+                    // every seeded task onto real case tickets, so this shouldn't normally hit).
+                    <span className="font-medium text-foreground" title="Tugas tidak terkait kasus pengaduan">
                       {t.ticket}
                     </span>
                   )}

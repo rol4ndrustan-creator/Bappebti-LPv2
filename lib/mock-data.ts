@@ -2022,14 +2022,15 @@ export const CASE_TASKS: CaseTask[] = [
     status: "Done",
     createdAt: "10 Jun 2026, 09:00",
   },
-  // Ekosistem Active role-switcher demo tasks (List Revisi 6) — illustrative
-  // tugas investigasi teknis per lembaga, not tied to a real pengaduan
-  // case (hence the TK- ticket prefix instead of BPP-2026-...), shown on
-  // /ekosistem/active/tugas when the matching Bursa/Kliring/Custody mode
-  // is selected in the role switcher.
+  // Ekosistem Active role-switcher demo tasks (List Revisi 6, standardized
+  // to real BPP-2026-... case tickets in List Revisi 7 so they stay
+  // connected to the Daftar Pengaduan module and the ticket link always
+  // resolves) — illustrative tugas investigasi teknis per lembaga, shown
+  // on /ekosistem/active/tugas when the matching Bursa/Kliring/Custody
+  // mode is selected in the role switcher.
   {
     id: "TASK-004",
-    ticket: "TK-1082",
+    ticket: "BPP-2026-000187",
     description: "Verifikasi Log Antrean Transaksi saat Jam Pembukaan Pasar",
     createdBy: "Koordinator Bursa",
     createdByRole: "Ekosistem Active",
@@ -2042,7 +2043,7 @@ export const CASE_TASKS: CaseTask[] = [
   },
   {
     id: "TASK-005",
-    ticket: "TK-1088",
+    ticket: "BPP-2026-000193",
     description: "Pengecekan Selisih Harga Eksekusi Order Nasabah",
     createdBy: "Koordinator Bursa",
     createdByRole: "Ekosistem Active",
@@ -2054,7 +2055,7 @@ export const CASE_TASKS: CaseTask[] = [
   },
   {
     id: "TASK-006",
-    ticket: "TK-1075",
+    ticket: "BPP-2026-000186",
     description: "Audit Rekonsiliasi Penarikan Dana Nasabah yang Tertahan",
     createdBy: "Koordinator Kliring",
     createdByRole: "Ekosistem Active",
@@ -2067,7 +2068,7 @@ export const CASE_TASKS: CaseTask[] = [
   },
   {
     id: "TASK-007",
-    ticket: "TK-1091",
+    ticket: "BPP-2026-000191",
     description: "Pengecekan Batas Margin Pialang Terlapor",
     createdBy: "Koordinator Kliring",
     createdByRole: "Ekosistem Active",
@@ -2079,7 +2080,7 @@ export const CASE_TASKS: CaseTask[] = [
   },
   {
     id: "TASK-008",
-    ticket: "TK-1064",
+    ticket: "BPP-2026-000195",
     description: "Verifikasi Bukti Pemindahan Aset (TxID) ke Cold Storage",
     createdBy: "Koordinator Custody",
     createdByRole: "Ekosistem Active",
@@ -2092,7 +2093,7 @@ export const CASE_TASKS: CaseTask[] = [
   },
   {
     id: "TASK-009",
-    ticket: "TK-1095",
+    ticket: "BPP-2026-000192",
     description: "Audit Fisik Cadangan Saldo Aset Nasabah",
     createdBy: "Koordinator Custody",
     createdByRole: "Ekosistem Active",
